@@ -32,3 +32,4 @@ apiRouter.use('/fondos', fondoRouter);
 apiRouter.use('/gastos', gastoRouter);
 apiRouter.use('/informes', informeRouter);
 apiRouter.use('/configuracion', configuracionRouter);
+apiRouter.use('/cajas', cajaRouter);
