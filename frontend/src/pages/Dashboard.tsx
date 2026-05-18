@@ -3,58 +3,48 @@ import Topbar from '../components/Layout/Topbar';
 const Dashboard = () => {
   return (
     <div>
-      <Topbar title="Resumen" />
+      <Topbar title="Inicio" />
       <div className="space-y-6 px-6 py-6">
-        <section className="theme-section-card rounded-2xl p-6 shadow-sm">
+        <section className="theme-section-card rounded-lg p-6 shadow-sm">
           <h3 className="theme-main-title theme-content-title text-2xl font-semibold">
-            Proyecto depurado
+            Semana de Ingenieria
           </h3>
           <p className="theme-content-subtitle mt-2 text-sm">
-            Se eliminó la lógica activa de rifas, boletas, canal público, Wompi, premios y cierres comerciales. El proyecto quedó reducido a una base administrativa para reconstruirlo como sistema de almacén.
+            Base operativa con autenticacion, roles, usuarios y conexion real a PostgreSQL.
           </p>
         </section>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="theme-summary-card rounded-2xl p-5 shadow-sm">
-            <p className="theme-summary-label">Estado</p>
-            <p className="mt-3 text-3xl font-semibold text-slate-900">Base limpia</p>
-            <p className="mt-2 text-sm text-slate-500">Sin dominio heredado activo</p>
+          <div className="theme-summary-card rounded-lg p-5 shadow-sm">
+            <p className="theme-summary-label">Usuarios</p>
+            <p className="mt-3 text-3xl font-semibold text-slate-900">Activo</p>
+            <p className="mt-2 text-sm text-slate-500">CRUD protegido por permisos</p>
           </div>
-          <div className="theme-summary-card rounded-2xl p-5 shadow-sm">
-            <p className="theme-summary-label">Frontend</p>
-            <p className="mt-3 text-3xl font-semibold text-slate-900">Reducido</p>
-            <p className="mt-2 text-sm text-slate-500">Solo resumen, usuarios y configuración</p>
+          <div className="theme-summary-card rounded-lg p-5 shadow-sm">
+            <p className="theme-summary-label">Roles</p>
+            <p className="mt-3 text-3xl font-semibold text-slate-900">7</p>
+            <p className="mt-2 text-sm text-slate-500">Permisos base cargados</p>
           </div>
-          <div className="theme-summary-card rounded-2xl p-5 shadow-sm">
-            <p className="theme-summary-label">Backend</p>
-            <p className="mt-3 text-3xl font-semibold text-slate-900">Mínimo</p>
-            <p className="mt-2 text-sm text-slate-500">Auth, salud y configuración base</p>
+          <div className="theme-summary-card rounded-lg p-5 shadow-sm">
+            <p className="theme-summary-label">Programas</p>
+            <p className="mt-3 text-3xl font-semibold text-slate-900">5</p>
+            <p className="mt-2 text-sm text-slate-500">Ingenierias configuradas</p>
           </div>
-          <div className="theme-summary-card rounded-2xl p-5 shadow-sm">
-            <p className="theme-summary-label">Siguiente fase</p>
-            <p className="mt-3 text-3xl font-semibold text-slate-900">Inventario</p>
-            <p className="mt-2 text-sm text-slate-500">Nuevo modelo y módulos del almacén</p>
+          <div className="theme-summary-card rounded-lg p-5 shadow-sm">
+            <p className="theme-summary-label">Base de datos</p>
+            <p className="mt-3 text-3xl font-semibold text-slate-900">OK</p>
+            <p className="mt-2 text-sm text-slate-500">Prisma migrado y validado</p>
           </div>
         </div>
 
-        <section className="theme-section-card rounded-2xl p-6 shadow-sm">
+        <section className="theme-section-card rounded-lg p-6 shadow-sm">
           <h3 className="theme-main-title theme-content-title text-2xl font-semibold">
-            Orden de construcción
+            Siguiente modulo
           </h3>
-          <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            {[
-              '1. Rediseñar Prisma para categorías, productos, inventario, ventas, clientes, caja y gastos.',
-              '2. Implementar inventario con categorías administrables y productos con costo, precio, stock y código de barras.',
-              '3. Implementar ventas con tirilla y descarga automática del inventario.',
-              '4. Implementar caja diaria, caja mayor, cierres y retiros.',
-              '5. Implementar clientes con búsqueda dinámica por nombre o cédula.',
-              '6. Implementar separados, créditos y salidas no vendidas.'
-            ].map((item) => (
-              <div key={item} className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-                {item}
-              </div>
-            ))}
-          </div>
+          <p className="theme-content-subtitle mt-2 max-w-3xl text-sm">
+            La siguiente fase funcional es eventos, charlas y asistencia. Esta pantalla ya
+            consume la sesion real del backend y puede crecer con metricas del dashboard.
+          </p>
         </section>
       </div>
     </div>

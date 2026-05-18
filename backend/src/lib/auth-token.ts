@@ -1,67 +1,47 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import crypto from 'node:crypto';
+
+import jwt from 'jsonwebtoken';
 
 import { env } from '../config/env';
+import type { UserWithAccess } from '../modules/auth/auth.service';
 
-type AuthTokenPayload = {
-  sub: string;
-  nombre: string;
-  email: string;
-  rol: string;
-  exp: number;
-};
+export function createAccessToken(user: UserWithAccess) {
+  const roles = user.roles.map((assignment) => assignment.role.code);
+  const permissions = [
+    ...new Set(
+      user.roles.flatMap((assignment) =>
+        assignment.role.permissions.map((rolePermission) => rolePermission.permission.code)
+      )
+    ),
+  ];
 
-function toBase64Url(value: string) {
-  return Buffer.from(value, 'utf8').toString('base64url');
-}
-
-function fromBase64Url<T>(value: string): T {
-  return JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as T;
-}
-
-function signSegment(value: string) {
-  return createHmac('sha256', env.authSecret).update(value).digest('base64url');
-}
-
-export function createAuthToken(input: Omit<AuthTokenPayload, 'exp'>) {
-  const payload: AuthTokenPayload = {
-    ...input,
-    exp: Math.floor(Date.now() / 1000) + env.authTtlSeconds,
+  const options: jwt.SignOptions = {
+    subject: user.id,
+    expiresIn: env.accessTokenExpiresIn as jwt.SignOptions['expiresIn'],
   };
 
-  const header = toBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const body = toBase64Url(JSON.stringify(payload));
-  const signature = signSegment(`${header}.${body}`);
-
-  return `${header}.${body}.${signature}`;
+  return jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      roles,
+      permissions,
+    },
+    env.jwtAccessSecret,
+    options
+  );
 }
 
-export function verifyAuthToken(token: string) {
-  const [header, body, signature] = String(token || '').split('.');
-
-  if (!header || !body || !signature) {
-    return null;
-  }
-
-  const expected = signSegment(`${header}.${body}`);
-
-  if (expected.length !== signature.length) {
-    return null;
-  }
-
-  const expectedBuffer = Buffer.from(expected, 'utf8');
-  const signatureBuffer = Buffer.from(signature, 'utf8');
-
-  if (!timingSafeEqual(expectedBuffer, signatureBuffer)) {
-    return null;
-  }
-
-  const payload = fromBase64Url<AuthTokenPayload>(body);
-
-  if (!payload?.sub || !payload.exp || payload.exp < Math.floor(Date.now() / 1000)) {
-    return null;
-  }
-
-  return payload;
+export function createRefreshToken() {
+  return crypto.randomBytes(64).toString('hex');
 }
 
-export type { AuthTokenPayload };
+export function hashRefreshToken(token: string) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+export function getRefreshExpirationDate() {
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + env.refreshTokenDays);
+  return expiresAt;
+}

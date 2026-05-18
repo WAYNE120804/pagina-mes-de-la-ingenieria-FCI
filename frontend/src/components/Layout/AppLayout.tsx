@@ -30,7 +30,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       }}
     >
       <Sidebar />
-      <main className="flex-1 overflow-x-hidden bg-slate-50">
+      <main className="flex-1 overflow-x-hidden bg-slate-50 text-slate-900">
         {children}
       </main>
     </div>

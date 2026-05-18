@@ -1,13 +1,9 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useState,
   type ReactNode,
 } from 'react';
-
-import client from '../api/client';
-import { endpoints } from '../api/endpoints';
 
 type AppConfig = {
   id?: string;
@@ -44,7 +40,7 @@ type AppConfigContextValue = {
 };
 
 const defaultConfig: AppConfig = {
-  nombreNegocio: 'Almacen Admin',
+  nombreNegocio: 'Plantilla App',
   logoDataUrl: null,
   propietarioNombre: null,
   propietarioTelefono: null,
@@ -73,54 +69,26 @@ const AppConfigContext = createContext<AppConfigContextValue | undefined>(undefi
 
 export const AppConfigProvider = ({ children }: { children: ReactNode }) => {
   const [config, setConfig] = useState<AppConfig>(defaultConfig);
-  const [loading, setLoading] = useState(true);
+  const [loading] = useState(false);
 
   const refreshConfig = async () => {
-    const { data } = await client.get(endpoints.configuracion());
-    setConfig({
-      id: data.id,
-      nombreNegocio: data.nombreNegocio || 'Almacen Admin',
-      logoDataUrl: data.logoDataUrl || null,
-      propietarioNombre: data.propietarioNombre || null,
-      propietarioTelefono: data.propietarioTelefono || null,
-      direccion: data.direccion || null,
-      ciudad: data.ciudad || null,
-      departamento: data.departamento || null,
-      notasRecibo: data.notasRecibo || null,
-      themeColors: {
-        ...defaultConfig.themeColors,
-        ...(data.themeColors || {}),
-      },
-    });
+    setConfig(defaultConfig);
   };
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        await refreshConfig();
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, []);
-
   const saveConfig = async (payload: AppConfig) => {
-    const { data } = await client.put(endpoints.configuracion(), payload);
     const nextConfig = {
-      id: data.id,
-      nombreNegocio: data.nombreNegocio || 'Almacen Admin',
-      logoDataUrl: data.logoDataUrl || null,
-      propietarioNombre: data.propietarioNombre || null,
-      propietarioTelefono: data.propietarioTelefono || null,
-      direccion: data.direccion || null,
-      ciudad: data.ciudad || null,
-      departamento: data.departamento || null,
-      notasRecibo: data.notasRecibo || null,
+      ...payload,
+      nombreNegocio: payload.nombreNegocio || defaultConfig.nombreNegocio,
+      logoDataUrl: payload.logoDataUrl || null,
+      propietarioNombre: payload.propietarioNombre || null,
+      propietarioTelefono: payload.propietarioTelefono || null,
+      direccion: payload.direccion || null,
+      ciudad: payload.ciudad || null,
+      departamento: payload.departamento || null,
+      notasRecibo: payload.notasRecibo || null,
       themeColors: {
         ...defaultConfig.themeColors,
-        ...(data.themeColors || {}),
+        ...(payload.themeColors || {}),
       },
     };
 

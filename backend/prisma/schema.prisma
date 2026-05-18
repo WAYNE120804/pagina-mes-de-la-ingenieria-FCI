@@ -7,684 +7,932 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum RolUsuario {
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  PENDING
+}
+
+enum UserPosition {
+  DIRECTIVO
+  PROFESOR
+  REPRESENTANTE
+  ESTUDIANTE
+}
+
+enum RoleCode {
+  SUPER_ADMIN
   ADMIN
-  CAJERO
-  VENDEDOR
+  COORDINADOR
+  JURADO
+  PONENTE
+  LOGISTICA
+  PARTICIPANTE
 }
 
-enum EstadoProducto {
-  ACTIVO
-  INACTIVO
-  AGOTADO
+enum EventType {
+  GENERAL
+  ACADEMIC
+  TALK
+  WORKSHOP
+  TOURNAMENT
+  HACKATHON
+  CEREMONY
+  OTHER
 }
 
-enum GeneroProducto {
-  MASCULINO
-  FEMENINO
-  UNISEX
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  FINISHED
 }
 
-enum TipoCodigoProducto {
-  INTERNO
-  BARRAS
+enum AttendanceMethod {
+  QR
+  MANUAL
+  TEMPORARY_CODE
 }
 
-enum TipoMovimientoInventario {
-  ENTRADA_INICIAL
-  COMPRA
-  AJUSTE_ENTRADA
-  AJUSTE_SALIDA
-  VENTA
-  DEVOLUCION_CLIENTE
-  DEVOLUCION_PROVEEDOR
-  SEPARADO
-  ENTREGA_SEPARADO
-  CREDITO
-  SALIDA_PRESTAMO
-  RETORNO_PRESTAMO
-  TRUEQUE_SALIDA
-  TRUEQUE_ENTRADA
-  MERMA
+enum AttendanceStatus {
+  REGISTERED
+  CHECKED_IN
+  CANCELLED
 }
 
-enum EstadoVenta {
-  ABIERTA
-  PAGADA
-  ANULADA
-}
-
-enum MetodoPago {
-  EFECTIVO
-  NEQUI
-  DAVIPLATA
-  TRANSFERENCIA
-  TARJETA
-  MIXTO
+enum AttendeeCategory {
+  ESTUDIANTE
+  PROFESOR
+  ADMINISTRATIVO
+  GRADUADO
   OTRO
 }
 
-enum EstadoPagoVenta {
-  CONFIRMADO
-  ANULADO
+enum Sport {
+  FUTBOL
+  BALONCESTO
+  VIDEOJUEGOS
+  PING_PONG
+  AJEDREZ
+  ROBOTICA
+  VOLEIBOL
 }
 
-enum CategoriaGasto {
-  NOMINA
-  ARRIENDO
-  SERVICIOS
-  PROVEEDOR
-  TRANSPORTE
-  MERCADEO
-  MANTENIMIENTO
-  IMPUESTOS
-  PAPELERIA
-  OTROS
+enum CompetitionMode {
+  TEAM
+  INDIVIDUAL
 }
 
-enum TipoMovimientoCaja {
-  INGRESO
-  EGRESO
-  TRASLADO_SALIDA
-  TRASLADO_ENTRADA
-  APERTURA
-  CIERRE
+enum VideoGameTitle {
+  FIFA
+  CALL_OF_DUTY
 }
 
-enum TipoCaja {
-  PRINCIPAL
-  DIARIA
-  MAYOR
-  BANCARIA
-  OTRO
+enum TournamentRulePreset {
+  FOOTBALL
+  BASKETBALL
+  VIDEO_GAME
+  TABLE_TENNIS
+  CHESS
+  ROBOTICS_BATTLE
+  CUSTOM
 }
 
-enum EstadoCaja {
-  ABIERTA
-  CERRADA
-  BLOQUEADA
+enum TournamentFormat {
+  GROUPS
+  KNOCKOUT
+  ROUND_ROBIN
+  MIXED
 }
 
-enum OrigenApartadoFondo {
-  CAJA_DIARIA
-  CAJA_GENERAL
+enum TournamentStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  IN_PROGRESS
+  FINISHED
+  CANCELLED
 }
 
-enum OrigenGasto {
-  CAJA_DIARIA
-  CAJA_GENERAL
-  FONDO_META
+enum TournamentPhase {
+  FASE_GRUPOS
+  OCTAVOS
+  CUARTOS
+  SEMIFINAL
+  FINAL
 }
 
-enum EstadoSeparado {
-  ACTIVO
-  PAGADO
-  ENTREGADO
-  VENCIDO
-  CANCELADO
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+  CANCELLED
 }
 
-enum EstadoCredito {
-  ACTIVO
-  PAGADO
-  VENCIDO
-  CANCELADO
+enum HackathonStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  IN_PROGRESS
+  EVALUATION
+  FINISHED
+  CANCELLED
 }
 
-enum EstadoSalidaProducto {
-  PRESTADO
-  DEVUELTO
-  VENDIDO_EXTERNAMENTE
-  TRUEQUEADO
-  CANCELADO
+enum DeliverableType {
+  PDF
+  ZIP
+  GITHUB_URL
+  VIDEO_URL
+  PRESENTATION
+  OTHER
 }
 
-enum TipoSalidaProducto {
-  PRESTAMO
-  CONSIGNACION
-  TRUEQUE
-  MUESTRA
-  OTRO
+enum EvaluationStatus {
+  DRAFT
+  SUBMITTED
+  INVALIDATED
 }
 
-model Usuario {
-  id        String     @id @default(cuid())
-  nombre    String
-  email     String     @unique
-  password  String
-  rol       RolUsuario
-  activo    Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  movimientosInventario MovimientoInventario[]
-  ventas                 Venta[]
-  pagosVenta             PagoVenta[]
-  gastos                 Gasto[]
-  movimientosCaja        MovimientoCaja[]
-  cierresCaja            CierreCaja[]          @relation("CierreCajaUsuario")
-  retirosCajaMayor       RetiroCajaMayor[]
-  apartadosFondo         FondoApartado[]
-  clientesCreados        Cliente[]             @relation("ClienteCreadoPor")
-  separadosCreados       Separado[]            @relation("SeparadoCreadoPor")
-  abonosSeparado         SeparadoAbono[]
-  creditosCreados        Credito[]             @relation("CreditoCreadoPor")
-  pagosCredito           CreditoPago[]
-  salidasProducto        SalidaProducto[]
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  WEBSOCKET
 }
 
-model CategoriaProducto {
-  id          String    @id @default(cuid())
-  nombre      String    @unique
-  codigo      String?   @unique @db.VarChar(2)
-  descripcion String?
-  activa      Boolean   @default(true)
-  orden       Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  productos Producto[]
-
-  @@index([activa, nombre])
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
 }
 
-model Producto {
-  id               String         @id @default(cuid())
-  categoriaId      String
-  nombre           String
-  descripcion      String?
-  marca            String?
-  genero           GeneroProducto @default(UNISEX)
-  estado           EstadoProducto @default(ACTIVO)
-  imagenUrl        String?
-  notas            String?        @db.Text
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-
-  categoria            CategoriaProducto     @relation(fields: [categoriaId], references: [id])
-  variantes            ProductoVariante[]
-
-  @@index([categoriaId, nombre])
-  @@index([estado, nombre])
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  CREATE
+  UPDATE
+  DELETE
+  EVALUATE
+  MATCH_CREATE
+  MATCH_UPDATE
+  ADMIN_CHANGE
 }
 
-model ProductoVariante {
-  id                  String         @id @default(cuid())
-  productoId          String
-  talla               String
-  color               String
-  sku                 String         @unique
-  costoPromedio       Decimal        @default(0) @db.Decimal(12,2)
-  precioVenta         Decimal        @default(0) @db.Decimal(12,2)
-  stockActual         Int            @default(0)
-  stockMinimo         Int            @default(0)
-  estado              EstadoProducto @default(ACTIVO)
-  permiteDecimal      Boolean        @default(false)
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  name            String
+  email           String     @unique
+  position        UserPosition @default(ESTUDIANTE)
+  phone           String?
+  passwordHash    String?    @map("password_hash")
+  programId       String?    @map("program_id") @db.Uuid
+  semester        Int?
+  universityCode  String?    @unique @map("university_code")
+  photoUrl        String?    @map("photo_url")
+  status          UserStatus @default(PENDING)
+  emailVerifiedAt DateTime?  @map("email_verified_at")
+  lastLoginAt     DateTime?  @map("last_login_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  deletedAt       DateTime?  @map("deleted_at")
 
-  producto             Producto              @relation(fields: [productoId], references: [id], onDelete: Cascade)
-  codigos              CodigoProducto[]
-  movimientosInventario MovimientoInventario[]
-  ventaItems           VentaItem[]
-  separadoItems        SeparadoItem[]
-  creditoItems         CreditoItem[]
-  salidaItems          SalidaProductoItem[]
+  program                AcademicProgram?        @relation(fields: [programId], references: [id], onDelete: SetNull)
+  roles                  UserRoleAssignment[]
+  refreshSessions        RefreshSession[]
+  speakerProfile         SpeakerProfile?
+  jurorProfile           JurorProfile?
+  eventResponsibilities  EventResponsible[]
+  attendances            Attendance[]            @relation("AttendanceUser")
+  scannedAttendances     Attendance[]            @relation("AttendanceScanner")
+  teamMemberships        TeamMember[]
+  captainTeams           Team[]                  @relation("TeamCaptain")
+  tournamentParticipants TournamentParticipant[]
+  hackathonMemberships   HackathonTeamMember[]
+  hackathonLeaderTeams   HackathonTeam[]         @relation("HackathonTeamLeader")
+  evaluations            Evaluation[]            @relation("EvaluationJudge")
+  createdNotifications   Notification[]          @relation("NotificationCreator")
+  receivedNotifications  NotificationRecipient[]
+  auditLogs              AuditLog[]              @relation("AuditActor")
 
-  @@unique([productoId, color, talla])
-  @@index([productoId, estado])
-  @@index([estado, stockActual])
+  @@index([email])
+  @@index([programId])
+  @@index([status])
+  @@map("users")
 }
 
-model CodigoProducto {
-  id          String            @id @default(cuid())
-  varianteId   String
-  codigo      String            @unique
-  tipo        TipoCodigoProducto @default(BARRAS)
-  principal   Boolean           @default(false)
-  createdAt   DateTime          @default(now())
+model AcademicProgram {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @unique
+  code      String?   @unique
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  variante ProductoVariante @relation(fields: [varianteId], references: [id], onDelete: Cascade)
+  users User[]
 
-  @@index([varianteId, principal])
+  @@map("academic_programs")
 }
 
-model Cliente {
-  id               String    @id @default(cuid())
-  nombreCompleto    String
-  cedula           String    @unique
-  telefonoCelular   String
-  email            String?
-  fechaNacimiento  DateTime?
-  direccion        String?
-  observaciones    String?   @db.Text
-  createdById      String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+model Role {
+  id          String    @id @default(uuid()) @db.Uuid
+  code        RoleCode  @unique
+  name        String
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
 
-  createdBy     Usuario?        @relation("ClienteCreadoPor", fields: [createdById], references: [id])
-  ventas        Venta[]
-  separados     Separado[]
-  creditos      Credito[]
-  salidasProducto SalidaProducto[]
+  users       UserRoleAssignment[]
+  permissions RolePermission[]
 
-  @@index([nombreCompleto])
-  @@index([telefonoCelular])
+  @@map("roles")
 }
 
-model MovimientoInventario {
-  id              String                  @id @default(cuid())
-  varianteId      String
-  usuarioId       String?
-  tipo            TipoMovimientoInventario
-  cantidad        Int
-  stockAnterior   Int
-  stockPosterior  Int
-  costoUnitario   Decimal?                @db.Decimal(12,2)
-  precioUnitario  Decimal?                @db.Decimal(12,2)
-  detalle         String?                 @db.Text
-  referenciaTipo  String?
-  referenciaId    String?
-  createdAt       DateTime                @default(now())
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  code        String   @unique
+  module      String
+  action      String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  variante ProductoVariante @relation(fields: [varianteId], references: [id], onDelete: Cascade)
-  usuario  Usuario? @relation(fields: [usuarioId], references: [id])
+  roles RolePermission[]
 
-  @@index([varianteId, createdAt])
-  @@index([tipo, createdAt])
-  @@index([referenciaTipo, referenciaId])
+  @@index([module, action])
+  @@map("permissions")
 }
 
-model Caja {
-  id           String      @id @default(cuid())
-  nombre       String      @unique
-  tipo         TipoCaja    @default(DIARIA)
-  estado       EstadoCaja  @default(ABIERTA)
-  saldoActual  Decimal     @default(0) @db.Decimal(12,2)
-  descripcion  String?
-  permiteVenta Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+model UserRoleAssignment {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
 
-  ventas            Venta[]
-  pagosVenta        PagoVenta[]
-  gastos            Gasto[]
-  movimientos       MovimientoCaja[]
-  cierres           CierreCaja[]
-  retirosOrigen     RetiroCajaMayor[] @relation("RetiroCajaOrigen")
-  retirosDestino    RetiroCajaMayor[] @relation("RetiroCajaDestino")
-  apartadosFondo     FondoApartado[]
-  abonosSeparado    SeparadoAbono[]
-  pagosCredito      CreditoPago[]
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  @@index([tipo, estado])
+  @@unique([userId, roleId])
+  @@index([roleId])
+  @@map("user_role_assignments")
 }
 
-model Venta {
-  id             String       @id @default(cuid())
-  clienteId      String?
-  usuarioId      String?
-  cajaId         String?
-  numero         Int          @default(autoincrement())
-  estado         EstadoVenta  @default(ABIERTA)
-  subtotal       Decimal      @default(0) @db.Decimal(12,2)
-  descuento      Decimal      @default(0) @db.Decimal(12,2)
-  total          Decimal      @default(0) @db.Decimal(12,2)
-  totalPagado    Decimal      @default(0) @db.Decimal(12,2)
-  utilidadTotal  Decimal      @default(0) @db.Decimal(12,2)
-  observaciones  String?      @db.Text
-  anuladaAt      DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+model RolePermission {
+  id           String   @id @default(uuid()) @db.Uuid
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  cliente Cliente? @relation(fields: [clienteId], references: [id])
-  usuario Usuario? @relation(fields: [usuarioId], references: [id])
-  caja    Caja?    @relation(fields: [cajaId], references: [id])
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
-  items        VentaItem[]
-  pagos        PagoVenta[]
-  movimientosCaja MovimientoCaja[]
-
-  @@unique([numero])
-  @@index([estado, createdAt])
-  @@index([clienteId, createdAt])
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
 }
 
-model VentaItem {
-  id             String   @id @default(cuid())
-  ventaId        String
-  varianteId     String
-  cantidad       Int
-  costoUnitario  Decimal  @default(0) @db.Decimal(12,2)
-  precioUnitario Decimal  @default(0) @db.Decimal(12,2)
-  descuento      Decimal  @default(0) @db.Decimal(12,2)
-  subtotal       Decimal  @default(0) @db.Decimal(12,2)
-  utilidad       Decimal  @default(0) @db.Decimal(12,2)
-  createdAt      DateTime @default(now())
+model RefreshSession {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  userAgent String?   @map("user_agent")
+  ipAddress String?   @map("ip_address")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
-  venta    Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
-  variante ProductoVariante @relation(fields: [varianteId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([ventaId])
-  @@index([varianteId])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_sessions")
 }
 
-model PagoVenta {
-  id          String           @id @default(cuid())
-  ventaId      String
-  usuarioId    String?
-  cajaId       String?
-  metodo       MetodoPago
-  estado       EstadoPagoVenta @default(CONFIRMADO)
-  valor        Decimal         @db.Decimal(12,2)
-  referencia   String?
-  observacion  String?         @db.Text
-  createdAt    DateTime        @default(now())
+model Venue {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String
+  location  String?
+  photoUrl  String?   @map("photo_url")
+  capacity  Int?
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  venta   Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
-  usuario Usuario? @relation(fields: [usuarioId], references: [id])
-  caja    Caja?    @relation(fields: [cajaId], references: [id])
+  events      Event[]
+  matches     Match[]
+  tournaments Tournament[]
 
-  movimientosCaja MovimientoCaja[]
-
-  @@index([ventaId, createdAt])
-  @@index([cajaId, createdAt])
+  @@unique([name, location])
+  @@map("venues")
 }
 
-model Gasto {
-  id           String         @id @default(cuid())
-  usuarioId     String?
-  cajaId        String?
-  fondoId       String?
-  origen        OrigenGasto    @default(CAJA_DIARIA)
-  categoria     CategoriaGasto @default(OTROS)
-  descripcion   String
-  valor         Decimal        @db.Decimal(12,2)
-  saldoOrigenAnterior  Decimal        @default(0) @db.Decimal(12,2)
-  saldoOrigenPosterior Decimal        @default(0) @db.Decimal(12,2)
-  soporte       String?
-  observacion   String?        @db.Text
-  anuladoAt     DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+model Event {
+  id          String      @id @default(uuid()) @db.Uuid
+  parentId    String?     @map("parent_id") @db.Uuid
+  venueId     String?     @map("venue_id") @db.Uuid
+  title       String
+  slug        String      @unique
+  description String?
+  type        EventType
+  status      EventStatus @default(DRAFT)
+  startsAt    DateTime    @map("starts_at")
+  endsAt      DateTime    @map("ends_at")
+  capacity    Int?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  deletedAt   DateTime?   @map("deleted_at")
 
-  usuario Usuario? @relation(fields: [usuarioId], references: [id])
-  caja    Caja?    @relation(fields: [cajaId], references: [id])
-  fondo   FondoMeta? @relation(fields: [fondoId], references: [id])
+  parent       Event?             @relation("EventHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Event[]            @relation("EventHierarchy")
+  venue        Venue?             @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  responsibles EventResponsible[]
+  talk         Talk?
+  attendances  Attendance[]
+  tournament   Tournament?
+  hackathon    HackathonEvent?
 
-  movimientosCaja MovimientoCaja[]
-
-  @@index([categoria, createdAt])
-  @@index([cajaId, createdAt])
-  @@index([fondoId, createdAt])
-  @@index([origen, createdAt])
+  @@index([parentId])
+  @@index([venueId])
+  @@index([type, status])
+  @@index([startsAt, endsAt])
+  @@map("events")
 }
 
-model MovimientoCaja {
-  id             String              @id @default(cuid())
-  cajaId          String
-  usuarioId       String?
-  ventaId         String?
-  pagoVentaId     String?
-  gastoId         String?
-  tipo            TipoMovimientoCaja
-  valor           Decimal             @db.Decimal(12,2)
-  saldoAnterior   Decimal             @default(0) @db.Decimal(12,2)
-  saldoPosterior  Decimal             @default(0) @db.Decimal(12,2)
-  descripcion     String?
-  referenciaTipo  String?
-  referenciaId    String?
-  createdAt       DateTime            @default(now())
+model EventResponsible {
+  id        String   @id @default(uuid()) @db.Uuid
+  eventId   String   @map("event_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  roleNote  String?  @map("role_note")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  caja      Caja      @relation(fields: [cajaId], references: [id], onDelete: Cascade)
-  usuario   Usuario?  @relation(fields: [usuarioId], references: [id])
-  venta     Venta?    @relation(fields: [ventaId], references: [id])
-  pagoVenta PagoVenta? @relation(fields: [pagoVentaId], references: [id])
-  gasto     Gasto?    @relation(fields: [gastoId], references: [id])
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([cajaId, createdAt])
-  @@index([tipo, createdAt])
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@map("event_responsibles")
 }
 
-model CierreCaja {
-  id                String    @id @default(cuid())
-  cajaId            String
-  usuarioId         String?
-  fechaApertura     DateTime
-  fechaCierre       DateTime  @default(now())
-  saldoInicial      Decimal   @default(0) @db.Decimal(12,2)
-  saldoEsperado     Decimal   @default(0) @db.Decimal(12,2)
-  saldoReal         Decimal   @default(0) @db.Decimal(12,2)
-  diferencia        Decimal   @default(0) @db.Decimal(12,2)
-  observaciones     String?   @db.Text
-  createdAt         DateTime  @default(now())
+model SpeakerProfile {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String?   @unique @map("user_id") @db.Uuid
+  fullName  String    @map("full_name")
+  email     String?
+  company   String?
+  bio       String?
+  photoUrl  String?   @map("photo_url")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  caja    Caja     @relation(fields: [cajaId], references: [id], onDelete: Cascade)
-  usuario Usuario? @relation("CierreCajaUsuario", fields: [usuarioId], references: [id])
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  talks Talk[]
 
-  @@index([cajaId, fechaCierre])
+  @@map("speaker_profiles")
 }
 
-model RetiroCajaMayor {
-  id             String    @id @default(cuid())
-  usuarioId       String?
-  cajaOrigenId    String
-  cajaDestinoId   String?
-  valor           Decimal   @db.Decimal(12,2)
-  motivo          String
-  observacion     String?   @db.Text
-  createdAt       DateTime  @default(now())
+model Talk {
+  id        String    @id @default(uuid()) @db.Uuid
+  eventId   String    @unique @map("event_id") @db.Uuid
+  speakerId String?   @map("speaker_id") @db.Uuid
+  topic     String
+  qrSecret  String?   @unique @map("qr_secret")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
-  usuario    Usuario? @relation(fields: [usuarioId], references: [id])
-  cajaOrigen Caja     @relation("RetiroCajaOrigen", fields: [cajaOrigenId], references: [id])
-  cajaDestino Caja?   @relation("RetiroCajaDestino", fields: [cajaDestinoId], references: [id])
+  event   Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  speaker SpeakerProfile? @relation(fields: [speakerId], references: [id], onDelete: SetNull)
 
-  @@index([cajaOrigenId, createdAt])
-  @@index([cajaDestinoId, createdAt])
+  @@index([speakerId])
+  @@map("talks")
 }
 
-model FondoMeta {
-  id          String   @id @default(cuid())
-  nombre      String   @unique
-  metaTotal   Decimal  @default(0) @db.Decimal(12,2)
-  acumulado   Decimal  @default(0) @db.Decimal(12,2)
-  notas       String?  @db.Text
-  activo      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model Attendance {
+  id          String           @id @default(uuid()) @db.Uuid
+  eventId     String           @map("event_id") @db.Uuid
+  userId      String?          @map("user_id") @db.Uuid
+  scannerId   String?          @map("scanner_id") @db.Uuid
+  fullName    String?          @map("full_name")
+  email       String?
+  identifier  String?
+  category    AttendeeCategory?
+  method      AttendanceMethod
+  status      AttendanceStatus @default(REGISTERED)
+  qrCode      String?          @unique @map("qr_code")
+  tempCode    String?          @map("temp_code")
+  checkedInAt DateTime?        @map("checked_in_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  deletedAt   DateTime?        @map("deleted_at")
 
-  apartados FondoApartado[]
-  gastos    Gasto[]
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user    User? @relation("AttendanceUser", fields: [userId], references: [id], onDelete: SetNull)
+  scanner User? @relation("AttendanceScanner", fields: [scannerId], references: [id], onDelete: SetNull)
 
-  @@index([activo, nombre])
+  @@unique([eventId, userId])
+  @@unique([eventId, identifier])
+  @@index([eventId, status])
+  @@index([userId])
+  @@index([identifier])
+  @@map("attendances")
 }
 
-model FondoApartado {
-  id                   String              @id @default(cuid())
-  fondoId              String
-  usuarioId            String?
-  cajaId               String
-  origen               OrigenApartadoFondo
-  valor                Decimal             @db.Decimal(12,2)
-  saldoFondoAnterior   Decimal             @default(0) @db.Decimal(12,2)
-  saldoFondoPosterior  Decimal             @default(0) @db.Decimal(12,2)
-  saldoCajaAnterior    Decimal             @default(0) @db.Decimal(12,2)
-  saldoCajaPosterior   Decimal             @default(0) @db.Decimal(12,2)
-  observacion          String?             @db.Text
-  createdAt            DateTime            @default(now())
+model Tournament {
+  id                String               @id @default(uuid()) @db.Uuid
+  eventId           String?              @unique @map("event_id") @db.Uuid
+  venueId           String?              @map("venue_id") @db.Uuid
+  name              String
+  sport             Sport
+  mode              CompetitionMode      @default(TEAM)
+  videoGameTitle    VideoGameTitle?      @map("video_game_title")
+  rulePreset        TournamentRulePreset @default(CUSTOM) @map("rule_preset")
+  format            TournamentFormat
+  status            TournamentStatus     @default(DRAFT)
+  description       String?
+  rules             String?
+  maxTeams          Int?                 @map("max_teams")
+  maxMembersPerTeam Int?                 @map("max_members_per_team")
+  maxParticipants   Int?                 @map("max_participants")
+  pointsWin         Int                  @default(3) @map("points_win")
+  pointsDraw        Int                  @default(1) @map("points_draw")
+  pointsLoss        Int                  @default(0) @map("points_loss")
+  allowsDraws       Boolean              @default(false) @map("allows_draws")
+  restrictionGroup  String?              @map("restriction_group")
+  startsAt          DateTime?            @map("starts_at")
+  endsAt            DateTime?            @map("ends_at")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+  deletedAt         DateTime?            @map("deleted_at")
 
-  fondo   FondoMeta @relation(fields: [fondoId], references: [id], onDelete: Cascade)
-  usuario Usuario?  @relation(fields: [usuarioId], references: [id])
-  caja    Caja      @relation(fields: [cajaId], references: [id])
+  event        Event?                  @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  venue        Venue?                  @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  groups       TournamentGroup[]
+  teams        Team[]
+  participants TournamentParticipant[]
+  matches      Match[]
+  standings    TournamentStanding[]
 
-  @@index([fondoId, createdAt])
-  @@index([cajaId, createdAt])
-  @@index([origen, createdAt])
+  @@index([sport, status])
+  @@index([mode, format])
+  @@index([restrictionGroup])
+  @@index([venueId])
+  @@map("tournaments")
 }
 
-model Separado {
-  id              String         @id @default(cuid())
-  clienteId        String
-  usuarioId        String?
-  estado           EstadoSeparado @default(ACTIVO)
-  fechaLimite      DateTime?
-  subtotal         Decimal        @default(0) @db.Decimal(12,2)
-  total            Decimal        @default(0) @db.Decimal(12,2)
-  totalAbonado     Decimal        @default(0) @db.Decimal(12,2)
-  saldoPendiente   Decimal        @default(0) @db.Decimal(12,2)
-  observaciones    String?        @db.Text
-  entregadoAt      DateTime?
-  canceladoAt      DateTime?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+model TournamentGroup {
+  id           String    @id @default(uuid()) @db.Uuid
+  tournamentId String    @map("tournament_id") @db.Uuid
+  name         String
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
 
-  cliente Cliente  @relation(fields: [clienteId], references: [id])
-  usuario Usuario? @relation("SeparadoCreadoPor", fields: [usuarioId], references: [id])
+  tournament   Tournament              @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  teams        Team[]
+  participants TournamentParticipant[]
+  matches      Match[]
+  standings    TournamentStanding[]
 
-  items   SeparadoItem[]
-  abonos  SeparadoAbono[]
-
-  @@index([clienteId, estado])
-  @@index([fechaLimite])
+  @@unique([tournamentId, name])
+  @@map("tournament_groups")
 }
 
-model SeparadoItem {
-  id             String   @id @default(cuid())
-  separadoId      String
-  varianteId      String
-  cantidad        Int
-  costoUnitario   Decimal  @default(0) @db.Decimal(12,2)
-  precioUnitario  Decimal  @default(0) @db.Decimal(12,2)
-  subtotal        Decimal  @default(0) @db.Decimal(12,2)
-  createdAt       DateTime @default(now())
+model TournamentParticipant {
+  id           String    @id @default(uuid()) @db.Uuid
+  tournamentId String    @map("tournament_id") @db.Uuid
+  userId       String?   @map("user_id") @db.Uuid
+  groupId      String?   @map("group_id") @db.Uuid
+  displayName  String    @map("display_name")
+  email        String?
+  identifier   String?
+  status       String    @default("PENDING")
+  seed         Int?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
 
-  separado Separado @relation(fields: [separadoId], references: [id], onDelete: Cascade)
-  variante ProductoVariante @relation(fields: [varianteId], references: [id])
+  tournament  Tournament           @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user        User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  group       TournamentGroup?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  homeMatches Match[]              @relation("HomeParticipant")
+  awayMatches Match[]              @relation("AwayParticipant")
+  wonMatches  Match[]              @relation("WinnerParticipant")
+  standings   TournamentStanding[]
 
-  @@index([separadoId])
-  @@index([varianteId])
+  @@unique([tournamentId, userId])
+  @@unique([tournamentId, email])
+  @@unique([tournamentId, identifier])
+  @@index([userId])
+  @@index([groupId])
+  @@map("tournament_participants")
 }
 
-model SeparadoAbono {
-  id          String     @id @default(cuid())
-  separadoId   String
-  usuarioId    String?
-  cajaId       String?
-  metodo       MetodoPago
-  valor        Decimal    @db.Decimal(12,2)
-  referencia   String?
-  observacion  String?    @db.Text
-  createdAt    DateTime   @default(now())
+model Team {
+  id           String    @id @default(uuid()) @db.Uuid
+  tournamentId String    @map("tournament_id") @db.Uuid
+  groupId      String?   @map("group_id") @db.Uuid
+  captainId    String?   @map("captain_id") @db.Uuid
+  name         String
+  logoUrl      String?   @map("logo_url")
+  status       String    @default("PENDING")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
 
-  separado Separado @relation(fields: [separadoId], references: [id], onDelete: Cascade)
-  usuario  Usuario? @relation(fields: [usuarioId], references: [id])
-  caja     Caja?    @relation(fields: [cajaId], references: [id])
+  tournament  Tournament           @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  group       TournamentGroup?     @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  captain     User?                @relation("TeamCaptain", fields: [captainId], references: [id], onDelete: SetNull)
+  members     TeamMember[]
+  homeMatches Match[]              @relation("HomeTeam")
+  awayMatches Match[]              @relation("AwayTeam")
+  wonMatches  Match[]              @relation("WinnerTeam")
+  standings   TournamentStanding[]
 
-  @@index([separadoId, createdAt])
+  @@unique([tournamentId, name])
+  @@index([groupId])
+  @@index([captainId])
+  @@map("teams")
 }
 
-model Credito {
-  id              String         @id @default(cuid())
-  clienteId        String
-  usuarioId        String?
-  estado           EstadoCredito @default(ACTIVO)
-  subtotal         Decimal       @default(0) @db.Decimal(12,2)
-  total            Decimal       @default(0) @db.Decimal(12,2)
-  totalPagado      Decimal       @default(0) @db.Decimal(12,2)
-  saldoPendiente   Decimal       @default(0) @db.Decimal(12,2)
-  fechaInicio      DateTime      @default(now())
-  fechaLimite      DateTime?
-  observaciones    String?       @db.Text
-  entregadoAt      DateTime?
-  canceladoAt      DateTime?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+model TeamMember {
+  id         String   @id @default(uuid()) @db.Uuid
+  teamId     String   @map("team_id") @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  fullName   String?  @map("full_name")
+  identifier String?
+  email      String?
+  isCaptain  Boolean  @default(false) @map("is_captain")
+  createdAt  DateTime @default(now()) @map("created_at")
 
-  cliente Cliente  @relation(fields: [clienteId], references: [id])
-  usuario Usuario? @relation("CreditoCreadoPor", fields: [usuarioId], references: [id])
+  team Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  items  CreditoItem[]
-  pagos  CreditoPago[]
-
-  @@index([clienteId, estado])
-  @@index([fechaLimite])
+  @@unique([teamId, userId])
+  @@unique([teamId, email])
+  @@unique([teamId, identifier])
+  @@index([userId])
+  @@map("team_members")
 }
 
-model CreditoItem {
-  id             String   @id @default(cuid())
-  creditoId       String
-  varianteId      String
-  cantidad        Int
-  costoUnitario   Decimal  @default(0) @db.Decimal(12,2)
-  precioUnitario  Decimal  @default(0) @db.Decimal(12,2)
-  subtotal        Decimal  @default(0) @db.Decimal(12,2)
-  createdAt       DateTime @default(now())
+model Match {
+  id                  String          @id @default(uuid()) @db.Uuid
+  tournamentId        String          @map("tournament_id") @db.Uuid
+  groupId             String?         @map("group_id") @db.Uuid
+  venueId             String?         @map("venue_id") @db.Uuid
+  homeTeamId          String?         @map("home_team_id") @db.Uuid
+  awayTeamId          String?         @map("away_team_id") @db.Uuid
+  winnerTeamId        String?         @map("winner_team_id") @db.Uuid
+  homeParticipantId   String?         @map("home_participant_id") @db.Uuid
+  awayParticipantId   String?         @map("away_participant_id") @db.Uuid
+  winnerParticipantId String?         @map("winner_participant_id") @db.Uuid
+  phase               TournamentPhase
+  status              MatchStatus     @default(SCHEDULED)
+  scheduledAt         DateTime?       @map("scheduled_at")
+  startedAt           DateTime?       @map("started_at")
+  finishedAt          DateTime?       @map("finished_at")
+  homeScore           Int             @default(0) @map("home_score")
+  awayScore           Int             @default(0) @map("away_score")
+  stats               Json?
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+  deletedAt           DateTime?       @map("deleted_at")
 
-  credito  Credito  @relation(fields: [creditoId], references: [id], onDelete: Cascade)
-  variante ProductoVariante @relation(fields: [varianteId], references: [id])
+  tournament        Tournament             @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  group             TournamentGroup?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  venue             Venue?                 @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  homeTeam          Team?                  @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: SetNull)
+  awayTeam          Team?                  @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: SetNull)
+  winnerTeam        Team?                  @relation("WinnerTeam", fields: [winnerTeamId], references: [id], onDelete: SetNull)
+  homeParticipant   TournamentParticipant? @relation("HomeParticipant", fields: [homeParticipantId], references: [id], onDelete: SetNull)
+  awayParticipant   TournamentParticipant? @relation("AwayParticipant", fields: [awayParticipantId], references: [id], onDelete: SetNull)
+  winnerParticipant TournamentParticipant? @relation("WinnerParticipant", fields: [winnerParticipantId], references: [id], onDelete: SetNull)
 
-  @@index([creditoId])
-  @@index([varianteId])
+  @@index([tournamentId, phase, status])
+  @@index([scheduledAt])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+  @@index([homeParticipantId])
+  @@index([awayParticipantId])
+  @@map("matches")
 }
 
-model CreditoPago {
-  id          String     @id @default(cuid())
-  creditoId    String
-  usuarioId    String?
-  cajaId       String?
-  metodo       MetodoPago
-  valor        Decimal    @db.Decimal(12,2)
-  referencia   String?
-  observacion  String?    @db.Text
-  createdAt    DateTime   @default(now())
+model TournamentStanding {
+  id             String   @id @default(uuid()) @db.Uuid
+  tournamentId   String   @map("tournament_id") @db.Uuid
+  groupId        String?  @map("group_id") @db.Uuid
+  teamId         String?  @map("team_id") @db.Uuid
+  participantId  String?  @map("participant_id") @db.Uuid
+  played         Int      @default(0)
+  won            Int      @default(0)
+  drawn          Int      @default(0)
+  lost           Int      @default(0)
+  points         Int      @default(0)
+  goalsFor       Int      @default(0) @map("goals_for")
+  goalsAgainst   Int      @default(0) @map("goals_against")
+  goalDifference Int      @default(0) @map("goal_difference")
+  rank           Int?
+  qualified      Boolean  @default(false)
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  credito Credito @relation(fields: [creditoId], references: [id], onDelete: Cascade)
-  usuario Usuario? @relation(fields: [usuarioId], references: [id])
-  caja    Caja?    @relation(fields: [cajaId], references: [id])
+  tournament  Tournament             @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  group       TournamentGroup?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  team        Team?                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  participant TournamentParticipant? @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
-  @@index([creditoId, createdAt])
+  @@unique([tournamentId, groupId, teamId])
+  @@unique([tournamentId, groupId, participantId])
+  @@index([teamId])
+  @@index([participantId])
+  @@map("tournament_standings")
 }
 
-model SalidaProducto {
-  id                String               @id @default(cuid())
-  clienteId          String?
-  usuarioId          String?
-  tipo              TipoSalidaProducto
-  estado            EstadoSalidaProducto @default(PRESTADO)
-  responsableNombre  String
-  responsableCedula  String?
-  responsableTelefono String?
-  destino            String?
-  fechaCompromiso    DateTime?
-  observaciones      String?              @db.Text
-  valorRecibido      Decimal?             @db.Decimal(12,2)
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  cerradoAt          DateTime?
+model HackathonEvent {
+  id          String          @id @default(uuid()) @db.Uuid
+  eventId     String?         @unique @map("event_id") @db.Uuid
+  name        String
+  status      HackathonStatus @default(DRAFT)
+  description String?
+  startsAt    DateTime?       @map("starts_at")
+  endsAt      DateTime?       @map("ends_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  deletedAt   DateTime?       @map("deleted_at")
 
-  cliente Cliente? @relation(fields: [clienteId], references: [id])
-  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+  event       Event?                @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  challenges  HackathonChallenge[]
+  teams       HackathonTeam[]
+  rubricItems EvaluationCriterion[]
 
-  items SalidaProductoItem[]
-
-  @@index([estado, createdAt])
-  @@index([tipo, createdAt])
-  @@index([clienteId])
+  @@index([status])
+  @@map("hackathon_events")
 }
 
-model SalidaProductoItem {
-  id              String   @id @default(cuid())
-  salidaId         String
-  varianteId       String
-  cantidad         Int
-  costoUnitario    Decimal? @db.Decimal(12,2)
-  precioReferencia Decimal? @db.Decimal(12,2)
-  observacion      String?  @db.Text
-  createdAt        DateTime @default(now())
+model Company {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String    @unique
+  contactName  String?   @map("contact_name")
+  contactEmail String?   @map("contact_email")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
 
-  salida   SalidaProducto @relation(fields: [salidaId], references: [id], onDelete: Cascade)
-  variante ProductoVariante @relation(fields: [varianteId], references: [id])
+  challenges HackathonChallenge[]
 
-  @@index([salidaId])
-  @@index([varianteId])
+  @@map("companies")
+}
+
+model HackathonChallenge {
+  id               String    @id @default(uuid()) @db.Uuid
+  hackathonEventId String    @map("hackathon_event_id") @db.Uuid
+  companyId        String?   @map("company_id") @db.Uuid
+  title            String
+  description      String
+  requirements     String?
+  suggestedTech    String?   @map("suggested_tech")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  hackathonEvent HackathonEvent  @relation(fields: [hackathonEventId], references: [id], onDelete: Cascade)
+  company        Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  teams          HackathonTeam[]
+
+  @@index([hackathonEventId])
+  @@index([companyId])
+  @@map("hackathon_challenges")
+}
+
+model HackathonTeam {
+  id               String    @id @default(uuid()) @db.Uuid
+  hackathonEventId String    @map("hackathon_event_id") @db.Uuid
+  challengeId      String?   @map("challenge_id") @db.Uuid
+  leaderId         String?   @map("leader_id") @db.Uuid
+  name             String
+  projectName      String?   @map("project_name")
+  githubUrl        String?   @map("github_url")
+  demoUrl          String?   @map("demo_url")
+  finalScore       Decimal?  @map("final_score") @db.Decimal(6, 2)
+  finalRank        Int?      @map("final_rank")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  hackathonEvent HackathonEvent         @relation(fields: [hackathonEventId], references: [id], onDelete: Cascade)
+  challenge      HackathonChallenge?    @relation(fields: [challengeId], references: [id], onDelete: SetNull)
+  leader         User?                  @relation("HackathonTeamLeader", fields: [leaderId], references: [id], onDelete: SetNull)
+  members        HackathonTeamMember[]
+  deliverables   HackathonDeliverable[]
+  evaluations    Evaluation[]
+
+  @@unique([hackathonEventId, name])
+  @@index([challengeId])
+  @@index([leaderId])
+  @@map("hackathon_teams")
+}
+
+model HackathonTeamMember {
+  id              String   @id @default(uuid()) @db.Uuid
+  hackathonTeamId String   @map("hackathon_team_id") @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  isLeader        Boolean  @default(false) @map("is_leader")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  hackathonTeam HackathonTeam @relation(fields: [hackathonTeamId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([hackathonTeamId, userId])
+  @@index([userId])
+  @@map("hackathon_team_members")
+}
+
+model HackathonDeliverable {
+  id              String          @id @default(uuid()) @db.Uuid
+  hackathonTeamId String          @map("hackathon_team_id") @db.Uuid
+  type            DeliverableType
+  title           String
+  url             String
+  submittedAt     DateTime        @default(now()) @map("submitted_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  deletedAt       DateTime?       @map("deleted_at")
+
+  hackathonTeam HackathonTeam @relation(fields: [hackathonTeamId], references: [id], onDelete: Cascade)
+
+  @@index([hackathonTeamId])
+  @@map("hackathon_deliverables")
+}
+
+model JurorProfile {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @unique @map("user_id") @db.Uuid
+  specialty    String?
+  organization String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("juror_profiles")
+}
+
+model EvaluationCriterion {
+  id               String    @id @default(uuid()) @db.Uuid
+  hackathonEventId String    @map("hackathon_event_id") @db.Uuid
+  name             String
+  description      String?
+  weight           Decimal   @db.Decimal(5, 2)
+  maxScore         Decimal   @map("max_score") @db.Decimal(6, 2)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  hackathonEvent HackathonEvent    @relation(fields: [hackathonEventId], references: [id], onDelete: Cascade)
+  scores         EvaluationScore[]
+
+  @@unique([hackathonEventId, name])
+  @@map("evaluation_criteria")
+}
+
+model Evaluation {
+  id              String           @id @default(uuid()) @db.Uuid
+  hackathonTeamId String           @map("hackathon_team_id") @db.Uuid
+  judgeId         String           @map("judge_id") @db.Uuid
+  status          EvaluationStatus @default(DRAFT)
+  observations    String?
+  totalScore      Decimal?         @map("total_score") @db.Decimal(6, 2)
+  submittedAt     DateTime?        @map("submitted_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  deletedAt       DateTime?        @map("deleted_at")
+
+  hackathonTeam HackathonTeam     @relation(fields: [hackathonTeamId], references: [id], onDelete: Cascade)
+  judge         User              @relation("EvaluationJudge", fields: [judgeId], references: [id], onDelete: Cascade)
+  scores        EvaluationScore[]
+
+  @@unique([hackathonTeamId, judgeId])
+  @@index([judgeId])
+  @@index([status])
+  @@map("evaluations")
+}
+
+model EvaluationScore {
+  id           String   @id @default(uuid()) @db.Uuid
+  evaluationId String   @map("evaluation_id") @db.Uuid
+  criterionId  String   @map("criterion_id") @db.Uuid
+  score        Decimal  @db.Decimal(6, 2)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  evaluation Evaluation          @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  criterion  EvaluationCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@unique([evaluationId, criterionId])
+  @@index([criterionId])
+  @@map("evaluation_scores")
+}
+
+model Notification {
+  id        String              @id @default(uuid()) @db.Uuid
+  creatorId String?             @map("creator_id") @db.Uuid
+  channel   NotificationChannel
+  status    NotificationStatus  @default(PENDING)
+  title     String
+  body      String
+  payload   Json?
+  sentAt    DateTime?           @map("sent_at")
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+  deletedAt DateTime?           @map("deleted_at")
+
+  creator    User?                   @relation("NotificationCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  recipients NotificationRecipient[]
+
+  @@index([channel, status])
+  @@map("notifications")
+}
+
+model NotificationRecipient {
+  id             String             @id @default(uuid()) @db.Uuid
+  notificationId String             @map("notification_id") @db.Uuid
+  userId         String             @map("user_id") @db.Uuid
+  status         NotificationStatus @default(PENDING)
+  readAt         DateTime?          @map("read_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, userId])
+  @@index([userId, status])
+  @@map("notification_recipients")
+}
+
+model StorageAsset {
+  id        String    @id @default(uuid()) @db.Uuid
+  bucket    String
+  key       String
+  url       String
+  mimeType  String?   @map("mime_type")
+  sizeBytes BigInt?   @map("size_bytes")
+  ownerId   String?   @map("owner_id") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([bucket, key])
+  @@index([ownerId])
+  @@map("storage_assets")
+}
+
+model SiteSetting {
+  id        String   @id @default("public")
+  brandName String   @default("Mes de la Ingenieria") @map("brand_name")
+  heroTitle String   @default("Innovacion que transforma el futuro.") @map("hero_title")
+  logoUrl   String?  @map("logo_url")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("site_settings")
+}
+
+model ReportExport {
+  id          String    @id @default(uuid()) @db.Uuid
+  type        String
+  format      String
+  filters     Json?
+  fileUrl     String?   @map("file_url")
+  generatedBy String?   @map("generated_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([type, format])
+  @@map("report_exports")
+}
+
+model AuditLog {
+  id        String      @id @default(uuid()) @db.Uuid
+  actorId   String?     @map("actor_id") @db.Uuid
+  action    AuditAction
+  entity    String
+  entityId  String?     @map("entity_id") @db.Uuid
+  oldValues Json?       @map("old_values")
+  newValues Json?       @map("new_values")
+  ipAddress String?     @map("ip_address")
+  userAgent String?     @map("user_agent")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

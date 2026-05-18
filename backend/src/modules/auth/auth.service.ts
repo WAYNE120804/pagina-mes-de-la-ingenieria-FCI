@@ -1,163 +1,193 @@
-import { env } from '../../config/env';
-import { createAuthToken } from '../../lib/auth-token';
+import { AuditAction, Prisma, UserStatus } from '../../lib/prisma-client';
 import { AppError } from '../../lib/app-error';
-import { hashPassword, verifyPassword } from '../../lib/password';
-import { RolUsuario } from '../../lib/prisma-client';
+import {
+  createAccessToken,
+  createRefreshToken,
+  getRefreshExpirationDate,
+  hashRefreshToken,
+} from '../../lib/auth-token';
 import { getPrisma } from '../../lib/prisma';
-import type { LoginPayload, UsuarioPayload } from './auth.schemas';
-import { normalizeLoginIdentifier } from './auth.utils';
+import { verifyPassword } from '../../lib/password';
+import { createAuditLog } from '../../utils/audit';
+import type { LoginInput, RefreshTokenInput } from './auth.schemas';
 
-function prismaClient() {
+const userAccessInclude = {
+  roles: {
+    include: {
+      role: {
+        include: {
+          permissions: {
+            include: {
+              permission: true,
+            },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.UserInclude;
+
+export type UserWithAccess = Prisma.UserGetPayload<{
+  include: typeof userAccessInclude;
+}>;
+
+function requirePrisma() {
   const prisma = getPrisma();
 
   if (!prisma) {
-    throw new AppError('DATABASE_URL no esta configurado en el backend.', 500);
+    throw new AppError('Base de datos no configurada', 500, 'DATABASE_NOT_CONFIGURED');
   }
 
   return prisma;
 }
 
-function serializeUser(usuario: {
-  id: string;
-  nombre: string;
-  email: string;
-  rol: RolUsuario;
-  activo: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}) {
+function sanitizeUser(user: UserWithAccess) {
   return {
-    id: usuario.id,
-    nombre: usuario.nombre,
-    email: usuario.email,
-    rol: usuario.rol,
-    activo: usuario.activo,
-    createdAt: usuario.createdAt,
-    updatedAt: usuario.updatedAt,
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    programId: user.programId,
+    semester: user.semester,
+    universityCode: user.universityCode,
+    photoUrl: user.photoUrl,
+    status: user.status,
+    roles: user.roles.map((assignment) => assignment.role.code),
+    permissions: [
+      ...new Set(
+        user.roles.flatMap((assignment) =>
+          assignment.role.permissions.map((rolePermission) => rolePermission.permission.code)
+        )
+      ),
+    ],
   };
 }
 
-export async function ensureBootstrapAdmin() {
-  const prisma = prismaClient();
-  const usersCount = await prisma.usuario.count();
+async function createSession(userId: string, reqMeta?: { userAgent?: string; ipAddress?: string }) {
+  const prisma = requirePrisma();
+  const refreshToken = createRefreshToken();
 
-  if (usersCount > 0) {
-    return;
-  }
-
-  await prisma.usuario.create({
+  await prisma.refreshSession.create({
     data: {
-      nombre: env.bootstrapAdminName,
-      email: normalizeLoginIdentifier(env.bootstrapAdminEmail),
-      password: hashPassword(env.bootstrapAdminPassword),
-      rol: RolUsuario.ADMIN,
-      activo: true,
+      userId,
+      tokenHash: hashRefreshToken(refreshToken),
+      expiresAt: getRefreshExpirationDate(),
+      userAgent: reqMeta?.userAgent,
+      ipAddress: reqMeta?.ipAddress,
     },
   });
+
+  return refreshToken;
 }
 
-export async function loginUsuario(payload: LoginPayload) {
-  const prisma = prismaClient();
-  const usuario = await prisma.usuario.findUnique({
-    where: { email: normalizeLoginIdentifier(payload.identifier) },
+export async function login(input: LoginInput, reqMeta?: { userAgent?: string; ipAddress?: string }) {
+  const prisma = requirePrisma();
+  const user = await prisma.user.findUnique({
+    where: { email: input.email },
+    include: userAccessInclude,
   });
 
-  if (!usuario || !verifyPassword(payload.password, usuario.password)) {
-    throw new AppError('Documento, correo o contrasena incorrectos.', 401, {
-      errorCode: 'INVALID_CREDENTIALS',
-    });
+  if (!user || user.deletedAt || user.status !== UserStatus.ACTIVE || !user.passwordHash) {
+    throw new AppError('Credenciales invalidas', 401, 'INVALID_CREDENTIALS');
   }
 
-  if (!usuario.activo) {
-    throw new AppError('Tu usuario esta inactivo.', 403, {
-      errorCode: 'USER_DISABLED',
-    });
+  const validPassword = await verifyPassword(input.password, user.passwordHash);
+
+  if (!validPassword) {
+    throw new AppError('Credenciales invalidas', 401, 'INVALID_CREDENTIALS');
   }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() },
+  });
+
+  await createAuditLog({
+    prisma,
+    actorId: user.id,
+    action: AuditAction.LOGIN,
+    entity: 'User',
+    entityId: user.id,
+    ipAddress: reqMeta?.ipAddress,
+    userAgent: reqMeta?.userAgent,
+  });
 
   return {
-    token: createAuthToken({
-      sub: usuario.id,
-      nombre: usuario.nombre,
-      email: usuario.email,
-      rol: usuario.rol,
-    }),
-    usuario: serializeUser(usuario),
+    user: sanitizeUser(user),
+    accessToken: createAccessToken(user),
+    refreshToken: await createSession(user.id, reqMeta),
   };
 }
 
-export async function getAuthProfile(userId: string) {
-  const usuario = await prismaClient().usuario.findUnique({
+export async function refresh(input: RefreshTokenInput) {
+  const prisma = requirePrisma();
+  const tokenHash = hashRefreshToken(input.refreshToken);
+  const session = await prisma.refreshSession.findUnique({
+    where: { tokenHash },
+    include: {
+      user: {
+        include: userAccessInclude,
+      },
+    },
+  });
+
+  if (
+    !session ||
+    session.revokedAt ||
+    session.expiresAt < new Date() ||
+    session.user.deletedAt ||
+    session.user.status !== UserStatus.ACTIVE
+  ) {
+    throw new AppError('Refresh token invalido', 401, 'INVALID_REFRESH_TOKEN');
+  }
+
+  await prisma.refreshSession.update({
+    where: { id: session.id },
+    data: { revokedAt: new Date() },
+  });
+
+  return {
+    user: sanitizeUser(session.user),
+    accessToken: createAccessToken(session.user),
+    refreshToken: await createSession(session.userId),
+  };
+}
+
+export async function logout(input: RefreshTokenInput, actorId?: string) {
+  const prisma = requirePrisma();
+  const tokenHash = hashRefreshToken(input.refreshToken);
+  const session = await prisma.refreshSession.findUnique({
+    where: { tokenHash },
+  });
+
+  if (session && !session.revokedAt) {
+    await prisma.refreshSession.update({
+      where: { id: session.id },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  if (actorId) {
+    await createAuditLog({
+      prisma,
+      actorId,
+      action: AuditAction.LOGOUT,
+      entity: 'User',
+      entityId: actorId,
+    });
+  }
+}
+
+export async function getMe(userId: string) {
+  const prisma = requirePrisma();
+  const user = await prisma.user.findUnique({
     where: { id: userId },
+    include: userAccessInclude,
   });
 
-  if (!usuario) {
-    throw new AppError('Usuario no encontrado.', 404);
+  if (!user || user.deletedAt) {
+    throw new AppError('Usuario no encontrado', 404, 'USER_NOT_FOUND');
   }
 
-  return serializeUser(usuario);
-}
-
-export async function listUsuarios() {
-  const usuarios = await prismaClient().usuario.findMany({
-    orderBy: [{ activo: 'desc' }, { nombre: 'asc' }],
-  });
-
-  return usuarios.map(serializeUser);
-}
-
-export async function createUsuario(payload: UsuarioPayload) {
-  const prisma = prismaClient();
-  const existing = await prisma.usuario.findUnique({
-    where: { email: normalizeLoginIdentifier(payload.email) },
-    select: { id: true },
-  });
-
-  if (existing) {
-    throw new AppError('Ya existe un usuario con ese identificador.', 409, {
-      errorCode: 'EMAIL_IN_USE',
-    });
-  }
-
-  const usuario = await prisma.usuario.create({
-    data: {
-      nombre: payload.nombre,
-      email: normalizeLoginIdentifier(payload.email),
-      password: hashPassword(payload.password),
-      rol: payload.rol,
-      activo: true,
-    },
-  });
-
-  return serializeUser(usuario);
-}
-
-export async function toggleUsuarioActivo(id: string, activo: boolean) {
-  const prisma = prismaClient();
-  const usuario = await prisma.usuario.findUnique({
-    where: { id },
-  });
-
-  if (!usuario) {
-    throw new AppError('Usuario no encontrado.', 404);
-  }
-
-  const totalAdminsActivos = await prisma.usuario.count({
-    where: {
-      rol: RolUsuario.ADMIN,
-      activo: true,
-    },
-  });
-
-  if (usuario.rol === RolUsuario.ADMIN && usuario.activo && !activo && totalAdminsActivos <= 1) {
-    throw new AppError('No puedes desactivar el ultimo administrador activo.', 409, {
-      errorCode: 'LAST_ADMIN',
-    });
-  }
-
-  const updated = await prisma.usuario.update({
-    where: { id },
-    data: { activo },
-  });
-
-  return serializeUser(updated);
+  return sanitizeUser(user);
 }

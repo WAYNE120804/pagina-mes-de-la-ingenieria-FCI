@@ -1,19 +1,9 @@
-rifasmejia.store, www.rifasmejia.store {
+app.example.com {
   encode gzip zstd
   reverse_proxy frontend:80
 }
 
-api.rifasmejia.store {
+api.example.com {
   encode gzip zstd
   reverse_proxy backend:3002
-}
-
-bot.rifasmejia.store {
-  encode gzip zstd
-  reverse_proxy n8n:5678
-}
-
-wa.rifasmejia.store {
-  encode gzip zstd
-  reverse_proxy evolution-api:8080
 }

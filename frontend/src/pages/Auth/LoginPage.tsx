@@ -1,122 +1,91 @@
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
-import ErrorBanner from '../../components/common/ErrorBanner';
-import { useAppConfig } from '../../context/AppConfigContext';
 import { useAuth } from '../../context/AuthContext';
 
 const LoginPage = () => {
-  const { config } = useAppConfig();
-  const { login, isAuthenticated, loading } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@semanaingenieria.local');
+  const [password, setPassword] = useState('Admin12345!');
+  const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  if (!loading && isAuthenticated) {
+  if (user) {
     return <Navigate to="/" replace />;
   }
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
-    setError(null);
+    setError('');
 
     try {
-      await login(identifier, password);
-      const nextPath = (location.state as { from?: string } | null)?.from || '/';
-      navigate(nextPath, { replace: true });
-    } catch (requestError) {
-      setError((requestError as Error).message);
+      await login(email, password);
+      navigate(from, { replace: true });
+    } catch {
+      setError('Correo o contrasena invalidos.');
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-10">
-      <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="rounded-3xl bg-white p-8 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+      <section className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+            Semana de Ingenieria
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold text-slate-950">
             Panel administrativo
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold uppercase text-slate-900">
-            {config.nombreNegocio}
           </h1>
-          <p className="mt-4 text-base text-slate-600">
-            Esta versión ya quedó depurada de la lógica de rifas. Desde aquí se administrará la reconstrucción del sistema para el almacén de ropa.
-          </p>
+        </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Uso interno
-              </p>
-              <p className="mt-2 text-sm text-slate-700">
-                No hay rutas públicas ni lógica web de clientes. El sistema queda solamente para uso interno administrativo.
-              </p>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">Correo</span>
+            <input
+              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              required
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-medium text-slate-700">Contrasena</span>
+            <input
+              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </label>
+
+          {error ? (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Base limpia
-              </p>
-              <p className="mt-2 text-sm text-slate-700">
-                Se conservaron autenticación, usuarios, configuración visual y la estructura base para arrancar el nuevo dominio del almacén.
-              </p>
-            </div>
-          </div>
-        </section>
+          ) : null}
 
-        <section className="rounded-3xl bg-white p-8 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-            Iniciar sesion
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold uppercase text-slate-900">
-            Acceso al sistema
-          </h2>
-
-          <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-            <ErrorBanner message={error} />
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">
-                Correo o identificador
-              </span>
-              <input
-                value={identifier}
-                onChange={(event) => setIdentifier(event.target.value)}
-                type="text"
-                autoComplete="username"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-500"
-                placeholder="admin@almacen.local"
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Contrasena</span>
-              <input
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                type="password"
-                autoComplete="current-password"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-slate-500"
-                placeholder="********"
-              />
-            </label>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting ? 'Ingresando...' : 'Entrar al panel'}
-            </button>
-          </form>
-        </section>
-      </div>
-    </div>
+          <button
+            className="w-full rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+            type="submit"
+            disabled={submitting}
+          >
+            {submitting ? 'Ingresando...' : 'Ingresar'}
+          </button>
+        </form>
+      </section>
+    </main>
   );
 };
 

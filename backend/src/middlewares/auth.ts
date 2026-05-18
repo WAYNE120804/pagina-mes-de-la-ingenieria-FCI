@@ -1,109 +1,102 @@
 import type { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 
-import { RolUsuario } from '../lib/prisma-client';
+import { env } from '../config/env';
 import { AppError } from '../lib/app-error';
-import { verifyAuthToken } from '../lib/auth-token';
-import { getPrisma } from '../lib/prisma';
 
-type AuthenticatedUser = {
+export type AuthUser = {
   id: string;
-  nombre: string;
   email: string;
-  rol: RolUsuario;
+  roles: string[];
+  permissions: string[];
 };
 
-declare global {
-  namespace Express {
-    interface Request {
-      authUser?: AuthenticatedUser;
-    }
+export type AuthenticatedRequest = Request & {
+  user?: AuthUser;
+};
+
+type AccessTokenPayload = jwt.JwtPayload & AuthUser;
+
+function getBearerToken(req: Request) {
+  const authorization = req.headers.authorization;
+
+  if (!authorization?.startsWith('Bearer ')) {
+    return null;
   }
+
+  return authorization.slice('Bearer '.length);
 }
 
-function getBearerToken(authorizationHeader?: string) {
-  if (!authorizationHeader?.startsWith('Bearer ')) {
-    return '';
-  }
-
-  return authorizationHeader.slice('Bearer '.length).trim();
-}
-
-export async function authenticateRequest(
-  req: Request,
+export function authMiddleware(
+  req: AuthenticatedRequest,
   _res: Response,
   next: NextFunction
 ) {
   try {
-    const token = getBearerToken(req.headers.authorization);
+    const token = getBearerToken(req);
 
     if (!token) {
-      throw new AppError('Debes iniciar sesion para acceder a esta ruta.', 401, {
-        errorCode: 'AUTH_REQUIRED',
-      });
+      throw new AppError('Token de autenticacion requerido', 401, 'AUTH_REQUIRED');
     }
 
-    const payload = verifyAuthToken(token);
-
-    if (!payload) {
-      throw new AppError('La sesion no es valida o ya expiro.', 401, {
-        errorCode: 'INVALID_SESSION',
-      });
+    if (!env.jwtAccessSecret) {
+      throw new AppError('JWT no configurado', 500, 'JWT_NOT_CONFIGURED');
     }
 
-    const prisma = getPrisma();
+    const payload = jwt.verify(token, env.jwtAccessSecret) as AccessTokenPayload;
 
-    if (!prisma) {
-      throw new AppError('DATABASE_URL no esta configurado en el backend.', 500);
-    }
-
-    const usuario = await prisma.usuario.findUnique({
-      where: { id: payload.sub },
-      select: {
-        id: true,
-        nombre: true,
-        email: true,
-        rol: true,
-        activo: true,
-      },
-    });
-
-    if (!usuario || !usuario.activo) {
-      throw new AppError('Tu usuario ya no tiene acceso al sistema.', 401, {
-        errorCode: 'USER_DISABLED',
-      });
-    }
-
-    req.authUser = {
-      id: usuario.id,
-      nombre: usuario.nombre,
-      email: usuario.email,
-      rol: usuario.rol,
+    req.user = {
+      id: payload.id || payload.sub || '',
+      email: payload.email,
+      roles: payload.roles || [],
+      permissions: payload.permissions || [],
     };
+
+    if (!req.user.id) {
+      throw new AppError('Token invalido', 401, 'INVALID_TOKEN');
+    }
 
     next();
   } catch (error) {
-    next(error);
+    if (error instanceof AppError) {
+      next(error);
+      return;
+    }
+
+    next(new AppError('Token invalido o expirado', 401, 'INVALID_TOKEN'));
   }
 }
 
-export function requireRole(...roles: RolUsuario[]) {
-  return (req: Request, _res: Response, next: NextFunction) => {
-    if (!req.authUser) {
-      return next(
-        new AppError('Debes iniciar sesion para acceder a esta ruta.', 401, {
-          errorCode: 'AUTH_REQUIRED',
-        })
-      );
+export function roleMiddleware(...roles: string[]) {
+  return (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
+    const hasRole = req.user?.roles.some((role) => roles.includes(role));
+
+    if (!hasRole) {
+      next(new AppError('No tienes rol suficiente para esta accion', 403, 'ROLE_FORBIDDEN'));
+      return;
     }
 
-    if (roles.length > 0 && !roles.includes(req.authUser.rol)) {
-      return next(
-        new AppError('No tienes permisos para realizar esta accion.', 403, {
-          errorCode: 'FORBIDDEN',
-        })
+    next();
+  };
+}
+
+export function permissionMiddleware(...permissions: string[]) {
+  return (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
+    const hasPermission = req.user?.permissions.some((permission) =>
+      permissions.includes(permission)
+    );
+
+    if (!hasPermission) {
+      next(
+        new AppError(
+          'No tienes permiso suficiente para esta accion',
+          403,
+          'PERMISSION_FORBIDDEN'
+        )
       );
+      return;
     }
 
-    return next();
+    next();
   };
 }

@@ -1,73 +1,67 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authenticateRequest = authenticateRequest;
-exports.requireRole = requireRole;
+exports.authMiddleware = authMiddleware;
+exports.roleMiddleware = roleMiddleware;
+exports.permissionMiddleware = permissionMiddleware;
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const env_1 = require("../config/env");
 const app_error_1 = require("../lib/app-error");
-const auth_token_1 = require("../lib/auth-token");
-const prisma_1 = require("../lib/prisma");
-function getBearerToken(authorizationHeader) {
-    if (!authorizationHeader?.startsWith('Bearer ')) {
-        return '';
+function getBearerToken(req) {
+    const authorization = req.headers.authorization;
+    if (!authorization?.startsWith('Bearer ')) {
+        return null;
     }
-    return authorizationHeader.slice('Bearer '.length).trim();
+    return authorization.slice('Bearer '.length);
 }
-async function authenticateRequest(req, _res, next) {
+function authMiddleware(req, _res, next) {
     try {
-        const token = getBearerToken(req.headers.authorization);
+        const token = getBearerToken(req);
         if (!token) {
-            throw new app_error_1.AppError('Debes iniciar sesion para acceder a esta ruta.', 401, {
-                errorCode: 'AUTH_REQUIRED',
-            });
+            throw new app_error_1.AppError('Token de autenticacion requerido', 401, 'AUTH_REQUIRED');
         }
-        const payload = (0, auth_token_1.verifyAuthToken)(token);
-        if (!payload) {
-            throw new app_error_1.AppError('La sesion no es valida o ya expiro.', 401, {
-                errorCode: 'INVALID_SESSION',
-            });
+        if (!env_1.env.jwtAccessSecret) {
+            throw new app_error_1.AppError('JWT no configurado', 500, 'JWT_NOT_CONFIGURED');
         }
-        const prisma = (0, prisma_1.getPrisma)();
-        if (!prisma) {
-            throw new app_error_1.AppError('DATABASE_URL no esta configurado en el backend.', 500);
-        }
-        const usuario = await prisma.usuario.findUnique({
-            where: { id: payload.sub },
-            select: {
-                id: true,
-                nombre: true,
-                email: true,
-                rol: true,
-                activo: true,
-            },
-        });
-        if (!usuario || !usuario.activo) {
-            throw new app_error_1.AppError('Tu usuario ya no tiene acceso al sistema.', 401, {
-                errorCode: 'USER_DISABLED',
-            });
-        }
-        req.authUser = {
-            id: usuario.id,
-            nombre: usuario.nombre,
-            email: usuario.email,
-            rol: usuario.rol,
+        const payload = jsonwebtoken_1.default.verify(token, env_1.env.jwtAccessSecret);
+        req.user = {
+            id: payload.id || payload.sub || '',
+            email: payload.email,
+            roles: payload.roles || [],
+            permissions: payload.permissions || [],
         };
+        if (!req.user.id) {
+            throw new app_error_1.AppError('Token invalido', 401, 'INVALID_TOKEN');
+        }
         next();
     }
     catch (error) {
-        next(error);
+        if (error instanceof app_error_1.AppError) {
+            next(error);
+            return;
+        }
+        next(new app_error_1.AppError('Token invalido o expirado', 401, 'INVALID_TOKEN'));
     }
 }
-function requireRole(...roles) {
+function roleMiddleware(...roles) {
     return (req, _res, next) => {
-        if (!req.authUser) {
-            return next(new app_error_1.AppError('Debes iniciar sesion para acceder a esta ruta.', 401, {
-                errorCode: 'AUTH_REQUIRED',
-            }));
+        const hasRole = req.user?.roles.some((role) => roles.includes(role));
+        if (!hasRole) {
+            next(new app_error_1.AppError('No tienes rol suficiente para esta accion', 403, 'ROLE_FORBIDDEN'));
+            return;
         }
-        if (roles.length > 0 && !roles.includes(req.authUser.rol)) {
-            return next(new app_error_1.AppError('No tienes permisos para realizar esta accion.', 403, {
-                errorCode: 'FORBIDDEN',
-            }));
+        next();
+    };
+}
+function permissionMiddleware(...permissions) {
+    return (req, _res, next) => {
+        const hasPermission = req.user?.permissions.some((permission) => permissions.includes(permission));
+        if (!hasPermission) {
+            next(new app_error_1.AppError('No tienes permiso suficiente para esta accion', 403, 'PERMISSION_FORBIDDEN'));
+            return;
         }
-        return next();
+        next();
     };
 }

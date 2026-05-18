@@ -2,123 +2,138 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import AppLayout from './components/Layout/AppLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AttendancePage from './pages/Attendance/AttendancePage';
+import AuditPage from './pages/Audit/AuditPage';
 import Dashboard from './pages/Dashboard';
+import EventsPage from './pages/Events/EventsPage';
+import EvaluationPage from './pages/Evaluation/EvaluationPage';
+import HackathonPage from './pages/Hackathon/HackathonPage';
 import LoginPage from './pages/Auth/LoginPage';
-import CajaDiariaPage from './pages/Caja/CajaDiariaPage';
-import CajaGeneralPage from './pages/Caja/CajaGeneralPage';
-import CategoriasPage from './pages/Categorias/CategoriasPage';
-import ClientesPage from './pages/Clientes/ClientesPage';
-import ConfiguracionPage from './pages/Configuracion/ConfiguracionPage';
-import FondosPage from './pages/Fondos/FondosPage';
-import GastoTicketPage from './pages/Gastos/GastoTicketPage';
-import GastosPage from './pages/Gastos/GastosPage';
-import InformesPage from './pages/Informes/InformesPage';
-import ProductosPage from './pages/Productos/ProductosPage';
-import UsuariosPage from './pages/Usuarios/UsuariosPage';
-import VentaTicketPage from './pages/Ventas/VentaTicketPage';
-import VentasPage from './pages/Ventas/VentasPage';
+import NotificationsPage from './pages/Notifications/NotificationsPage';
+import PublicEventFormPage from './pages/Public/PublicEventFormPage';
+import PublicHomePage from './pages/Public/PublicHomePage';
+import PublicSchedulePage from './pages/Public/PublicSchedulePage';
+import PublicTournamentsPage from './pages/Public/PublicTournamentsPage';
+import PublicTournamentFormPage from './pages/Public/PublicTournamentFormPage';
+import ReportsPage from './pages/Reports/ReportsPage';
+import SettingsPage from './pages/Settings/SettingsPage';
+import TournamentsPage from './pages/Tournaments/TournamentsPage';
+import UsersPage from './pages/Users/UsersPage';
+import VenuesPage from './pages/Venues/VenuesPage';
 
 const App = () => {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="*"
-          element={
-            <ProtectedRoute>
+        <Route path="/public" element={<PublicHomePage />} />
+        <Route path="/public/cronograma" element={<PublicSchedulePage />} />
+        <Route path="/public/charlas" element={<PublicSchedulePage eventType="TALK" />} />
+        <Route path="/public/talleres" element={<PublicSchedulePage eventType="WORKSHOP" />} />
+        <Route path="/public/torneos" element={<PublicTournamentsPage />} />
+        <Route path="/public/eventos/:eventId/inscripcion" element={<PublicEventFormPage mode="registration" />} />
+        <Route path="/public/eventos/:eventId/asistencia" element={<PublicEventFormPage mode="attendance" />} />
+        <Route path="/public/torneos/:tournamentId/inscripcion" element={<PublicTournamentFormPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/"
+            element={
               <AppLayout>
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route
-                    path="/categorias"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN']}>
-                        <CategoriasPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/productos"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN']}>
-                        <ProductosPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/clientes" element={<ClientesPage />} />
-                  <Route path="/ventas" element={<VentasPage />} />
-                  <Route path="/ventas/:id/tirilla" element={<VentaTicketPage />} />
-                  <Route
-                    path="/caja"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN', 'CAJERO']}>
-                        <CajaDiariaPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/caja-general"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN', 'CAJERO']}>
-                        <CajaGeneralPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/fondos"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN', 'CAJERO']}>
-                        <FondosPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/gastos"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN', 'CAJERO']}>
-                        <GastosPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/gastos/:id/tirilla"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN', 'CAJERO']}>
-                        <GastoTicketPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/informes"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN']}>
-                        <InformesPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/usuarios"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN']}>
-                        <UsuariosPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/configuracion"
-                    element={
-                      <ProtectedRoute allowedRoles={['ADMIN']}>
-                        <ConfiguracionPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                <Dashboard />
               </AppLayout>
-            </ProtectedRoute>
-          }
-        />
+            }
+          />
+          <Route
+            path="/usuarios"
+            element={
+              <AppLayout>
+                <UsersPage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/espacios"
+            element={
+              <AppLayout>
+                <VenuesPage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/eventos"
+            element={
+              <AppLayout>
+                <EventsPage />
+              </AppLayout>
+            }
+          />
+          <Route path="/charlas" element={<Navigate to="/eventos" replace />} />
+          <Route
+            path="/asistencia"
+            element={
+              <AppLayout>
+                <AttendancePage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/torneos"
+            element={
+              <AppLayout>
+                <TournamentsPage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/hackathon"
+            element={
+              <AppLayout>
+                <HackathonPage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/evaluacion"
+            element={
+              <AppLayout>
+                <EvaluationPage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/reportes"
+            element={
+              <AppLayout>
+                <ReportsPage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/notificaciones"
+            element={
+              <AppLayout>
+                <NotificationsPage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/auditoria"
+            element={
+              <AppLayout>
+                <AuditPage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/configuracion"
+            element={
+              <AppLayout>
+                <SettingsPage />
+              </AppLayout>
+            }
+          />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

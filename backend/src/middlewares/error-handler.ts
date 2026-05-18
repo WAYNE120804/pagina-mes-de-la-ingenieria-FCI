@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { logger } from '../lib/logger';
+import { errorResponse } from '../utils/api-response';
 
 type AppError = Error & {
   statusCode?: number;
@@ -28,11 +29,7 @@ export function errorHandler(
         ? 'Error interno del servidor'
         : error.message;
 
-  res.status(statusCode).json({
-    status: 'error',
-    message,
-    error: message,
-    code: error.errorCode,
-    details: error.details,
-  });
+  res
+    .status(statusCode)
+    .json(errorResponse(message, error.errorCode, error.details));
 }

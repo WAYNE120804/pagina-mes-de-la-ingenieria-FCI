@@ -1,88 +1,55 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import {
-  createUsuario,
-  getAuthProfile,
-  listUsuarios,
-  loginUsuario,
-  toggleUsuarioActivo,
-} from './auth.service';
-import { parseLoginPayload, parseUsuarioPayload } from './auth.schemas';
+import type { AuthenticatedRequest } from '../../middlewares/auth';
+import { successResponse } from '../../utils/api-response';
+import * as authService from './auth.service';
 
-function getIdParam(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value || '';
+function getRequestMeta(req: Request) {
+  return {
+    userAgent: req.headers['user-agent'],
+    ipAddress: req.ip,
+  };
 }
 
-function parseBoolean(value: unknown) {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    return value === 'true';
-  }
-
-  return false;
-}
-
-export async function postLogin(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function login(req: Request, res: Response, next: NextFunction) {
   try {
-    res.json(await loginUsuario(parseLoginPayload(req.body)));
+    const result = await authService.login(req.body, getRequestMeta(req));
+
+    res.json(successResponse('Sesion iniciada', result));
   } catch (error) {
     next(error);
   }
 }
 
-export async function getMe(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function refresh(req: Request, res: Response, next: NextFunction) {
   try {
-    res.json(await getAuthProfile(req.authUser!.id));
+    const result = await authService.refresh(req.body);
+
+    res.json(successResponse('Token renovado', result));
   } catch (error) {
     next(error);
   }
 }
 
-export async function getUsuarios(
-  _req: Request,
+export async function logout(
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) {
   try {
-    res.json(await listUsuarios());
+    await authService.logout(req.body, req.user?.id);
+
+    res.json(successResponse('Sesion cerrada'));
   } catch (error) {
     next(error);
   }
 }
 
-export async function postUsuario(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function me(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
-    const usuario = await createUsuario(parseUsuarioPayload(req.body));
-    res.status(201).json(usuario);
-  } catch (error) {
-    next(error);
-  }
-}
+    const user = await authService.getMe(req.user?.id || '');
 
-export async function patchUsuarioActivo(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    res.json(
-      await toggleUsuarioActivo(getIdParam(req.params.id), parseBoolean(req.body?.activo))
-    );
+    res.json(successResponse('Usuario autenticado', user));
   } catch (error) {
     next(error);
   }

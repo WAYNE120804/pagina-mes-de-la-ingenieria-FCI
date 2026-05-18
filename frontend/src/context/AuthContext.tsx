@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -7,127 +8,95 @@ import {
   type ReactNode,
 } from 'react';
 
-import client from '../api/client';
-import { endpoints } from '../api/endpoints';
-
-const AUTH_TOKEN_KEY = 'almacen_admin_token';
-
-type AuthUser = {
-  id: string;
-  nombre: string;
-  email: string;
-  rol: string;
-  activo: boolean;
-};
+import {
+  clearSession,
+  hasStoredSession,
+  loginRequest,
+  logoutRequest,
+  meRequest,
+  persistSession,
+  type AuthUser,
+} from '../api/auth.api';
 
 type AuthContextValue = {
   user: AuthUser | null;
-  token: string | null;
   loading: boolean;
-  isAuthenticated: boolean;
-  login: (identifier: string, password: string) => Promise<void>;
-  logout: () => void;
-  refreshSession: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
-function getStoredToken() {
-  return window.localStorage.getItem(AUTH_TOKEN_KEY);
-}
-
-function storeToken(token: string | null) {
-  if (!token) {
-    window.localStorage.removeItem(AUTH_TOKEN_KEY);
-    return;
-  }
-
-  window.localStorage.setItem(AUTH_TOKEN_KEY, token);
-}
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(() => getStoredToken());
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    storeToken(null);
-  };
+  useEffect(() => {
+    let mounted = true;
 
-  const refreshSession = async () => {
-    const activeToken = getStoredToken();
+    async function loadSession() {
+      if (!hasStoredSession()) {
+        setLoading(false);
+        return;
+      }
 
-    if (!activeToken) {
-      setUser(null);
-      return;
+      try {
+        const currentUser = await meRequest();
+
+        if (mounted) {
+          setUser(currentUser);
+        }
+      } catch {
+        clearSession();
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     }
 
-    const { data } = await client.get(endpoints.authMe());
-    setToken(activeToken);
-    setUser(data);
-  };
+    loadSession();
 
-  const login = async (identifier: string, password: string) => {
-    const { data } = await client.post(endpoints.authLogin(), {
-      identificador: identifier,
-      password,
-    });
-    storeToken(data.token);
-    setToken(data.token);
-    setUser(data.usuario);
-  };
-
-  useEffect(() => {
-    const bootstrap = async () => {
-      try {
-        if (token) {
-          await refreshSession();
-        }
-      } catch (_error) {
-        logout();
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      mounted = false;
     };
-
-    void bootstrap();
   }, []);
 
-  useEffect(() => {
-    const handleUnauthorized = () => {
-      logout();
-    };
+  const login = useCallback(async (email: string, password: string) => {
+    const payload = await loginRequest(email, password);
 
-    window.addEventListener('auth:logout', handleUnauthorized);
-    return () => window.removeEventListener('auth:logout', handleUnauthorized);
+    persistSession(payload);
+    setUser(payload.user);
   }, []);
 
-  const value = useMemo<AuthContextValue>(
+  const logout = useCallback(async () => {
+    try {
+      await logoutRequest();
+    } finally {
+      clearSession();
+      setUser(null);
+    }
+  }, []);
+
+  const value = useMemo(
     () => ({
       user,
-      token,
       loading,
-      isAuthenticated: Boolean(user && token),
       login,
       logout,
-      refreshSession,
     }),
-    [user, token, loading]
+    [loading, login, logout, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error('useAuth debe usarse dentro de AuthProvider.');
+    throw new Error('useAuth debe usarse dentro de AuthProvider');
   }
 
   return context;
-};
-
-export { AUTH_TOKEN_KEY };
+}

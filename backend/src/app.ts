@@ -1,22 +1,11 @@
 import cors from 'cors';
 import express from 'express';
 
-import { authenticateRequest } from './middlewares/auth';
 import { errorHandler } from './middlewares/error-handler';
 import { notFoundHandler } from './middlewares/not-found-handler';
 import { serializeResponse } from './middlewares/serialize-response';
 import { apiRouter } from './routes';
-
-const publicApiRules = [
-  { method: 'GET', pattern: /^\/api\/health(?:\/.*)?$/ },
-  { method: 'POST', pattern: /^\/api\/auth\/login$/ },
-];
-
-function isPublicApiRoute(method: string, path: string) {
-  return publicApiRules.some(
-    (rule) => rule.method === method.toUpperCase() && rule.pattern.test(path)
-  );
-}
+import { successResponse } from './utils/api-response';
 
 export function createApp() {
   const app = express();
@@ -27,23 +16,11 @@ export function createApp() {
   app.use(serializeResponse);
 
   app.get('/', (_req, res) => {
-    res.json({
-      name: 'Sistema Administrativo de Almacen API',
+    res.json(successResponse('API operativa', {
+      name: 'Semana de Ingenieria API',
       status: 'ok',
-      phase: 'base-limpia',
-    });
-  });
-
-  app.use((req, res, next) => {
-    if (!req.path.startsWith('/api')) {
-      return next();
-    }
-
-    if (isPublicApiRoute(req.method, req.path)) {
-      return next();
-    }
-
-    return authenticateRequest(req, res, next);
+      phase: 'fase-3d-public-academic-forms',
+    }));
   });
 
   app.use('/api', apiRouter);

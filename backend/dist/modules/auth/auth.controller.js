@@ -1,60 +1,81 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.postLogin = postLogin;
-exports.getMe = getMe;
-exports.getUsuarios = getUsuarios;
-exports.postUsuario = postUsuario;
-exports.patchUsuarioActivo = patchUsuarioActivo;
-const auth_service_1 = require("./auth.service");
-const auth_schemas_1 = require("./auth.schemas");
-function getIdParam(value) {
-    return Array.isArray(value) ? value[0] : value || '';
+exports.login = login;
+exports.refresh = refresh;
+exports.logout = logout;
+exports.me = me;
+const api_response_1 = require("../../utils/api-response");
+const authService = __importStar(require("./auth.service"));
+function getRequestMeta(req) {
+    return {
+        userAgent: req.headers['user-agent'],
+        ipAddress: req.ip,
+    };
 }
-function parseBoolean(value) {
-    if (typeof value === 'boolean') {
-        return value;
-    }
-    if (typeof value === 'string') {
-        return value === 'true';
-    }
-    return false;
-}
-async function postLogin(req, res, next) {
+async function login(req, res, next) {
     try {
-        res.json(await (0, auth_service_1.loginUsuario)((0, auth_schemas_1.parseLoginPayload)(req.body)));
+        const result = await authService.login(req.body, getRequestMeta(req));
+        res.json((0, api_response_1.successResponse)('Sesion iniciada', result));
     }
     catch (error) {
         next(error);
     }
 }
-async function getMe(req, res, next) {
+async function refresh(req, res, next) {
     try {
-        res.json(await (0, auth_service_1.getAuthProfile)(req.authUser.id));
+        const result = await authService.refresh(req.body);
+        res.json((0, api_response_1.successResponse)('Token renovado', result));
     }
     catch (error) {
         next(error);
     }
 }
-async function getUsuarios(_req, res, next) {
+async function logout(req, res, next) {
     try {
-        res.json(await (0, auth_service_1.listUsuarios)());
+        await authService.logout(req.body, req.user?.id);
+        res.json((0, api_response_1.successResponse)('Sesion cerrada'));
     }
     catch (error) {
         next(error);
     }
 }
-async function postUsuario(req, res, next) {
+async function me(req, res, next) {
     try {
-        const usuario = await (0, auth_service_1.createUsuario)((0, auth_schemas_1.parseUsuarioPayload)(req.body));
-        res.status(201).json(usuario);
-    }
-    catch (error) {
-        next(error);
-    }
-}
-async function patchUsuarioActivo(req, res, next) {
-    try {
-        res.json(await (0, auth_service_1.toggleUsuarioActivo)(getIdParam(req.params.id), parseBoolean(req.body?.activo)));
+        const user = await authService.getMe(req.user?.id || '');
+        res.json((0, api_response_1.successResponse)('Usuario autenticado', user));
     }
     catch (error) {
         next(error);

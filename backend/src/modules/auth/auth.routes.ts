@@ -1,22 +1,13 @@
 import { Router } from 'express';
 
-import { RolUsuario } from '../../lib/prisma-client';
-import { authenticateRequest, requireRole } from '../../middlewares/auth';
-import {
-  getMe,
-  getUsuarios,
-  patchUsuarioActivo,
-  postLogin,
-  postUsuario,
-} from './auth.controller';
+import { authMiddleware } from '../../middlewares/auth';
+import { validateRequest } from '../../middlewares/validate-request';
+import { login, logout, me, refresh } from './auth.controller';
+import { loginSchema, logoutSchema, refreshTokenSchema } from './auth.schemas';
 
 export const authRouter = Router();
-export const usuarioRouter = Router();
 
-authRouter.post('/login', postLogin);
-authRouter.get('/me', authenticateRequest, getMe);
-
-usuarioRouter.use(authenticateRequest);
-usuarioRouter.get('/', requireRole(RolUsuario.ADMIN), getUsuarios);
-usuarioRouter.post('/', requireRole(RolUsuario.ADMIN), postUsuario);
-usuarioRouter.patch('/:id/activo', requireRole(RolUsuario.ADMIN), patchUsuarioActivo);
+authRouter.post('/login', validateRequest({ body: loginSchema }), login);
+authRouter.post('/refresh', validateRequest({ body: refreshTokenSchema }), refresh);
+authRouter.post('/logout', authMiddleware, validateRequest({ body: logoutSchema }), logout);
+authRouter.get('/me', authMiddleware, me);

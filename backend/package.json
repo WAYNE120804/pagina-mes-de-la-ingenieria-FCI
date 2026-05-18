@@ -1,7 +1,7 @@
 {
-  "name": "rifas-backend",
+  "name": "plantilla-backend",
   "version": "2.0.0",
-  "description": "Backend del sistema de rifas reconstruido sobre Express y Prisma",
+  "description": "Backend base para crear nuevos programas con Express y Prisma",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -11,13 +11,15 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
     "db:purge:all": "prisma db execute --file prisma/purge-all.sql --schema prisma/schema.prisma",
-    "config:reset": "node scripts/reset-config.cjs",
-    "dev:reset:all": "npm run db:purge:all && npm run config:reset",
     "test": "node -e \"console.log('No hay tests automatizados todavia')\""
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "keywords": [
-    "rifas",
+    "plantilla",
     "prisma",
     "express",
     "postgresql"
@@ -26,15 +28,23 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@prisma/client": "6.12.0",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
+    "exceljs": "^4.4.0",
     "express": "^4.19.2",
-    "pg": "^8.11.5"
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.11.5",
+    "qrcode": "^1.5.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.5.0",
+    "@types/qrcode": "^1.5.6",
     "prisma": "6.12.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"

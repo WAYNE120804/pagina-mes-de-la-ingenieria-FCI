@@ -12,19 +12,17 @@ services:
     depends_on:
       - frontend
       - backend
-      - n8n
-      - evolution-api
     networks:
-      - rifas_net
+      - plantilla_net
 
   frontend:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: ${FRONTEND_VITE_API_URL:-https://api.rifasmejia.store/api}
+        VITE_API_URL: ${FRONTEND_VITE_API_URL:-https://api.example.com/api}
     restart: unless-stopped
     networks:
-      - rifas_net
+      - plantilla_net
 
   backend:
     build:
@@ -34,118 +32,28 @@ services:
       NODE_ENV: ${BACKEND_NODE_ENV:-production}
       PORT: ${BACKEND_PORT:-3002}
       DATABASE_URL: ${BACKEND_DATABASE_URL}
-      AUTH_SECRET: ${BACKEND_AUTH_SECRET}
-      AUTH_TTL_SECONDS: ${BACKEND_AUTH_TTL_SECONDS:-43200}
-      BOOTSTRAP_ADMIN_NAME: ${BACKEND_BOOTSTRAP_ADMIN_NAME}
-      BOOTSTRAP_ADMIN_EMAIL: ${BACKEND_BOOTSTRAP_ADMIN_EMAIL}
-      BOOTSTRAP_ADMIN_PASSWORD: ${BACKEND_BOOTSTRAP_ADMIN_PASSWORD}
-      WOMPI_ENV: ${BACKEND_WOMPI_ENV:-production}
-      WOMPI_PUBLIC_KEY: ${BACKEND_WOMPI_PUBLIC_KEY}
-      WOMPI_PRIVATE_KEY: ${BACKEND_WOMPI_PRIVATE_KEY}
-      WOMPI_EVENTS_SECRET: ${BACKEND_WOMPI_EVENTS_SECRET}
-      WOMPI_INTEGRITY_SECRET: ${BACKEND_WOMPI_INTEGRITY_SECRET}
-      WOMPI_REDIRECT_URL: ${BACKEND_WOMPI_REDIRECT_URL}
-      WOMPI_WEBHOOK_URL: ${BACKEND_WOMPI_WEBHOOK_URL}
     depends_on:
       - postgres
     networks:
-      - rifas_net
-
-  n8n:
-    image: n8nio/n8n:2.11.2
-    command: start
-    restart: unless-stopped
-    environment:
-      N8N_HOST: ${N8N_HOST}
-      N8N_PROTOCOL: ${N8N_PROTOCOL:-https}
-      N8N_PORT: ${N8N_PORT:-5678}
-      N8N_EDITOR_BASE_URL: https://bot.rifasmejia.store
-      WEBHOOK_URL: https://bot.rifasmejia.store
-      N8N_DISABLE_UI: "false"
-      N8N_SECURE_COOKIE: "false"
-      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
-      N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-true}
-      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
-      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
-      N8N_PROXY_HOPS: ${N8N_PROXY_HOPS:-1}
-      N8N_DIAGNOSTICS_ENABLED: ${N8N_DIAGNOSTICS_ENABLED:-false}
-      N8N_PERSONALIZATION_ENABLED: ${N8N_PERSONALIZATION_ENABLED:-false}
-      GENERIC_TIMEZONE: ${N8N_TIMEZONE:-America/Bogota}
-      EXECUTIONS_MODE: regular
-    volumes:
-      - n8n_data_clean:/home/node/.n8n
-    networks:
-      - rifas_net
-
-  evolution-api:
-    image: evoapicloud/evolution-api:v2.3.6
-    restart: unless-stopped
-    environment:
-      SERVER_URL: ${EVOLUTION_SERVER_URL}
-      EVOLUTION_API_PORT: ${EVOLUTION_SERVER_PORT:-8080}
-      AUTHENTICATION_API_KEY: ${EVOLUTION_AUTHENTICATION_API_KEY}
-      TELEMETRY: ${EVOLUTION_TELEMETRY:-false}
-      DATABASE_ENABLED: ${EVOLUTION_DATABASE_ENABLED:-true}
-      DATABASE_PROVIDER: ${EVOLUTION_DATABASE_PROVIDER:-postgresql}
-      DATABASE_CONNECTION_URI: ${EVOLUTION_DATABASE_CONNECTION_URI}
-      DATABASE_CONNECTION_CLIENT_NAME: ${EVOLUTION_DATABASE_CONNECTION_CLIENT_NAME:-evolution_exchange}
-      DATABASE_SAVE_DATA_INSTANCE: ${EVOLUTION_DATABASE_SAVE_DATA_INSTANCE:-true}
-      DATABASE_SAVE_DATA_NEW_MESSAGE: ${EVOLUTION_DATABASE_SAVE_DATA_NEW_MESSAGE:-true}
-      DATABASE_SAVE_MESSAGE_UPDATE: ${EVOLUTION_DATABASE_SAVE_MESSAGE_UPDATE:-true}
-      DATABASE_SAVE_DATA_CONTACTS: ${EVOLUTION_DATABASE_SAVE_DATA_CONTACTS:-true}
-      DATABASE_SAVE_DATA_CHATS: ${EVOLUTION_DATABASE_SAVE_DATA_CHATS:-true}
-      DATABASE_SAVE_DATA_LABELS: ${EVOLUTION_DATABASE_SAVE_DATA_LABELS:-true}
-      DATABASE_SAVE_DATA_HISTORIC: ${EVOLUTION_DATABASE_SAVE_DATA_HISTORIC:-true}
-      REDIS_ENABLED: ${EVOLUTION_REDIS_ENABLED:-true}
-      REDIS_URI: ${EVOLUTION_REDIS_URI:-redis://redis:6379/0}
-      CACHE_REDIS_ENABLED: ${EVOLUTION_CACHE_REDIS_ENABLED:-true}
-      CACHE_REDIS_URI: ${EVOLUTION_CACHE_REDIS_URI:-redis://redis:6379/0}
-      DEL_INSTANCE: ${EVOLUTION_DEL_INSTANCE:-false}
-      CONFIG_SESSION_PHONE_CLIENT: ${EVOLUTION_CONFIG_SESSION_PHONE_CLIENT:-RifasMejia}
-      CONFIG_SESSION_PHONE_NAME: ${EVOLUTION_CONFIG_SESSION_PHONE_NAME:-Chrome}
-      WEBSOCKET_ENABLED: ${EVOLUTION_WEBSOCKET_ENABLED:-true}
-      WEBSOCKET_GLOBAL_EVENTS: ${EVOLUTION_WEBSOCKET_GLOBAL_EVENTS:-true}
-      LOG_LEVEL: ${EVOLUTION_LOG_LEVEL:-ERROR,WARN,INFO,LOG}
-      LOG_COLOR: ${EVOLUTION_LOG_COLOR:-true}
-    depends_on:
-      - postgres
-      - redis
-    volumes:
-      - evolution_instances:/evolution/instances
-      - evolution_store:/evolution/store
-    networks:
-      - rifas_net
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-    networks:
-      - rifas_net
+      - plantilla_net
 
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-rifas}
-      POSTGRES_USER: ${POSTGRES_USER:-rifas_user}
+      POSTGRES_DB: ${POSTGRES_DB:-plantilla}
+      POSTGRES_USER: ${POSTGRES_USER:-plantilla_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - rifas_net
+      - plantilla_net
 
 volumes:
   caddy_data:
   caddy_config:
-  n8n_data_clean:
   postgres_data:
-  redis_data:
-  evolution_instances:
-  evolution_store:
 
 networks:
-  rifas_net:
+  plantilla_net:
     driver: bridge

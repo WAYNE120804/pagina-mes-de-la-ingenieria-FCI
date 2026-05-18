@@ -7,6 +7,10 @@ export function serializeData(value: unknown): unknown {
     return value.map(serializeData);
   }
 
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+
   if (value instanceof Date) {
     return value.toISOString();
   }

@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { env } from '../../config/env';
 import { getPrisma } from '../../lib/prisma';
+import { successResponse } from '../../utils/api-response';
 
 export async function getHealth(
   _req: Request,
@@ -9,27 +9,29 @@ export async function getHealth(
   next: NextFunction
 ) {
   try {
-    const now = new Date().toISOString();
-    const checks = {
-      api: 'ok',
-      database: env.databaseUrl ? 'configured' : 'missing-database-url',
-    };
+    const prisma = getPrisma();
+    let databaseStatus = 'not-configured';
+    let databaseLatencyMs: number | null = null;
 
-    if (env.databaseUrl) {
-      const prisma = getPrisma();
+    if (prisma) {
+      const startedAt = Date.now();
 
-      if (prisma) {
-        await prisma.$queryRaw`SELECT 1`;
-        checks.database = 'ok';
-      }
+      await prisma.$queryRaw`SELECT 1`;
+
+      databaseLatencyMs = Date.now() - startedAt;
+      databaseStatus = 'ok';
     }
 
-    res.json({
+    res.json(successResponse('Servicio disponible', {
       status: 'ok',
-      timestamp: now,
-      phase: 'base-limpia',
-      checks,
-    });
+      timestamp: new Date().toISOString(),
+      phase: 'fase-3d-public-academic-forms',
+      checks: {
+        api: 'ok',
+        database: databaseStatus,
+        databaseLatencyMs,
+      },
+    }));
   } catch (error) {
     next(error);
   }
