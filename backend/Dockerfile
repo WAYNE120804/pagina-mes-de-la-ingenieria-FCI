@@ -34,6 +34,8 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
 COPY scripts ./scripts
 
+RUN npm run prisma:generate
+
 EXPOSE 3002
 
 CMD ["sh", "./scripts/docker-entrypoint.sh"]
