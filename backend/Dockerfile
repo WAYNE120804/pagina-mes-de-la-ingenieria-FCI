@@ -5,12 +5,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-FROM node:22-bookworm-slim AS build
+FROM deps AS build
 
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY prisma ./prisma
+COPY src ./src
+COPY tsconfig.json ./
 
 RUN npm run prisma:generate
 RUN npm run build
@@ -22,13 +21,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package*.json ./
-RUN npm ci --omit=dev
-
+COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/generated ./generated
-COPY --from=build /app/src ./src
+COPY scripts ./scripts
 
 EXPOSE 3002
 
-CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
+CMD ["sh", "./scripts/docker-entrypoint.sh"]

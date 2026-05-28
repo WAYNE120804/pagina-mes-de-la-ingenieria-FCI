@@ -1,9 +1,9 @@
-app.example.com {
+{$APP_DOMAIN} {
   encode gzip zstd
   reverse_proxy frontend:80
 }
 
-api.example.com {
+{$API_DOMAIN} {
   encode gzip zstd
   reverse_proxy backend:3002
 }

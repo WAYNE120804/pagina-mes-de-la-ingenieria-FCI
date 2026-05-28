@@ -1,12 +1,12 @@
-# Plantilla Programa
+# Mes de la Ingenieria FCI
 
-Plantilla base para crear nuevos programas con frontend React/Vite/Tailwind y backend Express/TypeScript.
+Aplicacion web para gestionar y publicar el Mes de la Ingenieria de la Facultad de Ciencias e Ingenieria.
 
 ## Estructura
 
-- `frontend`: interfaz base con layout, tema visual y componentes comunes.
-- `backend`: API Express minima con middlewares compartidos y endpoint de salud.
-- `deploy`: archivos base para despliegue con Caddy y Docker.
+- `frontend`: panel publico y panel administrativo en React/Vite/Tailwind.
+- `backend`: API Express/TypeScript con Prisma y PostgreSQL.
+- `deploy`: archivos para despliegue en Ubuntu Server con Docker Compose, PostgreSQL y Caddy.
 
 ## Desarrollo
 
@@ -33,6 +33,6 @@ cd frontend && npm run build
 cd backend && npm run build
 ```
 
-## Punto de partida
+## Despliegue
 
-La plantilla no incluye reglas de negocio, autenticacion, modelos ni pantallas especificas. Agrega los nuevos modulos desde `frontend/src/pages`, `backend/src/modules` y `backend/prisma/schema.prisma`.
+Consulta [deploy/README.md](deploy/README.md) para publicar la aplicacion en Ubuntu Server.

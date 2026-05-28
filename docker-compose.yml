@@ -9,20 +9,30 @@ services:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      API_DOMAIN: ${API_DOMAIN}
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
     networks:
-      - plantilla_net
+      - semana_ingenieria_net
 
   frontend:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: ${FRONTEND_VITE_API_URL:-https://api.example.com/api}
+        VITE_API_URL: ${FRONTEND_VITE_API_URL}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     networks:
-      - plantilla_net
+      - semana_ingenieria_net
 
   backend:
     build:
@@ -32,22 +42,40 @@ services:
       NODE_ENV: ${BACKEND_NODE_ENV:-production}
       PORT: ${BACKEND_PORT:-3002}
       DATABASE_URL: ${BACKEND_DATABASE_URL}
+      JWT_ACCESS_SECRET: ${BACKEND_JWT_ACCESS_SECRET}
+      ACCESS_TOKEN_EXPIRES_IN: ${BACKEND_ACCESS_TOKEN_EXPIRES_IN:-15m}
+      REFRESH_TOKEN_DAYS: ${BACKEND_REFRESH_TOKEN_DAYS:-7}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@semanaingenieria.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin12345!}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      RUN_SEED: ${RUN_SEED:-false}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
     networks:
-      - plantilla_net
+      - semana_ingenieria_net
 
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-plantilla}
-      POSTGRES_USER: ${POSTGRES_USER:-plantilla_user}
+      POSTGRES_DB: ${POSTGRES_DB:-semana_ingenieria}
+      POSTGRES_USER: ${POSTGRES_USER:-semana_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-semana_user} -d ${POSTGRES_DB:-semana_ingenieria}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
-      - plantilla_net
+      - semana_ingenieria_net
 
 volumes:
   caddy_data:
@@ -55,5 +83,5 @@ volumes:
   postgres_data:
 
 networks:
-  plantilla_net:
+  semana_ingenieria_net:
     driver: bridge
