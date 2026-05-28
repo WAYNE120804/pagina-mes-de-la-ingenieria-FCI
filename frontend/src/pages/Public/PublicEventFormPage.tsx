@@ -11,6 +11,30 @@ import { attendeeCategoryLabels, eventTypeLabels, labelFor } from '../../utils/l
 import PublicLayout from './PublicLayout';
 
 const categories = Object.keys(attendeeCategoryLabels);
+const semesterOptions = [
+  { value: '1', label: '1' },
+  { value: '2', label: '2' },
+  { value: '3', label: '3' },
+  { value: '4', label: '4' },
+  { value: '5', label: '5' },
+  { value: '6', label: '6' },
+  { value: '7', label: '7' },
+  { value: '8', label: '8' },
+  { value: '9', label: '9' },
+  { value: '10', label: '10' },
+  { value: 'POSGRADO', label: 'Posgrado' },
+  { value: 'NO_APLICA', label: 'No aplica' },
+];
+
+const careerOptions = [
+  { value: 'ING_SISTEMAS_TELECOMUNICACIONES', label: 'Ing. Sistemas y Telecomunicaciones' },
+  { value: 'ING_ANALITICA_DATOS', label: 'Ing. Analitica de Datos' },
+  { value: 'ING_INDUSTRIAL', label: 'Ing. Industrial' },
+  { value: 'ING_LOGISTICA', label: 'Ing. Logistica' },
+  { value: 'ING_SEGURIDAD_INFORMACION', label: 'Ing. Seguridad de Informacion' },
+  { value: 'POSGRADOS', label: 'Posgrados' },
+  { value: 'NO_APLICA', label: 'No aplica' },
+];
 
 function formatDateTime(value: string) {
   return new Date(value)
@@ -31,6 +55,8 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
   const [fullName, setFullName] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [category, setCategory] = useState('ESTUDIANTE');
+  const [semester, setSemester] = useState('');
+  const [career, setCareer] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -56,6 +82,8 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
           fullName,
           identifier,
           category,
+          semester,
+          career,
           email: email || null,
         });
         setMessage('Inscripcion registrada. Guarda tu codigo o cedula para confirmar asistencia.');
@@ -64,6 +92,8 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
           fullName: fullName || undefined,
           identifier,
           category: fullName ? category : undefined,
+          semester: fullName ? semester : undefined,
+          career: fullName ? career : undefined,
           email: email || null,
         });
         setMessage('Asistencia confirmada correctamente.');
@@ -73,6 +103,8 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
       setIdentifier('');
       setEmail('');
       setCategory('ESTUDIANTE');
+      setSemester('');
+      setCareer('');
     } catch {
       setError(
         mode === 'registration'
@@ -163,6 +195,40 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
                   ))}
                 </select>
               </label>
+              <div className="grid gap-5 md:grid-cols-2">
+                <label className="block text-sm font-semibold text-[#e0e3e5]">
+                  Semestre
+                  <select
+                    className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                    value={semester}
+                    onChange={(event) => setSemester(event.target.value)}
+                    required={mode === 'registration' || Boolean(fullName)}
+                  >
+                    <option value="">Selecciona semestre</option>
+                    {semesterOptions.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-sm font-semibold text-[#e0e3e5]">
+                  Carrera
+                  <select
+                    className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                    value={career}
+                    onChange={(event) => setCareer(event.target.value)}
+                    required={mode === 'registration' || Boolean(fullName)}
+                  >
+                    <option value="">Selecciona carrera</option>
+                    {careerOptions.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
               <label className="block text-sm font-semibold text-[#e0e3e5]">
                 Correo
                 <input

@@ -10,6 +10,31 @@ import {
 } from '../../lib/prisma-client';
 import { z } from 'zod';
 
+const semesterSchema = z.enum([
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '10',
+  'POSGRADO',
+  'NO_APLICA',
+]);
+
+const careerSchema = z.enum([
+  'ING_SISTEMAS_TELECOMUNICACIONES',
+  'ING_ANALITICA_DATOS',
+  'ING_INDUSTRIAL',
+  'ING_LOGISTICA',
+  'ING_SEGURIDAD_INFORMACION',
+  'POSGRADOS',
+  'NO_APLICA',
+]);
+
 export const tournamentIdParamsSchema = z.object({
   id: z.string().uuid(),
 });
@@ -83,6 +108,8 @@ export const tournamentRegistrationMemberSchema = z.object({
   fullName: z.string().trim().min(2),
   identifier: z.string().trim().min(3),
   email: z.string().email().trim().toLowerCase(),
+  semester: semesterSchema.optional().nullable(),
+  career: careerSchema.optional().nullable(),
   isCaptain: z.boolean().optional(),
 });
 
@@ -107,6 +134,8 @@ const individualRegistrationBodySchema = z.object({
   displayName: z.string().trim().min(2).optional(),
   email: z.string().email().trim().toLowerCase().optional().nullable(),
   identifier: z.string().trim().min(3).optional().nullable(),
+  semester: semesterSchema.optional().nullable(),
+  career: careerSchema.optional().nullable(),
   status: z.string().trim().min(2).default('APPROVED'),
   seed: z.number().int().positive().optional().nullable(),
 });
@@ -125,6 +154,8 @@ export const publicTournamentMemberSchema = z.object({
   fullName: z.string().trim().min(2),
   identifier: z.string().trim().min(3),
   email: z.string().email().trim().toLowerCase(),
+  semester: semesterSchema,
+  career: careerSchema,
 });
 
 export const publicTournamentRegistrationSchema = z.object({
@@ -141,6 +172,10 @@ export const generateGroupsSchema = z.object({
 
 export const generateFixtureSchema = z.object({
   overwrite: z.boolean().default(false),
+  scheduledStartAt: z.coerce.date().optional().nullable(),
+  matchIntervalMinutes: z.number().int().min(15).max(240).default(60),
+  matchesPerDay: z.number().int().min(1).max(12).default(1),
+  venueId: z.string().uuid().optional().nullable(),
 });
 
 export const createMatchSchema = z.object({
@@ -162,7 +197,13 @@ export const createMatchSchema = z.object({
 });
 
 export const updateMatchSchema = z.object({
+  groupId: z.string().uuid().optional().nullable(),
   venueId: z.string().uuid().optional().nullable(),
+  homeTeamId: z.string().uuid().optional().nullable(),
+  awayTeamId: z.string().uuid().optional().nullable(),
+  homeParticipantId: z.string().uuid().optional().nullable(),
+  awayParticipantId: z.string().uuid().optional().nullable(),
+  phase: z.nativeEnum(TournamentPhase).optional(),
   scheduledAt: z.coerce.date().optional().nullable(),
   status: z.nativeEnum(MatchStatus).optional(),
 });

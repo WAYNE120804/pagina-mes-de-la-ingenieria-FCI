@@ -18,13 +18,42 @@ type MemberForm = {
   fullName: string;
   identifier: string;
   email: string;
+  semester: string;
+  career: string;
 };
 
 const emptyMember: MemberForm = {
   fullName: '',
   identifier: '',
   email: '',
+  semester: '',
+  career: '',
 };
+
+const semesterOptions = [
+  { value: '1', label: '1' },
+  { value: '2', label: '2' },
+  { value: '3', label: '3' },
+  { value: '4', label: '4' },
+  { value: '5', label: '5' },
+  { value: '6', label: '6' },
+  { value: '7', label: '7' },
+  { value: '8', label: '8' },
+  { value: '9', label: '9' },
+  { value: '10', label: '10' },
+  { value: 'POSGRADO', label: 'Posgrado' },
+  { value: 'NO_APLICA', label: 'No aplica' },
+];
+
+const careerOptions = [
+  { value: 'ING_SISTEMAS_TELECOMUNICACIONES', label: 'Ing. Sistemas y Telecomunicaciones' },
+  { value: 'ING_ANALITICA_DATOS', label: 'Ing. Analitica de Datos' },
+  { value: 'ING_INDUSTRIAL', label: 'Ing. Industrial' },
+  { value: 'ING_LOGISTICA', label: 'Ing. Logistica' },
+  { value: 'ING_SEGURIDAD_INFORMACION', label: 'Ing. Seguridad de Informacion' },
+  { value: 'POSGRADOS', label: 'Posgrados' },
+  { value: 'NO_APLICA', label: 'No aplica' },
+];
 
 const PublicTournamentFormPage = () => {
   const { tournamentId = '' } = useParams();
@@ -224,6 +253,32 @@ const PublicTournamentFormPage = () => {
                       onChange={(event) => updateMember(index, 'email', event.target.value)}
                       required
                     />
+                    <select
+                      className="rounded-xl border border-[#3b4b3c] bg-[#101415] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                      value={member.semester}
+                      onChange={(event) => updateMember(index, 'semester', event.target.value)}
+                      required
+                    >
+                      <option value="">Semestre</option>
+                      {semesterOptions.map((item) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="rounded-xl border border-[#3b4b3c] bg-[#101415] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82] md:col-span-2"
+                      value={member.career}
+                      onChange={(event) => updateMember(index, 'career', event.target.value)}
+                      required
+                    >
+                      <option value="">Carrera</option>
+                      {careerOptions.map((item) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   {isTeam && members.length > 2 ? (
                     <button

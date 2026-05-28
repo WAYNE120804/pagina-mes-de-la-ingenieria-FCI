@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { listPublicEventsRequest, type PublicEventItem } from '../../api/events.api';
 import {
@@ -33,7 +33,19 @@ function formatEventTime(value: string) {
   });
 }
 
+function eventDetailPath(event: PublicEventItem) {
+  const basePath =
+    event.type === 'TALK'
+      ? '/public/charlas'
+      : event.type === 'WORKSHOP'
+        ? '/public/talleres'
+        : '/public/cronograma';
+
+  return `${basePath}?evento=${event.id}`;
+}
+
 const PublicHomePage = () => {
+  const navigate = useNavigate();
   const [events, setEvents] = useState<PublicEventItem[]>([]);
   const [tournaments, setTournaments] = useState<PublicTournamentOverview[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
@@ -123,7 +135,16 @@ const PublicHomePage = () => {
                 {events.slice(0, 3).map((event) => (
                   <article
                     key={event.id}
-                    className="flex min-h-72 flex-col rounded-xl border border-[#3b4b3c] bg-[#1d2022] p-6 transition-colors hover:border-[#5adf82]"
+                    className="flex min-h-72 cursor-pointer flex-col rounded-xl border border-[#3b4b3c] bg-[#1d2022] p-6 transition-colors hover:border-[#5adf82]"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(eventDetailPath(event))}
+                    onKeyDown={(keyboardEvent) => {
+                      if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+                        keyboardEvent.preventDefault();
+                        navigate(eventDetailPath(event));
+                      }
+                    }}
                   >
                     <div className="mb-6 flex items-start justify-between gap-4">
                       <span className="rounded bg-[#323537] px-3 py-1 font-mono text-xs uppercase text-[#e0e3e5]">
@@ -149,14 +170,24 @@ const PublicHomePage = () => {
                       {event.type === 'TALK' ? (
                         <Link
                           className="mt-4 inline-flex rounded-lg border border-[#5adf82]/40 px-4 py-2 text-sm font-bold text-[#5adf82]"
-                          to="/public/charlas"
+                          to={eventDetailPath(event)}
+                          onClick={(clickEvent) => clickEvent.stopPropagation()}
                         >
                           Ver charla
+                        </Link>
+                      ) : event.type === 'WORKSHOP' ? (
+                        <Link
+                          className="mt-4 inline-flex rounded-lg border border-[#5adf82]/40 px-4 py-2 text-sm font-bold text-[#5adf82]"
+                          to={eventDetailPath(event)}
+                          onClick={(clickEvent) => clickEvent.stopPropagation()}
+                        >
+                          Ver taller
                         </Link>
                       ) : event.registrationUrl || event.attendanceUrl ? (
                         <Link
                           className="mt-4 inline-flex rounded-lg bg-[#5adf82] px-4 py-2 text-sm font-bold text-[#003917]"
                           to={event.registrationUrl || event.attendanceUrl || '#'}
+                          onClick={(clickEvent) => clickEvent.stopPropagation()}
                         >
                           {event.registrationUrl ? 'Inscribirse' : 'Confirmar asistencia'}
                         </Link>

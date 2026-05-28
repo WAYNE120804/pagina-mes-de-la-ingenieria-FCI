@@ -1,6 +1,31 @@
 import { AttendanceMethod, AttendanceStatus, AttendeeCategory } from '../../lib/prisma-client';
 import { z } from 'zod';
 
+const semesterSchema = z.enum([
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '10',
+  'POSGRADO',
+  'NO_APLICA',
+]);
+
+const careerSchema = z.enum([
+  'ING_SISTEMAS_TELECOMUNICACIONES',
+  'ING_ANALITICA_DATOS',
+  'ING_INDUSTRIAL',
+  'ING_LOGISTICA',
+  'ING_SEGURIDAD_INFORMACION',
+  'POSGRADOS',
+  'NO_APLICA',
+]);
+
 export const eventAttendanceParamsSchema = z.object({
   eventId: z.string().uuid(),
 });
@@ -22,6 +47,8 @@ export const createAttendanceSchema = z
     email: z.string().email().trim().toLowerCase().optional().nullable(),
     identifier: z.string().trim().min(3).optional().nullable(),
     category: z.nativeEnum(AttendeeCategory).optional().nullable(),
+    semester: semesterSchema.optional().nullable(),
+    career: careerSchema.optional().nullable(),
     method: z.nativeEnum(AttendanceMethod).default(AttendanceMethod.MANUAL),
     status: z.nativeEnum(AttendanceStatus).default(AttendanceStatus.CHECKED_IN),
     tempCode: z.string().trim().optional().nullable(),
@@ -44,12 +71,16 @@ export const publicAttendanceSchema = z.object({
   fullName: z.string().trim().min(2),
   identifier: z.string().trim().min(3),
   category: z.nativeEnum(AttendeeCategory),
+  semester: semesterSchema,
+  career: careerSchema,
   email: z.string().email().trim().toLowerCase().optional().nullable(),
 });
 
 export const publicCheckInSchema = publicAttendanceSchema.partial({
   fullName: true,
   category: true,
+  semester: true,
+  career: true,
   email: true,
 }).extend({
   identifier: z.string().trim().min(3),

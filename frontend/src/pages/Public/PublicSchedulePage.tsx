@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import {
   listPublicEventsRequest,
@@ -28,6 +28,20 @@ function timeLabel(value: string) {
   return new Date(value).toLocaleTimeString('es-CO', {
     hour: '2-digit',
     minute: '2-digit',
+  });
+}
+
+function weekdayOnlyLabel(value: string) {
+  return new Date(value).toLocaleDateString('es-CO', {
+    weekday: 'long',
+  });
+}
+
+function dateOnlyLabel(value: string) {
+  return new Date(value).toLocaleDateString('es-CO', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
   });
 }
 
@@ -69,11 +83,14 @@ const defaultCopy = {
 };
 
 const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [allEvents, setAllEvents] = useState<PublicEventItem[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
+  const [profileEvent, setProfileEvent] = useState<PublicEventItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const copy = eventType ? copyByType[eventType] : defaultCopy;
+  const requestedEventId = searchParams.get('evento') || '';
 
   useEffect(() => {
     listPublicEventsRequest()
@@ -86,7 +103,35 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
     () => (eventType ? allEvents.filter((event) => event.type === eventType) : allEvents),
     [allEvents, eventType]
   );
-  const selectedEvent = events.find((event) => event.id === selectedEventId) || events[0] || null;
+  const selectedEvent =
+    events.find((event) => event.id === selectedEventId) ||
+    events.find((event) => event.id === requestedEventId) ||
+    events[0] ||
+    null;
+
+  useEffect(() => {
+    if (!requestedEventId || events.length === 0) {
+      return;
+    }
+
+    const eventFromUrl = events.find((event) => event.id === requestedEventId);
+
+    if (eventFromUrl) {
+      setSelectedEventId(eventFromUrl.id);
+      setProfileEvent(eventFromUrl);
+    }
+  }, [events, requestedEventId]);
+
+  function openEventProfile(event: PublicEventItem) {
+    setSelectedEventId(event.id);
+    setProfileEvent(event);
+    setSearchParams({ evento: event.id });
+  }
+
+  function closeEventProfile() {
+    setProfileEvent(null);
+    setSearchParams({});
+  }
 
   const groupedEvents = useMemo(
     () =>
@@ -185,11 +230,11 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                         ].join(' ')}
                         role="button"
                         tabIndex={0}
-                        onClick={() => setSelectedEventId(event.id)}
+                        onClick={() => openEventProfile(event)}
                         onKeyDown={(keyboardEvent) => {
                           if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
                             keyboardEvent.preventDefault();
-                            setSelectedEventId(event.id);
+                            openEventProfile(event);
                           }
                         }}
                       >
@@ -284,6 +329,7 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                               <Link
                                 className="w-full rounded-xl bg-[#5adf82] px-4 py-3 text-center font-bold text-[#003917] transition-transform active:scale-95"
                                 to={event.registrationUrl || event.attendanceUrl || '#'}
+                                onClick={(clickEvent) => clickEvent.stopPropagation()}
                               >
                                 {event.registrationUrl ? 'Inscribirse' : 'Asistencia'}
                               </Link>
@@ -298,6 +344,119 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
             )}
           </section>
         </div>
+        {profileEvent ? (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm">
+            <button
+              className="absolute inset-0 cursor-default"
+              type="button"
+              aria-label="Cerrar detalle del evento"
+              onClick={closeEventProfile}
+            />
+            <section className="relative max-h-[calc(100vh-4rem)] w-full max-w-4xl overflow-y-auto rounded-2xl border border-[#5adf82]/40 bg-[#101415] p-6 shadow-2xl shadow-black/50 md:p-8">
+              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <span className="inline-flex rounded-full border border-[#5adf82]/30 bg-[#5adf82]/10 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-[#5adf82]">
+                    {labelFor(eventTypeLabels, profileEvent.type)}
+                  </span>
+                  <h2 className="mt-4 font-display text-3xl font-extrabold leading-tight text-[#f0ffed]">
+                    {profileEvent.talk?.topic || profileEvent.title}
+                  </h2>
+                </div>
+                <button
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#3b4b3c] text-[#b9cbb8] transition-colors hover:border-[#5adf82] hover:text-[#5adf82]"
+                  type="button"
+                  aria-label="Cerrar"
+                  onClick={closeEventProfile}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="mt-7 grid gap-5 md:grid-cols-2">
+                <div className="rounded-xl border border-[#3b4b3c] bg-[#1d2022]/80 p-5">
+                  <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#5adf82]">
+                    Detalle
+                  </p>
+                  <dl className="mt-4 grid gap-4 text-sm text-[#b9cbb8]">
+                    <div>
+                      <dt className="text-[#849584]">Dia</dt>
+                      <dd className="mt-1 font-semibold capitalize text-[#f0ffed]">
+                        {weekdayOnlyLabel(profileEvent.startsAt)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[#849584]">Fecha</dt>
+                      <dd className="mt-1 font-semibold text-[#f0ffed]">
+                        {dateOnlyLabel(profileEvent.startsAt)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[#849584]">Hora</dt>
+                      <dd className="mt-1 font-semibold text-[#f0ffed]">
+                        {timeLabel(profileEvent.startsAt)} - {timeLabel(profileEvent.endsAt)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[#849584]">Lugar</dt>
+                      <dd className="mt-1 font-semibold text-[#f0ffed]">
+                        {profileEvent.venue?.name || 'Espacio por confirmar'}
+                      </dd>
+                      {profileEvent.venue?.location ? (
+                        <dd className="mt-1 text-xs leading-5 text-[#b9cbb8]">
+                          {profileEvent.venue.location}
+                        </dd>
+                      ) : null}
+                    </div>
+                  </dl>
+                </div>
+
+                <div className="rounded-xl border border-[#5adf82]/30 bg-[#02a752]/10 p-5">
+                  <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#5adf82]">
+                    Ponente
+                  </p>
+                  <div className="mt-4 flex gap-4">
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#3b4b3c] bg-[#1d2022] text-[#5adf82]">
+                      {profileEvent.talk?.speaker?.photoUrl ? (
+                        <img
+                          className="h-full w-full object-cover"
+                          src={profileEvent.talk.speaker.photoUrl}
+                          alt={profileEvent.talk.speaker.fullName}
+                        />
+                      ) : (
+                        <span className="material-symbols-outlined text-3xl">person</span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="break-words font-display text-xl font-bold text-[#f0ffed]">
+                        {profileEvent.talk?.speaker?.fullName || 'Sin ponente asignado'}
+                      </p>
+                      <p className="mt-1 text-sm text-[#b9cbb8]">
+                        {profileEvent.talk?.speaker?.company || 'Empresa o institucion pendiente'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-5 border-t border-[#3b4b3c] pt-4">
+                    <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#5adf82]">
+                      ¿Quien es?
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-[#dbe8d8]">
+                      {profileEvent.talk?.speaker?.bio || 'Sin descripcion del ponente registrada.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-xl border border-[#3b4b3c] bg-[#1d2022]/80 p-5">
+                <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#5adf82]">
+                  Descripcion
+                </p>
+                <p className="mt-3 text-sm leading-7 text-[#dbe8d8]">
+                  {profileEvent.description || 'Sin descripcion registrada.'}
+                </p>
+              </div>
+            </section>
+          </div>
+        ) : null}
       </main>
     </PublicLayout>
   );

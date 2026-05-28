@@ -18,6 +18,7 @@ import {
   listTournamentsRequest,
   recalculateTournamentStandingsRequest,
   updateIndividualParticipantRequest,
+  updateMatchScheduleRequest,
   updateMatchScoreRequest,
   updateTeamRegistrationRequest,
   updateTournamentRequest,
@@ -70,6 +71,10 @@ type FixtureForm = {
   groupCount: string;
   overwriteGroups: boolean;
   overwriteFixture: boolean;
+  scheduledStartAt: string;
+  matchIntervalMinutes: string;
+  matchesPerDay: string;
+  venueId: string;
 };
 
 type MatchForm = {
@@ -82,6 +87,14 @@ type MatchForm = {
 };
 
 type ScoreInputs = Record<string, { homeScore: string; awayScore: string }>;
+type MatchScheduleInputs = Record<string, {
+  scheduledAt: string;
+  venueId: string;
+  phase: string;
+  homeId: string;
+  awayId: string;
+  groupId: string;
+}>;
 type TeamMemberEditForm = {
   userId?: string | null;
   fullName: string;
@@ -123,6 +136,10 @@ const emptyFixtureForm: FixtureForm = {
   groupCount: '2',
   overwriteGroups: false,
   overwriteFixture: false,
+  scheduledStartAt: '',
+  matchIntervalMinutes: '60',
+  matchesPerDay: '1',
+  venueId: '',
 };
 
 const emptyMatchForm: MatchForm = {
@@ -211,6 +228,8 @@ const TournamentsPage = () => {
   const [registrationError, setRegistrationError] = useState('');
   const [fixtureError, setFixtureError] = useState('');
   const [scoreInputs, setScoreInputs] = useState<ScoreInputs>({});
+  const [matchScheduleInputs, setMatchScheduleInputs] = useState<MatchScheduleInputs>({});
+  const [phaseFilter, setPhaseFilter] = useState('');
   const [publicRegistrationLink, setPublicRegistrationLink] = useState('');
   const [publicRegistrationQrSvg, setPublicRegistrationQrSvg] = useState('');
   const [publicFormTournament, setPublicFormTournament] = useState<Tournament | null>(null);
@@ -368,6 +387,19 @@ const TournamentsPage = () => {
         acc[match.id] = {
           homeScore: String(match.homeScore),
           awayScore: String(match.awayScore),
+        };
+        return acc;
+      }, {})
+    );
+    setMatchScheduleInputs(
+      fixtureData.matches.reduce<MatchScheduleInputs>((acc, match) => {
+        acc[match.id] = {
+          scheduledAt: toLocalInputValue(match.scheduledAt),
+          venueId: match.venueId || tournament.venue?.id || '',
+          phase: match.phase,
+          homeId: tournament.mode === 'TEAM' ? match.homeTeam?.id || '' : match.homeParticipant?.id || '',
+          awayId: tournament.mode === 'TEAM' ? match.awayTeam?.id || '' : match.awayParticipant?.id || '',
+          groupId: match.groupId || '',
         };
         return acc;
       }, {})
@@ -551,6 +583,26 @@ const TournamentsPage = () => {
     return matchSide?.name || matchSide?.displayName || 'Pendiente';
   }
 
+  function matchHasBothCompetitors(match: TournamentFixture['matches'][number]) {
+    return selectedTournament?.mode === 'TEAM'
+      ? Boolean(match.homeTeam && match.awayTeam)
+      : Boolean(match.homeParticipant && match.awayParticipant);
+  }
+
+  function buildScheduleInputs(matches: TournamentFixture['matches']) {
+    return matches.reduce<MatchScheduleInputs>((acc, match) => {
+      acc[match.id] = {
+        scheduledAt: toLocalInputValue(match.scheduledAt),
+        venueId: match.venueId || selectedTournament?.venue?.id || '',
+        phase: match.phase,
+        homeId: selectedTournament?.mode === 'TEAM' ? match.homeTeam?.id || '' : match.homeParticipant?.id || '',
+        awayId: selectedTournament?.mode === 'TEAM' ? match.awayTeam?.id || '' : match.awayParticipant?.id || '',
+        groupId: match.groupId || '',
+      };
+      return acc;
+    }, {});
+  }
+
   async function generateGroups() {
     if (!selectedTournament) {
       return;
@@ -563,6 +615,7 @@ const TournamentsPage = () => {
         overwrite: fixtureForm.overwriteGroups,
       });
       setFixture(data);
+      setMatchScheduleInputs(buildScheduleInputs(data.matches));
       const registrationData = await getTournamentRegistrationsRequest(selectedTournament.id);
       setRegistrations(registrationData);
     } catch {
@@ -577,14 +630,33 @@ const TournamentsPage = () => {
 
     try {
       setFixtureError('');
+      let registrationData = registrations;
+
+      if (
+        (selectedTournament.format === 'GROUPS' || selectedTournament.format === 'MIXED') &&
+        (!fixture.groups.length || fixtureForm.overwriteGroups)
+      ) {
+        await generateTournamentGroupsRequest(selectedTournament.id, {
+          groupCount: Number(fixtureForm.groupCount || 2),
+          overwrite: fixtureForm.overwriteGroups,
+        });
+        registrationData = await getTournamentRegistrationsRequest(selectedTournament.id);
+        setRegistrations(registrationData);
+      }
+
       const data = await generateTournamentFixtureRequest(selectedTournament.id, {
         overwrite: fixtureForm.overwriteFixture,
+        scheduledStartAt: fixtureForm.scheduledStartAt || null,
+        matchIntervalMinutes: Number(fixtureForm.matchIntervalMinutes || 60),
+        matchesPerDay: Number(fixtureForm.matchesPerDay || 1),
+        venueId: fixtureForm.venueId || selectedTournament.venue?.id || null,
       });
       setFixture(data);
+      setMatchScheduleInputs(buildScheduleInputs(data.matches));
       setStandings(await getTournamentStandingsRequest(selectedTournament.id));
       await loadTournaments();
     } catch {
-      setFixtureError('No fue posible generar el fixture. Revisa grupos, inscritos o partidos existentes.');
+      setFixtureError('No fue posible generar los partidos. Revisa inscritos, grupos o si ya existen partidos finalizados.');
     }
   }
 
@@ -597,9 +669,9 @@ const TournamentsPage = () => {
     try {
       setFixtureError('');
       await createManualMatchRequest(selectedTournament.id, {
-      groupId: matchForm.groupId || null,
-      venueId: matchForm.venueId || selectedTournament.venue?.id || null,
-      phase: matchForm.phase,
+        groupId: matchForm.groupId || null,
+        venueId: matchForm.venueId || selectedTournament.venue?.id || null,
+        phase: matchForm.phase,
         scheduledAt: matchForm.scheduledAt || null,
         homeTeamId: selectedTournament.mode === 'TEAM' ? matchForm.homeId : null,
         awayTeamId: selectedTournament.mode === 'TEAM' ? matchForm.awayId : null,
@@ -609,6 +681,7 @@ const TournamentsPage = () => {
       setMatchForm(emptyMatchForm);
       const data = await getTournamentFixtureRequest(selectedTournament.id);
       setFixture(data);
+      setMatchScheduleInputs(buildScheduleInputs(data.matches));
       setStandings(await getTournamentStandingsRequest(selectedTournament.id));
       await loadTournaments();
     } catch {
@@ -616,7 +689,10 @@ const TournamentsPage = () => {
     }
   }
 
-  const matchesByPhase = fixture.matches.reduce<Record<string, typeof fixture.matches>>((acc, match) => {
+  const visibleMatches = phaseFilter
+    ? fixture.matches.filter((match) => match.phase === phaseFilter)
+    : fixture.matches;
+  const matchesByPhase = visibleMatches.reduce<Record<string, typeof fixture.matches>>((acc, match) => {
     acc[match.phase] = acc[match.phase] || [];
     acc[match.phase].push(match);
     return acc;
@@ -636,6 +712,64 @@ const TournamentsPage = () => {
     });
   }
 
+  function scheduleFor(matchId: string) {
+    return matchScheduleInputs[matchId] || {
+      scheduledAt: '',
+      venueId: selectedTournament?.venue?.id || '',
+      phase: 'FASE_GRUPOS',
+      homeId: '',
+      awayId: '',
+      groupId: '',
+    };
+  }
+
+  function setMatchScheduleInput(
+    matchId: string,
+    key: 'scheduledAt' | 'venueId' | 'phase' | 'homeId' | 'awayId' | 'groupId',
+    value: string
+  ) {
+    setMatchScheduleInputs({
+      ...matchScheduleInputs,
+      [matchId]: {
+        ...scheduleFor(matchId),
+        [key]: value,
+      },
+    });
+  }
+
+  async function saveMatchSchedule(matchId: string) {
+    if (!selectedTournament) {
+      return;
+    }
+
+    const schedule = scheduleFor(matchId);
+    await updateMatchScheduleRequest(selectedTournament.id, matchId, {
+      groupId: schedule.groupId || null,
+      scheduledAt: schedule.scheduledAt || null,
+      venueId: schedule.venueId || null,
+      phase: schedule.phase,
+      homeTeamId:
+        selectedTournament.mode === 'TEAM' && schedule.homeId && schedule.awayId
+          ? schedule.homeId
+          : undefined,
+      awayTeamId:
+        selectedTournament.mode === 'TEAM' && schedule.homeId && schedule.awayId
+          ? schedule.awayId
+          : undefined,
+      homeParticipantId:
+        selectedTournament.mode === 'INDIVIDUAL' && schedule.homeId && schedule.awayId
+          ? schedule.homeId
+          : undefined,
+      awayParticipantId:
+        selectedTournament.mode === 'INDIVIDUAL' && schedule.homeId && schedule.awayId
+          ? schedule.awayId
+          : undefined,
+    });
+    const fixtureData = await getTournamentFixtureRequest(selectedTournament.id);
+    setFixture(fixtureData);
+    setMatchScheduleInputs(buildScheduleInputs(fixtureData.matches));
+  }
+
   async function saveMatchScore(matchId: string) {
     if (!selectedTournament) {
       return;
@@ -646,7 +780,9 @@ const TournamentsPage = () => {
       homeScore: Number(score.homeScore || 0),
       awayScore: Number(score.awayScore || 0),
     });
-    setFixture(await getTournamentFixtureRequest(selectedTournament.id));
+    const fixtureData = await getTournamentFixtureRequest(selectedTournament.id);
+    setFixture(fixtureData);
+    setMatchScheduleInputs(buildScheduleInputs(fixtureData.matches));
   }
 
   async function closeMatch(matchId: string) {
@@ -666,6 +802,7 @@ const TournamentsPage = () => {
         getTournamentStandingsRequest(selectedTournament.id),
       ]);
       setFixture(fixtureData);
+      setMatchScheduleInputs(buildScheduleInputs(fixtureData.matches));
       setStandings(standingsData);
     } catch {
       setFixtureError('No fue posible cerrar el partido. Revisa si el empate esta permitido.');
@@ -988,95 +1125,212 @@ const TournamentsPage = () => {
                   Descargar Excel
                 </button>
               </div>
-              <div className="p-5">
+              <div className="space-y-5 p-5">
                 {registrationError ? <p className="mb-3 text-sm text-red-600">{registrationError}</p> : null}
-                <div className="overflow-x-auto">
-                  {selectedTournament.mode === 'TEAM' ? (
-                    <table className="min-w-full divide-y divide-slate-200 text-sm">
-                      <thead className="theme-table-head">
-                        <tr>
-                          <th className="px-4 py-3 text-left">Equipo</th>
-                          <th className="px-4 py-3 text-left">Capitan</th>
-                          <th className="px-4 py-3 text-left">Integrantes</th>
-                          <th className="px-4 py-3 text-left">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {registrations.teams.map((team) => (
-                          <tr key={team.id}>
-                            <td className="px-4 py-3 font-medium text-slate-950">
-                              <div className="flex items-center gap-3">
-                                {team.logoUrl ? <img className="h-9 w-9 rounded-md object-cover" src={team.logoUrl} alt="" /> : null}
-                                {team.name}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-slate-600">{team.members.find((member) => member.isCaptain)?.fullName || team.captain?.name || 'Sin capitan'}</td>
-                            <td className="px-4 py-3 text-slate-600">{team.members.map((member) => member.fullName || member.user?.name || 'Sin nombre').join(', ')}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap gap-2">
-                                <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" type="button" onClick={() => openTeamDetail(team)}>Detalle</button>
-                                <button className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-700" onClick={() => void removeTeamRegistration(team.id)}>Retirar</button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <table className="min-w-full divide-y divide-slate-200 text-sm">
-                      <thead className="theme-table-head">
-                        <tr>
-                          <th className="px-4 py-3 text-left">Participante</th>
-                          <th className="px-4 py-3 text-left">Correo</th>
-                          <th className="px-4 py-3 text-left">Semilla</th>
-                          <th className="px-4 py-3 text-left">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {registrations.participants.map((participant) => (
-                          <tr key={participant.id}>
-                            <td className="px-4 py-3 font-medium text-slate-950">{participant.displayName}</td>
-                            <td className="px-4 py-3 text-slate-600">{participant.email}</td>
-                            <td className="px-4 py-3 text-slate-600">{participant.seed || 'Sin semilla'}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap gap-2">
-                                <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" type="button" onClick={() => openParticipantDetail(participant)}>Detalle</button>
-                                <button className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-700" onClick={() => void removeIndividualRegistration(participant.id)}>Retirar</button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                    <p className="font-mono text-xs uppercase tracking-widest text-slate-500">
+                      {selectedTournament.mode === 'TEAM' ? 'Equipos' : 'Participantes'}
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-slate-950">
+                      {selectedTournament.mode === 'TEAM' ? registrations.teams.length : registrations.participants.length}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                    <p className="font-mono text-xs uppercase tracking-widest text-slate-500">Formato</p>
+                    <p className="mt-2 text-lg font-bold text-slate-950">{labelFor(tournamentFormatLabels, selectedTournament.format)}</p>
+                  </div>
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                    <p className="font-mono text-xs uppercase tracking-widest text-slate-500">Estado</p>
+                    <p className="mt-2 text-lg font-bold text-slate-950">{labelFor(tournamentStatusLabels, selectedTournament.status)}</p>
+                  </div>
                 </div>
+
+                {selectedTournament.mode === 'TEAM' ? (
+                  registrations.teams.length ? (
+                    <>
+                      <div className="grid gap-3 xl:grid-cols-2">
+                        {registrations.teams.map((team) => {
+                          const captain = team.members.find((member) => member.isCaptain);
+                          return (
+                            <article key={team.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="truncate text-lg font-bold text-slate-950">{team.name}</p>
+                                  <p className="mt-1 text-sm text-slate-600">
+                                    Capitan: {captain?.fullName || captain?.user?.name || team.captain?.name || 'Sin capitan'}
+                                  </p>
+                                </div>
+                                <div className="flex shrink-0 gap-2">
+                                  <button className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold" type="button" onClick={() => openTeamDetail(team)}>Detalle</button>
+                                  <button className="rounded-md border border-red-200 px-3 py-2 text-xs font-semibold text-red-700" type="button" onClick={() => void removeTeamRegistration(team.id)}>Retirar</button>
+                                </div>
+                              </div>
+                              <div className="mt-4 flex flex-wrap gap-2">
+                                {team.members.map((member) => (
+                                  <span key={member.id} className="rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-600">
+                                    {member.fullName || member.user?.name || 'Sin nombre'}
+                                  </span>
+                                ))}
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                      <div className="hidden overflow-x-auto xl:block">
+                        <table className="min-w-full divide-y divide-slate-200 text-sm">
+                          <thead className="theme-table-head">
+                            <tr>
+                              <th className="px-4 py-3 text-left">Equipo</th>
+                              <th className="px-4 py-3 text-left">Capitan</th>
+                              <th className="px-4 py-3 text-left">Integrantes</th>
+                              <th className="px-4 py-3 text-left">Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {registrations.teams.map((team) => (
+                              <tr key={team.id}>
+                                <td className="px-4 py-3 font-medium text-slate-950">{team.name}</td>
+                                <td className="px-4 py-3 text-slate-600">{team.members.find((member) => member.isCaptain)?.fullName || team.captain?.name || 'Sin capitan'}</td>
+                                <td className="max-w-xl px-4 py-3 text-slate-600">{team.members.map((member) => member.fullName || member.user?.name || 'Sin nombre').join(', ')}</td>
+                                <td className="px-4 py-3">
+                                  <div className="flex flex-wrap gap-2">
+                                    <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" type="button" onClick={() => openTeamDetail(team)}>Detalle</button>
+                                    <button className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-700" type="button" onClick={() => void removeTeamRegistration(team.id)}>Retirar</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="rounded-md border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
+                      Este torneo no tiene equipos inscritos.
+                    </p>
+                  )
+                ) : registrations.participants.length ? (
+                  <>
+                    <div className="grid gap-3 xl:grid-cols-2">
+                      {registrations.participants.map((participant) => (
+                        <article key={participant.id} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-lg font-bold text-slate-950">{participant.displayName}</p>
+                              <p className="mt-1 break-all text-sm text-slate-600">{participant.email || 'Sin correo'}</p>
+                              <p className="mt-1 text-sm text-slate-600">Semilla: {participant.seed || 'Sin semilla'}</p>
+                            </div>
+                            <div className="flex shrink-0 gap-2">
+                              <button className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold" type="button" onClick={() => openParticipantDetail(participant)}>Detalle</button>
+                              <button className="rounded-md border border-red-200 px-3 py-2 text-xs font-semibold text-red-700" type="button" onClick={() => void removeIndividualRegistration(participant.id)}>Retirar</button>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                    <div className="hidden overflow-x-auto xl:block">
+                      <table className="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead className="theme-table-head">
+                          <tr>
+                            <th className="px-4 py-3 text-left">Participante</th>
+                            <th className="px-4 py-3 text-left">Correo</th>
+                            <th className="px-4 py-3 text-left">Semilla</th>
+                            <th className="px-4 py-3 text-left">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {registrations.participants.map((participant) => (
+                            <tr key={participant.id}>
+                              <td className="px-4 py-3 font-medium text-slate-950">{participant.displayName}</td>
+                              <td className="px-4 py-3 text-slate-600">{participant.email}</td>
+                              <td className="px-4 py-3 text-slate-600">{participant.seed || 'Sin semilla'}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-2">
+                                  <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" type="button" onClick={() => openParticipantDetail(participant)}>Detalle</button>
+                                  <button className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-700" type="button" onClick={() => void removeIndividualRegistration(participant.id)}>Retirar</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : (
+                  <p className="rounded-md border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
+                    Este torneo no tiene participantes inscritos.
+                  </p>
+                )}
               </div>
             </section>
           ) : null}
 
-          {false && selectedTournament ? (
+          {selectedTournament ? (
             <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-200 px-5 py-4">
-                <h3 className="text-base font-semibold text-slate-950">Fixture y mapa visual</h3>
+                <h3 className="text-base font-semibold text-slate-950">Organizar partidos</h3>
                 <p className="mt-1 text-sm text-slate-600">
-                  Cruces, grupos e historial de {selectedTournament.name}
+                  Usa el modo automatico para crear los cruces iniciales con fecha y hora. Usa el modo manual para semifinales, finales o ajustes puntuales.
                 </p>
               </div>
               <div className="space-y-5 p-5">
-                <div className="grid gap-3 lg:grid-cols-[120px_1fr_1fr]">
-                  <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" max="16" value={fixtureForm.groupCount} onChange={(event) => setFixtureForm({ ...fixtureForm, groupCount: event.target.value })} />
-                  <label className="flex items-center gap-2 text-sm text-slate-700">
-                    <input type="checkbox" checked={fixtureForm.overwriteGroups} onChange={(event) => setFixtureForm({ ...fixtureForm, overwriteGroups: event.target.checked })} />
-                    Sobrescribir grupos
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-700">
-                    <input type="checkbox" checked={fixtureForm.overwriteFixture} onChange={(event) => setFixtureForm({ ...fixtureForm, overwriteFixture: event.target.checked })} />
-                    Sobrescribir fixture
-                  </label>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h4 className="font-semibold text-slate-950">Automatico</h4>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Genera todos contra todos por grupo o la primera ronda de eliminacion directa.
+                      </p>
+                    </div>
+                    <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={() => void generateFixture()}>
+                      Organizar automaticamente
+                    </button>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+                    <label className="grid gap-1 text-sm font-semibold text-slate-700">
+                      Fecha y hora inicial
+                      <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="datetime-local" value={fixtureForm.scheduledStartAt} onChange={(event) => setFixtureForm({ ...fixtureForm, scheduledStartAt: event.target.value })} />
+                    </label>
+                    <label className="grid gap-1 text-sm font-semibold text-slate-700">
+                      Intervalo
+                      <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={fixtureForm.matchIntervalMinutes} onChange={(event) => setFixtureForm({ ...fixtureForm, matchIntervalMinutes: event.target.value })}>
+                        <option value="30">30 minutos</option>
+                        <option value="45">45 minutos</option>
+                        <option value="60">1 hora</option>
+                        <option value="90">1 hora 30 min</option>
+                        <option value="120">2 horas</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-sm font-semibold text-slate-700">
+                      Partidos por dia
+                      <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" max="12" value={fixtureForm.matchesPerDay} onChange={(event) => setFixtureForm({ ...fixtureForm, matchesPerDay: event.target.value })} />
+                    </label>
+                    <label className="grid gap-1 text-sm font-semibold text-slate-700">
+                      Lugar
+                      <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={fixtureForm.venueId || selectedTournament.venue?.id || ''} onChange={(event) => setFixtureForm({ ...fixtureForm, venueId: event.target.value })}>
+                        <option value="">Lugar del torneo</option>
+                        {venues.map((venue) => (
+                          <option key={venue.id} value={venue.id}>{venue.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-sm font-semibold text-slate-700">
+                      Grupos
+                      <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" max="16" value={fixtureForm.groupCount} onChange={(event) => setFixtureForm({ ...fixtureForm, groupCount: event.target.value })} />
+                    </label>
+                    <label className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                      <input type="checkbox" checked={fixtureForm.overwriteGroups} onChange={(event) => setFixtureForm({ ...fixtureForm, overwriteGroups: event.target.checked })} />
+                      Rehacer grupos
+                    </label>
+                    <label className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                      <input type="checkbox" checked={fixtureForm.overwriteFixture} onChange={(event) => setFixtureForm({ ...fixtureForm, overwriteFixture: event.target.checked })} />
+                      Rehacer partidos
+                    </label>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void generateGroups()}>Generar grupos</button>
-                  <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={() => void generateFixture()}>Generar fixture</button>
+                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void generateGroups()}>Solo generar grupos</button>
                   <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void recalculateStandings()}>Recalcular tabla</button>
                   <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void exportExcel()}>Exportar Excel</button>
                 </div>
@@ -1138,7 +1392,13 @@ const TournamentsPage = () => {
                   </div>
                 ) : null}
 
-                <form className="grid gap-3 rounded-md border border-slate-200 p-3 lg:grid-cols-[1fr_1fr_160px_180px_190px_auto]" onSubmit={submitManualMatch}>
+                <form className="grid gap-3 rounded-md border border-slate-200 p-3 lg:grid-cols-[1fr_1fr_150px_160px_180px_190px_auto]" onSubmit={submitManualMatch}>
+                  <div className="lg:col-span-7">
+                    <h4 className="font-semibold text-slate-950">Manual</h4>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Crea o ajusta partidos escogiendo rivales, fase, grupo, fecha, hora y lugar.
+                    </p>
+                  </div>
                   <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={matchForm.homeId} onChange={(event) => setMatchForm({ ...matchForm, homeId: event.target.value })} required>
                     <option value="">Local</option>
                     {competitors.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -1150,6 +1410,10 @@ const TournamentsPage = () => {
                   <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={matchForm.phase} onChange={(event) => setMatchForm({ ...matchForm, phase: event.target.value })}>
                     {phases.map((phase) => <option key={phase} value={phase}>{tournamentPhaseLabels[phase]}</option>)}
                   </select>
+                  <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={matchForm.groupId} onChange={(event) => setMatchForm({ ...matchForm, groupId: event.target.value })}>
+                    <option value="">Sin grupo</option>
+                    {fixture.groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+                  </select>
                   <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={matchForm.venueId} onChange={(event) => setMatchForm({ ...matchForm, venueId: event.target.value })}>
                     <option value="">Sitio del torneo</option>
                     {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
@@ -1158,13 +1422,23 @@ const TournamentsPage = () => {
                   <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold">Crear partido</button>
                 </form>
 
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h4 className="font-semibold text-slate-950">Partidos</h4>
+                  <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={phaseFilter} onChange={(event) => setPhaseFilter(event.target.value)}>
+                    <option value="">Todas las fases</option>
+                    {phases.map((phase) => (
+                      <option key={phase} value={phase}>{tournamentPhaseLabels[phase]}</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="space-y-4">
                   {Object.keys(matchesByPhase).length ? Object.entries(matchesByPhase).map(([phase, matches]) => (
                     <div key={phase}>
                       <h4 className="text-sm font-semibold text-slate-950">{labelFor(tournamentPhaseLabels, phase)}</h4>
-                      <div className="mt-3 grid gap-3 xl:grid-cols-2">
+                      <div className="mt-3 grid gap-3">
                         {matches.map((match) => (
-                          <div key={match.id} className="rounded-md border border-slate-200 p-3">
+                          <div key={match.id} className="min-w-0 rounded-md border border-slate-200 p-3">
                             <div className="flex items-center justify-between gap-3">
                               <span className="text-xs font-semibold uppercase text-slate-500">{match.group?.name || labelFor(tournamentPhaseLabels, match.phase)}</span>
                               <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">{labelFor(matchStatusLabels, match.status)}</span>
@@ -1174,14 +1448,78 @@ const TournamentsPage = () => {
                               <span className="rounded-md bg-slate-950 px-2 py-1 text-xs font-semibold text-white">vs</span>
                               <p className="text-right font-semibold text-slate-950">{participantName(match.awayTeam || match.awayParticipant)}</p>
                             </div>
-                            <p className="mt-3 text-xs text-slate-500">{formatDateTime(match.scheduledAt)}</p>
-                            <p className="mt-1 text-xs text-slate-500">{match.venue?.name || selectedTournament.venue?.name || 'Sin sitio asignado'}</p>
-                            <div className="mt-3 grid grid-cols-[70px_70px_auto_auto] gap-2">
-                              <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" type="number" min="0" value={scoreFor(match.id).homeScore} onChange={(event) => setMatchScoreInput(match.id, 'homeScore', event.target.value)} disabled={match.status === 'FINISHED'} />
-                              <input className="rounded-md border border-slate-300 px-2 py-1 text-sm" type="number" min="0" value={scoreFor(match.id).awayScore} onChange={(event) => setMatchScoreInput(match.id, 'awayScore', event.target.value)} disabled={match.status === 'FINISHED'} />
-                              <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" type="button" onClick={() => void saveMatchScore(match.id)} disabled={match.status === 'FINISHED'}>Guardar</button>
-                              <button className="rounded-md bg-slate-950 px-2 py-1 text-xs font-semibold text-white disabled:bg-slate-300" type="button" onClick={() => void closeMatch(match.id)} disabled={match.status === 'FINISHED'}>Cerrar</button>
+                            <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1fr)_minmax(150px,1fr)_150px_150px_170px_190px_110px]">
+                              <select
+                                className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                                value={scheduleFor(match.id).homeId}
+                                onChange={(event) => setMatchScheduleInput(match.id, 'homeId', event.target.value)}
+                              >
+                                <option value="">Local pendiente</option>
+                                {competitors.map((item) => (
+                                  <option key={item.id} value={item.id}>{item.name}</option>
+                                ))}
+                              </select>
+                              <select
+                                className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                                value={scheduleFor(match.id).awayId}
+                                onChange={(event) => setMatchScheduleInput(match.id, 'awayId', event.target.value)}
+                              >
+                                <option value="">Visitante pendiente</option>
+                                {competitors.map((item) => (
+                                  <option key={item.id} value={item.id}>{item.name}</option>
+                                ))}
+                              </select>
+                              <select
+                                className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                                value={scheduleFor(match.id).phase}
+                                onChange={(event) => setMatchScheduleInput(match.id, 'phase', event.target.value)}
+                              >
+                                {phases.map((phase) => (
+                                  <option key={phase} value={phase}>{tournamentPhaseLabels[phase]}</option>
+                                ))}
+                              </select>
+                              <select
+                                className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                                value={scheduleFor(match.id).groupId}
+                                onChange={(event) => setMatchScheduleInput(match.id, 'groupId', event.target.value)}
+                              >
+                                <option value="">Sin grupo</option>
+                                {fixture.groups.map((group) => (
+                                  <option key={group.id} value={group.id}>{group.name}</option>
+                                ))}
+                              </select>
+                              <input
+                                className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                                type="datetime-local"
+                                value={scheduleFor(match.id).scheduledAt}
+                                onChange={(event) => setMatchScheduleInput(match.id, 'scheduledAt', event.target.value)}
+                              />
+                              <select
+                                className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                                value={scheduleFor(match.id).venueId}
+                                onChange={(event) => setMatchScheduleInput(match.id, 'venueId', event.target.value)}
+                              >
+                                <option value="">Sin sitio asignado</option>
+                                {venues.map((venue) => (
+                                  <option key={venue.id} value={venue.id}>{venue.name}</option>
+                                ))}
+                              </select>
+                              <button className="rounded-md border border-slate-300 px-3 py-1 text-xs font-semibold" type="button" onClick={() => void saveMatchSchedule(match.id)}>
+                                Actualizar
+                              </button>
                             </div>
+                            <p className="mt-2 text-xs text-slate-500">
+                              {formatDateTime(match.scheduledAt)} - {match.venue?.name || selectedTournament.venue?.name || 'Sin sitio asignado'}
+                            </p>
+                            <div className="mt-3 grid gap-2 sm:grid-cols-[80px_80px_minmax(140px,1fr)_minmax(140px,1fr)]">
+                              <input className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm" type="number" min="0" value={scoreFor(match.id).homeScore} onChange={(event) => setMatchScoreInput(match.id, 'homeScore', event.target.value)} disabled={match.status === 'FINISHED' || !matchHasBothCompetitors(match)} />
+                              <input className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm" type="number" min="0" value={scoreFor(match.id).awayScore} onChange={(event) => setMatchScoreInput(match.id, 'awayScore', event.target.value)} disabled={match.status === 'FINISHED' || !matchHasBothCompetitors(match)} />
+                              <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold disabled:opacity-50" type="button" onClick={() => void saveMatchScore(match.id)} disabled={match.status === 'FINISHED' || !matchHasBothCompetitors(match)}>Guardar</button>
+                              <button className="rounded-md bg-slate-950 px-2 py-1 text-xs font-semibold text-white disabled:bg-slate-300" type="button" onClick={() => void closeMatch(match.id)} disabled={match.status === 'FINISHED' || !matchHasBothCompetitors(match)}>Cerrar</button>
+                            </div>
+                            {!matchHasBothCompetitors(match) ? (
+                              <p className="mt-2 text-xs text-slate-500">Esperando ganador del otro partido para completar este cruce.</p>
+                            ) : null}
                             {match.status === 'FINISHED' ? (
                               <p className="mt-2 text-xs font-semibold text-slate-700">Ganador: {participantName(match.winnerTeam || match.winnerParticipant)}</p>
                             ) : null}

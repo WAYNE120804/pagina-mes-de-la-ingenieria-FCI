@@ -12,7 +12,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
 
   return (
     <div
-      className="app-shell flex min-h-screen max-w-full overflow-x-hidden"
+      className="app-shell admin-shell flex min-h-screen max-w-full overflow-x-hidden"
       style={{
         ['--sidebar-bg' as string]: config.themeColors.sidebarBg,
         ['--sidebar-button-bg' as string]: config.themeColors.sidebarButtonBg,
@@ -30,7 +30,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       }}
     >
       <Sidebar />
-      <main className="flex-1 overflow-x-hidden bg-slate-50 text-slate-900">
+      <main className="public-technical-grid flex-1 overflow-x-hidden bg-[#101415] text-[#e0e3e5]">
         {children}
       </main>
     </div>

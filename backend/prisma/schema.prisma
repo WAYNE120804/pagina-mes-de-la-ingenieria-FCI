@@ -420,6 +420,8 @@ model Attendance {
   email       String?
   identifier  String?
   category    AttendeeCategory?
+  semester    String?
+  career      String?
   method      AttendanceMethod
   status      AttendanceStatus @default(REGISTERED)
   qrCode      String?          @unique @map("qr_code")
@@ -509,6 +511,8 @@ model TournamentParticipant {
   displayName  String    @map("display_name")
   email        String?
   identifier   String?
+  semester     String?
+  career       String?
   status       String    @default("PENDING")
   seed         Int?
   createdAt    DateTime  @default(now()) @map("created_at")
@@ -565,6 +569,8 @@ model TeamMember {
   fullName   String?  @map("full_name")
   identifier String?
   email      String?
+  semester   String?
+  career     String?
   isCaptain  Boolean  @default(false) @map("is_captain")
   createdAt  DateTime @default(now()) @map("created_at")
 

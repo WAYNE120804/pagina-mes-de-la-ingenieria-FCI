@@ -25,6 +25,33 @@ function competitorName(match: TournamentMatch, side: 'home' | 'away') {
   return match.awayTeam?.name || match.awayParticipant?.displayName || 'Por definir';
 }
 
+const phaseOrder = ['FASE_GRUPOS', 'OCTAVOS', 'CUARTOS', 'SEMIFINAL', 'FINAL'];
+
+function formatMatchDate(value?: string | null) {
+  if (!value) {
+    return 'Fecha por confirmar';
+  }
+
+  return new Intl.DateTimeFormat('es-CO', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
+function groupMatchesByGroup(matches: TournamentMatch[]) {
+  return Object.entries(
+    matches.reduce<Record<string, TournamentMatch[]>>((groups, match) => {
+      const groupName = match.group?.name || 'Grupo unico';
+      groups[groupName] = groups[groupName] || [];
+      groups[groupName].push(match);
+      return groups;
+    }, {})
+  ).sort(([first], [second]) => first.localeCompare(second, 'es'));
+}
+
 const PublicTournamentsPage = () => {
   const [tournaments, setTournaments] = useState<PublicTournamentOverview[]>([]);
   const [activeId, setActiveId] = useState('');
@@ -43,11 +70,30 @@ const PublicTournamentsPage = () => {
 
   const activeTournament = tournaments.find((item) => item.id === activeId) || tournaments[0];
   const matchesByPhase = useMemo(() => {
-    return (activeTournament?.matches || []).reduce<Record<string, TournamentMatch[]>>((groups, match) => {
+    const grouped = (activeTournament?.matches || []).reduce<Record<string, TournamentMatch[]>>((groups, match) => {
       groups[match.phase] = groups[match.phase] || [];
       groups[match.phase].push(match);
       return groups;
     }, {});
+
+    return Object.entries(grouped).sort(([first], [second]) => {
+      const firstIndex = phaseOrder.indexOf(first);
+      const secondIndex = phaseOrder.indexOf(second);
+      return (firstIndex === -1 ? 99 : firstIndex) - (secondIndex === -1 ? 99 : secondIndex);
+    });
+  }, [activeTournament]);
+  const standingsByGroup = useMemo(() => {
+    return Object.entries(
+      (activeTournament?.standings || []).reduce<Record<string, PublicTournamentOverview['standings']>>(
+        (groups, standing) => {
+          const groupName = standing.group?.name || 'General';
+          groups[groupName] = groups[groupName] || [];
+          groups[groupName].push(standing);
+          return groups;
+        },
+        {}
+      )
+    ).sort(([first], [second]) => first.localeCompare(second, 'es'));
   }, [activeTournament]);
 
   const registrationCount = activeTournament
@@ -108,7 +154,7 @@ const PublicTournamentsPage = () => {
             </section>
 
             <div className="grid gap-5 lg:grid-cols-12">
-              <section className="relative overflow-hidden rounded-3xl border border-[#3b4b3c] bg-[#191c1e] p-6 lg:col-span-8 md:p-8">
+              <section className="relative overflow-hidden rounded-3xl border border-[#3b4b3c] bg-[#191c1e] p-4 lg:col-span-8 md:p-6">
                 <div className="absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/2 rounded-full bg-[#5adf82]/10 blur-3xl" />
                 <div className="relative z-10 mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                   <div>
@@ -139,39 +185,85 @@ const PublicTournamentsPage = () => {
                   ) : null}
                 </div>
 
-                {Object.keys(matchesByPhase).length === 0 ? (
+                {matchesByPhase.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#3b4b3c] bg-[#101415] p-8 text-center text-[#b9cbb8]">
                     No hay partidos publicados para este torneo.
                   </div>
                 ) : (
-                  <div className="overflow-x-auto pb-3">
-                    <div className="flex min-w-[820px] gap-5 py-4">
-                      {Object.entries(matchesByPhase).map(([phase, matches]) => (
-                        <div key={phase} className="w-64 shrink-0 space-y-4">
-                          <p className="text-center font-mono text-xs uppercase tracking-widest text-[#849584]">
-                            {labelFor(tournamentPhaseLabels, phase)}
-                          </p>
-                          {matches.map((match) => (
-                            <article key={match.id} className="rounded-xl border border-[#3b4b3c] bg-[#1d2022] p-4">
-                              <div className="flex justify-between gap-3 border-b border-[#3b4b3c] pb-3">
-                                <span className="font-semibold text-[#f0ffed]">{competitorName(match, 'home')}</span>
-                                <span className="font-mono font-bold text-[#5adf82]">{match.homeScore}</span>
-                              </div>
-                              <div className="flex justify-between gap-3 pt-3">
-                                <span className="text-[#b9cbb8]">{competitorName(match, 'away')}</span>
-                                <span className="font-mono font-bold text-[#5adf82]">{match.awayScore}</span>
-                              </div>
-                              <p className="mt-3 rounded-full bg-[#323537] px-3 py-1 text-center font-mono text-[10px] uppercase text-[#b9cbb8]">
-                                {labelFor(matchStatusLabels, match.status)}
+                  <div className="space-y-6">
+                    {matchesByPhase.map(([phase, matches]) => {
+                      const groupedMatches =
+                        phase === 'FASE_GRUPOS'
+                          ? groupMatchesByGroup(matches)
+                          : [[labelFor(tournamentPhaseLabels, phase), matches] as [string, TournamentMatch[]]];
+
+                      return (
+                        <section key={phase} className="rounded-3xl border border-[#3b4b3c] bg-[#0b0f10]/70 p-3 shadow-2xl md:p-4">
+                          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[#3b4b3c] pb-4">
+                            <div>
+                              <p className="font-mono text-xs font-bold uppercase tracking-[0.35em] text-[#5adf82]">
+                                {labelFor(tournamentPhaseLabels, phase)}
                               </p>
-                              <p className="mt-2 text-center text-xs text-[#849584]">
-                                {match.venue?.name || activeVenue?.name || 'Sitio por confirmar'}
-                              </p>
-                            </article>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
+                              <h3 className="mt-1 font-display text-2xl font-bold text-[#f0ffed]">
+                                {phase === 'FASE_GRUPOS' ? 'Grupos publicados' : 'Llave final'}
+                              </h3>
+                            </div>
+                            <span className="rounded-full bg-[#5adf82]/10 px-3 py-1 font-mono text-xs font-bold text-[#5adf82]">
+                              {matches.length} partidos
+                            </span>
+                          </div>
+
+                          <div className={phase === 'FASE_GRUPOS' ? 'grid gap-5 2xl:grid-cols-2' : 'grid gap-4'}>
+                            {groupedMatches.map(([groupName, groupMatches]) => (
+                              <div key={groupName} className="rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-4 md:p-5">
+                                <div className="mb-4 flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-3">
+                                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5adf82] font-display text-lg font-extrabold text-[#003917]">
+                                      {groupName.replace('Grupo ', '').slice(0, 2)}
+                                    </span>
+                                    <div>
+                                      <p className="font-display text-xl font-bold text-[#f0ffed]">{groupName}</p>
+                                      <p className="text-xs text-[#849584]">{groupMatches.length} encuentros</p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                  {groupMatches.map((match) => (
+                                    <article key={match.id} className="rounded-2xl border border-[#3b4b3c] bg-[#101415] p-5">
+                                      <div className="grid grid-cols-[minmax(0,1fr)_48px_minmax(0,1fr)] items-center gap-4">
+                                        <div className="min-w-0">
+                                          <p className="break-words text-lg font-bold leading-snug text-[#f0ffed]">{competitorName(match, 'home')}</p>
+                                          <p className="mt-2 font-mono text-2xl font-extrabold text-[#5adf82]">{match.homeScore}</p>
+                                        </div>
+                                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#5adf82] text-xs font-black text-[#003917]">VS</span>
+                                        <div className="min-w-0 text-right">
+                                          <p className="break-words text-lg font-bold leading-snug text-[#f0ffed]">{competitorName(match, 'away')}</p>
+                                          <p className="mt-2 font-mono text-2xl font-extrabold text-[#5adf82]">{match.awayScore}</p>
+                                        </div>
+                                      </div>
+                                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#3b4b3c] pt-3 text-xs text-[#b9cbb8]">
+                                        <span className="rounded-full bg-[#323537] px-3 py-1 font-mono uppercase">
+                                          {labelFor(matchStatusLabels, match.status)}
+                                        </span>
+                                        <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-[#1d2022] px-3 py-1">
+                                          <span className="material-symbols-outlined text-sm text-[#5adf82]">schedule</span>
+                                          {formatMatchDate(match.scheduledAt)}
+                                        </span>
+                                        <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-[#1d2022] px-3 py-1">
+                                          <span className="material-symbols-outlined text-sm text-[#5adf82]">location_on</span>
+                                          {match.venue?.name || activeVenue?.name || 'Sitio por confirmar'}
+                                        </span>
+                                      </div>
+                                    </article>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      );
+                    })}
                   </div>
                 )}
               </section>
@@ -182,23 +274,42 @@ const PublicTournamentsPage = () => {
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5adf82]/20 text-[#5adf82]">
                       <span className="material-symbols-outlined">format_list_numbered</span>
                     </span>
-                    <h2 className="font-display text-2xl font-bold text-[#f0ffed]">Tabla</h2>
+                    <h2 className="font-display text-2xl font-bold text-[#f0ffed]">
+                      {activeTournament?.format === 'KNOCKOUT' ? 'Ranking' : 'Tabla'}
+                    </h2>
                   </div>
                   {activeTournament?.standings?.length ? (
                     <div className="space-y-3">
-                      {activeTournament.standings.slice(0, 8).map((standing) => (
-                        <div key={standing.id} className="grid grid-cols-6 items-center rounded-xl border border-[#3b4b3c] bg-[#1d2022] p-3">
-                          <div className="col-span-3 flex items-center gap-3">
-                            <span className="h-2 w-2 rounded-full bg-[#5adf82]" />
-                            <span className="truncate font-bold text-[#e0e3e5]">
-                              {standing.team?.name || standing.participant?.displayName || 'Competidor'}
+                      {standingsByGroup.map(([groupName, standings]) => (
+                        <div key={groupName} className="rounded-2xl border border-[#3b4b3c] bg-[#101415] p-3">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#5adf82]">
+                              {groupName}
                             </span>
+                            <span className="text-xs text-[#849584]">Pts / G / P</span>
                           </div>
-                          <span className="text-center font-mono font-bold text-[#5adf82]">{standing.points}</span>
-                          <span className="text-center font-mono text-[#b9cbb8]">{standing.won}</span>
-                          <span className="text-center font-mono text-[#b9cbb8]">{standing.lost}</span>
+                          <div className="space-y-2">
+                            {standings.slice(0, 8).map((standing) => (
+                              <div key={standing.id} className="grid grid-cols-6 items-center rounded-xl border border-[#3b4b3c] bg-[#1d2022] p-3">
+                                <div className="col-span-3 flex min-w-0 items-center gap-3">
+                                  <span className="h-2 w-2 shrink-0 rounded-full bg-[#5adf82]" />
+                                  <span className="truncate font-bold text-[#e0e3e5]">
+                                    {standing.team?.name || standing.participant?.displayName || 'Competidor'}
+                                  </span>
+                                </div>
+                                <span className="text-center font-mono font-bold text-[#5adf82]">{standing.points}</span>
+                                <span className="text-center font-mono text-[#b9cbb8]">{standing.won}</span>
+                                <span className="text-center font-mono text-[#b9cbb8]">{standing.lost}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       ))}
+                      {activeTournament.format === 'KNOCKOUT' ? (
+                        <p className="text-xs leading-5 text-[#849584]">
+                          En eliminacion directa el ranking se actualiza por partidos ganados y puntos del marcador.
+                        </p>
+                      ) : null}
                     </div>
                   ) : (
                     <p className="text-sm leading-6 text-[#b9cbb8]">

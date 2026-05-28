@@ -317,7 +317,13 @@ export async function generateTournamentGroupsRequest(
 
 export async function generateTournamentFixtureRequest(
   id: string,
-  input: { overwrite?: boolean }
+  input: {
+    overwrite?: boolean;
+    scheduledStartAt?: string | null;
+    matchIntervalMinutes?: number;
+    matchesPerDay?: number;
+    venueId?: string | null;
+  }
 ) {
   const response = await client.post<ApiResponse<TournamentFixture>>(
     endpoints.tournaments.generateFixture(id),
@@ -339,7 +345,17 @@ export async function createManualMatchRequest(id: string, input: CreateMatchInp
 export async function updateMatchScheduleRequest(
   id: string,
   matchId: string,
-  input: { scheduledAt?: string | null; status?: string }
+  input: {
+    groupId?: string | null;
+    venueId?: string | null;
+    homeTeamId?: string | null;
+    awayTeamId?: string | null;
+    homeParticipantId?: string | null;
+    awayParticipantId?: string | null;
+    phase?: string;
+    scheduledAt?: string | null;
+    status?: string;
+  }
 ) {
   const response = await client.patch<ApiResponse<TournamentMatch>>(
     endpoints.tournaments.matchDetail(id, matchId),
@@ -492,7 +508,13 @@ export async function publicRegisterTournamentRequest(
     teamName?: string;
     logoUrl?: string | null;
     captainIndex?: number;
-    members: Array<{ fullName: string; identifier: string; email: string }>;
+    members: Array<{
+      fullName: string;
+      identifier: string;
+      email: string;
+      semester: string;
+      career: string;
+    }>;
   }
 ) {
   const response = await client.post<ApiResponse<unknown>>(

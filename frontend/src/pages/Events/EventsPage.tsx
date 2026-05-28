@@ -51,6 +51,7 @@ type EventForm = {
   speakerName: string;
   speakerEmail: string;
   speakerCompany: string;
+  speakerBio: string;
   speakerPhotoUrl: string;
 };
 
@@ -68,6 +69,7 @@ const emptyForm: EventForm = {
   speakerName: '',
   speakerEmail: '',
   speakerCompany: '',
+  speakerBio: '',
   speakerPhotoUrl: '',
 };
 
@@ -204,6 +206,7 @@ const EventsPage = () => {
       speakerName: event.talk?.speaker?.fullName || '',
       speakerEmail: event.talk?.speaker?.email || '',
       speakerCompany: event.talk?.speaker?.company || '',
+      speakerBio: event.talk?.speaker?.bio || '',
       speakerPhotoUrl: event.talk?.speaker?.photoUrl || '',
     });
     setShowEventModal(true);
@@ -264,6 +267,7 @@ const EventsPage = () => {
             fullName: form.speakerName,
             email: form.speakerEmail || undefined,
             company: form.speakerCompany || undefined,
+            bio: form.speakerBio || null,
             photoUrl: form.speakerPhotoUrl || null,
           });
           selectedSpeakerId = speaker.id;
@@ -448,6 +452,12 @@ const EventsPage = () => {
                     <input className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Nombre del ponente" value={form.speakerName} onChange={(event) => setForm({ ...form, speakerName: event.target.value })} />
                     <input className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Correo del ponente" type="email" value={form.speakerEmail} onChange={(event) => setForm({ ...form, speakerEmail: event.target.value })} />
                     <input className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Empresa o institucion" value={form.speakerCompany} onChange={(event) => setForm({ ...form, speakerCompany: event.target.value })} />
+                    <textarea
+                      className="min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      placeholder="¿Quien es? Perfil breve del ponente"
+                      value={form.speakerBio}
+                      onChange={(event) => setForm({ ...form, speakerBio: event.target.value })}
+                    />
                     <div className="flex items-center gap-3 rounded-md border border-slate-200 bg-white p-3">
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50 text-xs text-slate-500">
                         {form.speakerPhotoUrl ? (
@@ -665,6 +675,10 @@ const EventsPage = () => {
                     <div>
                       <dt className="text-slate-500">Empresa / institucion</dt>
                       <dd className="mt-1 font-semibold text-slate-950">{selectedEvent.talk?.speaker?.company || 'Sin empresa'}</dd>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <dt className="text-slate-500">¿Quien es?</dt>
+                      <dd className="mt-1 break-words text-slate-700">{selectedEvent.talk?.speaker?.bio || 'Sin descripcion del ponente'}</dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">Formulario</dt>

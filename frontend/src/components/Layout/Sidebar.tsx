@@ -9,6 +9,7 @@ const navItems = [
   { to: '/usuarios', label: 'Usuarios' },
   { to: '/espacios', label: 'Espacios' },
   { to: '/eventos', label: 'Eventos' },
+  { to: '/ponentes', label: 'Ponentes' },
   { to: '/asistencia', label: 'Asistencia' },
   { to: '/torneos', label: 'Torneos' },
   { to: '/hackathon', label: 'Hackathon' },

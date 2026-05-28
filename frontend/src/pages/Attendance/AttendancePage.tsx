@@ -22,6 +22,29 @@ import {
 } from '../../utils/labels';
 
 const categories = Object.keys(attendeeCategoryLabels);
+const semesterLabels: Record<string, string> = {
+  '1': '1',
+  '2': '2',
+  '3': '3',
+  '4': '4',
+  '5': '5',
+  '6': '6',
+  '7': '7',
+  '8': '8',
+  '9': '9',
+  '10': '10',
+  POSGRADO: 'Posgrado',
+  NO_APLICA: 'No aplica',
+};
+const careerLabels: Record<string, string> = {
+  ING_SISTEMAS_TELECOMUNICACIONES: 'Ing. Sistemas y Telecomunicaciones',
+  ING_ANALITICA_DATOS: 'Ing. Analitica de Datos',
+  ING_INDUSTRIAL: 'Ing. Industrial',
+  ING_LOGISTICA: 'Ing. Logistica',
+  ING_SEGURIDAD_INFORMACION: 'Ing. Seguridad de Informacion',
+  POSGRADOS: 'Posgrados',
+  NO_APLICA: 'No aplica',
+};
 
 const emptyStats: AttendanceStats = {
   capacity: null,
@@ -113,19 +136,49 @@ async function downloadQrImage(svg: string, title: string, format: 'png' | 'jpeg
     throw new Error('No fue posible crear la imagen.');
   }
 
-  context.fillStyle = '#ffffff';
+  context.fillStyle = '#101415';
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = '#020617';
-  context.font = '700 34px Arial';
+
+  context.fillStyle = '#18261c';
+  for (let x = 0; x < canvas.width; x += 28) {
+    for (let y = 0; y < canvas.height; y += 28) {
+      context.beginPath();
+      context.arc(x, y, 1.2, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+
+  context.strokeStyle = '#5adf82';
+  context.lineWidth = 3;
+  context.strokeRect(54, 54, canvas.width - 108, canvas.height - 108);
+
+  context.fillStyle = '#5adf82';
+  context.font = '700 18px Arial';
   context.textAlign = 'center';
-  const titleBottom = wrapCanvasText(context, title, canvas.width / 2, 90, 760, 44);
+  context.fillText('MES DE LA INGENIERIA', canvas.width / 2, 104);
+
+  context.fillStyle = '#f0ffed';
+  context.font = '800 36px Arial';
+  context.textAlign = 'center';
+  const titleBottom = wrapCanvasText(context, title, canvas.width / 2, 158, 720, 46);
 
   context.font = '500 24px Arial';
-  context.fillStyle = '#475569';
-  context.fillText('Formulario de asistencia', canvas.width / 2, titleBottom + 52);
+  context.fillStyle = '#b9cbb8';
+  context.fillText('QR publico para registrar asistencia', canvas.width / 2, titleBottom + 56);
 
   const qrSize = 620;
-  context.drawImage(image, (canvas.width - qrSize) / 2, 300, qrSize, qrSize);
+  const qrX = (canvas.width - qrSize) / 2;
+  const qrY = 318;
+  context.fillStyle = '#f8fff7';
+  context.fillRect(qrX - 24, qrY - 24, qrSize + 48, qrSize + 48);
+  context.strokeStyle = '#5adf82';
+  context.lineWidth = 2;
+  context.strokeRect(qrX - 24, qrY - 24, qrSize + 48, qrSize + 48);
+  context.drawImage(image, qrX, qrY, qrSize, qrSize);
+
+  context.fillStyle = '#849584';
+  context.font = '600 20px Arial';
+  context.fillText('Facultad de Ciencias e Ingenieria - UManizales', canvas.width / 2, 1014);
 
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob(resolve, `image/${format}`, format === 'jpeg' ? 0.95 : undefined);
@@ -159,6 +212,8 @@ function exportAttendanceExcel(
         attendeeEmail(item),
         attendeeIdentifier(item),
         labelFor(labels.categories, item.category),
+        labelFor(semesterLabels, item.semester),
+        labelFor(careerLabels, item.career),
         labelFor(labels.methods, item.method),
         labelFor(labels.statuses, item.status),
         item.checkedInAt ? new Date(item.checkedInAt).toLocaleString('es-CO') : '',
@@ -173,12 +228,14 @@ function exportAttendanceExcel(
       <head><meta charset="UTF-8" /></head>
       <body>
         <table>
-          <tr><th colspan="7">${escapeHtml(eventTitle)}</th></tr>
+          <tr><th colspan="9">${escapeHtml(eventTitle)}</th></tr>
           <tr>
             <th>Nombre</th>
             <th>Correo</th>
             <th>Codigo/Cedula</th>
             <th>Cargo</th>
+            <th>Semestre</th>
+            <th>Carrera</th>
             <th>Metodo</th>
             <th>Estado</th>
             <th>Ingreso confirmado</th>
@@ -207,6 +264,8 @@ const AttendancePage = () => {
   const [email, setEmail] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [category, setCategory] = useState('ESTUDIANTE');
+  const [semester, setSemester] = useState('');
+  const [career, setCareer] = useState('');
   const [publicQrSvg, setPublicQrSvg] = useState('');
   const [publicLink, setPublicLink] = useState('');
   const [error, setError] = useState('');
@@ -272,10 +331,12 @@ const AttendancePage = () => {
     setNotice('');
 
     try {
-      await createAttendanceRequest(eventId, { fullName, email, identifier, category });
+      await createAttendanceRequest(eventId, { fullName, email, identifier, category, semester, career });
       setFullName('');
       setEmail('');
       setIdentifier('');
+      setSemester('');
+      setCareer('');
       await loadAttendance();
     } catch {
       setError('No fue posible registrar asistencia. Revisa duplicados o capacidad.');
@@ -378,6 +439,14 @@ const AttendancePage = () => {
                 <select className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={category} onChange={(event) => setCategory(event.target.value)} required>
                   {categories.map((item) => <option key={item} value={item}>{attendeeCategoryLabels[item]}</option>)}
                 </select>
+                <select className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={semester} onChange={(event) => setSemester(event.target.value)} required>
+                  <option value="">Semestre</option>
+                  {Object.entries(semesterLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+                <select className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={career} onChange={(event) => setCareer(event.target.value)} required>
+                  <option value="">Carrera</option>
+                  {Object.entries(careerLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
                 <input className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Correo" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
                 {error ? <p className="text-sm text-red-600">{error}</p> : null}
                 <div className="flex flex-wrap gap-2">
@@ -386,14 +455,16 @@ const AttendancePage = () => {
               </form>
 
               {publicQrSvg ? (
-                <div className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
+                <div className="mt-5 overflow-hidden rounded-lg border border-[#5adf82]/40 bg-[#101415] p-4 text-center shadow-[0_0_0_1px_rgba(90,223,130,0.12)]">
                   <div className="mx-auto flex max-w-full flex-col items-center gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-950">{selectedEvent?.title || 'Evento seleccionado'}</p>
-                      <p className="mt-1 text-xs text-slate-500">QR publico para registrar asistencia</p>
+                      <p className="text-sm font-semibold text-[#f0ffed]">{selectedEvent?.title || 'Evento seleccionado'}</p>
+                      <p className="mt-1 text-xs text-[#b9cbb8]">QR publico para registrar asistencia</p>
                     </div>
-                    <div className="h-56 w-56 max-w-full shrink-0 [&_svg]:block [&_svg]:h-full [&_svg]:w-full" dangerouslySetInnerHTML={{ __html: publicQrSvg }} />
-                    <p className="w-full max-w-sm break-all rounded-md bg-white px-3 py-2 text-xs leading-5 text-slate-700">{publicLink}</p>
+                    <div className="qr-scan-surface rounded-xl border border-[#5adf82]/40 p-3">
+                      <div className="h-56 w-56 max-w-full shrink-0 [&_svg]:block [&_svg]:h-full [&_svg]:w-full" dangerouslySetInnerHTML={{ __html: publicQrSvg }} />
+                    </div>
+                    <p className="w-full max-w-sm break-all rounded-md border border-[#3b4b3c] bg-[#1d2022] px-3 py-2 text-xs leading-5 text-[#b9cbb8]">{publicLink}</p>
                   </div>
                   <div className="mt-4 flex flex-wrap justify-center gap-2">
                     <button className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold" type="button" onClick={() => void navigator.clipboard.writeText(publicLink)}>
@@ -428,22 +499,24 @@ const AttendancePage = () => {
             </div>
             {notice ? <p className="border-b border-slate-100 px-5 py-3 text-sm text-emerald-700">{notice}</p> : null}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] table-fixed divide-y divide-slate-200 text-sm">
+              <table className="w-full min-w-[1100px] table-fixed divide-y divide-slate-200 text-sm">
                 <thead className="theme-table-head">
                   <tr>
-                    <th className="w-[18%] px-4 py-3 text-left">Nombre</th>
-                    <th className="w-[23%] px-4 py-3 text-left">Correo</th>
-                    <th className="w-[14%] px-4 py-3 text-left">Codigo/Cedula</th>
-                    <th className="w-[11%] px-4 py-3 text-left">Cargo</th>
-                    <th className="w-[9%] px-4 py-3 text-left">Metodo</th>
-                    <th className="w-[13%] px-4 py-3 text-left">Estado</th>
+                    <th className="w-[16%] px-4 py-3 text-left">Nombre</th>
+                    <th className="w-[18%] px-4 py-3 text-left">Correo</th>
+                    <th className="w-[12%] px-4 py-3 text-left">Codigo/Cedula</th>
+                    <th className="w-[9%] px-4 py-3 text-left">Cargo</th>
+                    <th className="w-[8%] px-4 py-3 text-left">Semestre</th>
+                    <th className="w-[17%] px-4 py-3 text-left">Carrera</th>
+                    <th className="w-[8%] px-4 py-3 text-left">Metodo</th>
+                    <th className="w-[10%] px-4 py-3 text-left">Estado</th>
                     <th className="w-[12%] px-4 py-3 text-left">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {attendance.length === 0 ? (
                     <tr>
-                      <td className="px-5 py-6 text-center text-slate-500" colSpan={7}>
+                      <td className="px-5 py-6 text-center text-slate-500" colSpan={9}>
                         No hay asistentes registrados para este evento.
                       </td>
                     </tr>
@@ -458,6 +531,8 @@ const AttendancePage = () => {
                       </td>
                       <td className="px-4 py-4 align-top text-slate-600">{attendeeIdentifier(item) || 'N/A'}</td>
                       <td className="px-4 py-4 align-top text-slate-600">{labelFor(attendeeCategoryLabels, item.category)}</td>
+                      <td className="px-4 py-4 align-top text-slate-600">{labelFor(semesterLabels, item.semester)}</td>
+                      <td className="px-4 py-4 align-top text-slate-600">{labelFor(careerLabels, item.career)}</td>
                       <td className="px-4 py-4 align-top">
                         <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
                           {labelFor(attendanceMethodLabels, item.method)}

@@ -39,6 +39,7 @@ export async function createSpeakerRequest(input: {
   fullName: string;
   email?: string;
   company?: string;
+  bio?: string | null;
   photoUrl?: string | null;
 }) {
   const response = await client.post<ApiResponse<Speaker>>(endpoints.speakers.create(), input);
@@ -48,7 +49,13 @@ export async function createSpeakerRequest(input: {
 
 export async function updateSpeakerRequest(
   id: string,
-  input: { fullName?: string; email?: string | null; company?: string | null; photoUrl?: string | null }
+  input: {
+    fullName?: string;
+    email?: string | null;
+    company?: string | null;
+    bio?: string | null;
+    photoUrl?: string | null;
+  }
 ) {
   const response = await client.patch<ApiResponse<Speaker>>(endpoints.speakers.detail(id), input);
 

@@ -38,10 +38,10 @@ const tournamentInclude = {
   venue: true,
   _count: {
     select: {
-      groups: true,
-      teams: true,
-      participants: true,
-      matches: true,
+      groups: { where: { deletedAt: null } },
+      teams: { where: { deletedAt: null } },
+      participants: { where: { deletedAt: null } },
+      matches: { where: { deletedAt: null } },
     },
   },
 } satisfies Prisma.TournamentInclude;
@@ -568,6 +568,8 @@ type NormalizedTeamMember = {
   fullName: string;
   identifier: string;
   email: string;
+  semester?: string | null;
+  career?: string | null;
   isCaptain: boolean;
 };
 
@@ -581,6 +583,8 @@ async function normalizeTeamMembers(
       fullName?: string | null;
       identifier?: string | null;
       email?: string | null;
+      semester?: string | null;
+      career?: string | null;
       isCaptain: boolean;
       user?: {
         id: string;
@@ -599,6 +603,8 @@ async function normalizeTeamMembers(
       fullName: member.fullName,
       identifier: member.identifier,
       email: member.email,
+      semester: member.semester || null,
+      career: member.career || null,
       isCaptain: Boolean(member.isCaptain),
     }));
   } else if (input.memberIds?.length) {
@@ -608,6 +614,8 @@ async function normalizeTeamMembers(
       fullName: user.name,
       identifier: user.universityCode || user.id,
       email: user.email,
+      semester: null,
+      career: null,
       isCaptain: index === 0,
     }));
   } else if (input.existingMembers?.length) {
@@ -616,6 +624,8 @@ async function normalizeTeamMembers(
       fullName: member.fullName || member.user?.name || '',
       identifier: member.identifier || member.user?.universityCode || member.userId || '',
       email: member.email || member.user?.email || '',
+      semester: member.semester || null,
+      career: member.career || null,
       isCaptain: member.isCaptain,
     }));
   }
@@ -1012,6 +1022,8 @@ export async function registerIndividualParticipant(
       displayName,
       email,
       identifier,
+      semester: input.semester || null,
+      career: input.career || null,
       status: input.status,
       seed: input.seed || null,
     },
@@ -1118,6 +1130,8 @@ export async function publicRegisterTournament(
             fullName: member.fullName,
             identifier: member.identifier,
             email: member.email,
+            semester: member.semester || null,
+            career: member.career || null,
             isCaptain: member.isCaptain,
           })),
         },
@@ -1162,6 +1176,8 @@ export async function publicRegisterTournament(
       displayName: member.fullName,
       email: member.email,
       identifier: member.identifier,
+      semester: member.semester,
+      career: member.career,
       status: 'APPROVED',
     },
     include: participantInclude,
@@ -1276,6 +1292,22 @@ function buildPairs<T extends { id: string }>(items: T[]) {
   for (let homeIndex = 0; homeIndex < items.length; homeIndex += 1) {
     for (let awayIndex = homeIndex + 1; awayIndex < items.length; awayIndex += 1) {
       pairs.push([items[homeIndex], items[awayIndex]]);
+    }
+  }
+
+  return pairs;
+}
+
+function buildKnockoutPairs<T extends { id: string }>(items: T[]) {
+  const pairs: Array<[T, T]> = [];
+  const bracketOrder = [...items];
+
+  for (let index = 0; index < Math.floor(bracketOrder.length / 2); index += 1) {
+    const home = bracketOrder[index];
+    const away = bracketOrder[bracketOrder.length - 1 - index];
+
+    if (home && away) {
+      pairs.push([home, away]);
     }
   }
 
@@ -1523,7 +1555,9 @@ async function buildFixtureMatchData(
         ? getKnockoutPhase(teams.length)
         : TournamentPhase.FASE_GRUPOS;
 
-    return buildPairs(teams).map(([home, away]) => ({
+    const pairs = tournament.format === TournamentFormat.KNOCKOUT ? buildKnockoutPairs(teams) : buildPairs(teams);
+
+    return pairs.map(([home, away]) => ({
       tournamentId: tournament.id,
       phase,
       homeTeamId: home.id,
@@ -1569,7 +1603,12 @@ async function buildFixtureMatchData(
       ? getKnockoutPhase(participants.length)
       : TournamentPhase.FASE_GRUPOS;
 
-  return buildPairs(participants).map(([home, away]) => ({
+  const pairs =
+    tournament.format === TournamentFormat.KNOCKOUT
+      ? buildKnockoutPairs(participants)
+      : buildPairs(participants);
+
+  return pairs.map(([home, away]) => ({
     tournamentId: tournament.id,
     phase,
     homeParticipantId: home.id,
@@ -1592,8 +1631,23 @@ export async function generateTournamentFixture(
     throw new AppError('No hay cruces para generar', 400, 'EMPTY_FIXTURE');
   }
 
+  const scheduledStartAt = input.scheduledStartAt ? new Date(input.scheduledStartAt) : null;
+  const matchIntervalMinutes = input.matchIntervalMinutes || 60;
+  const matchesPerDay = input.matchesPerDay || 1;
+  const matchesWithSchedule = matches.map((match, index) => ({
+    ...match,
+    venueId: input.venueId || tournament.venueId || undefined,
+    scheduledAt: scheduledStartAt
+      ? new Date(
+          scheduledStartAt.getTime() +
+            Math.floor(index / matchesPerDay) * 24 * 60 * 60_000 +
+            (index % matchesPerDay) * matchIntervalMinutes * 60_000
+        )
+      : undefined,
+  }));
+
   await prisma.match.createMany({
-    data: matches,
+    data: matchesWithSchedule,
   });
 
   await createAuditLog({
@@ -1602,7 +1656,14 @@ export async function generateTournamentFixture(
     action: AuditAction.MATCH_CREATE,
     entity: 'Match',
     entityId: tournamentId,
-    newValues: { tournamentId, matches: matches.length, overwrite: input.overwrite },
+    newValues: {
+      tournamentId,
+      matches: matches.length,
+      overwrite: input.overwrite,
+      scheduledStartAt: input.scheduledStartAt,
+      matchIntervalMinutes,
+      matchesPerDay,
+    },
   });
 
   return getTournamentFixture(tournamentId);
@@ -1700,6 +1761,7 @@ export async function updateMatchSchedule(
   actorId?: string
 ) {
   const prisma = requirePrisma();
+  const tournament = await getTournamentById(tournamentId);
   const existingMatch = await prisma.match.findFirst({
     where: { id: matchId, tournamentId, deletedAt: null },
   });
@@ -1708,12 +1770,63 @@ export async function updateMatchSchedule(
     throw new AppError('Partido no encontrado', 404, 'MATCH_NOT_FOUND');
   }
 
+  const competitorFieldsWereEdited =
+    input.homeTeamId !== undefined ||
+    input.awayTeamId !== undefined ||
+    input.homeParticipantId !== undefined ||
+    input.awayParticipantId !== undefined;
+
+  if (competitorFieldsWereEdited) {
+    await ensureCompetitorsBelongToTournament(prisma, tournament, {
+      groupId: input.groupId === undefined ? existingMatch.groupId : input.groupId,
+      venueId: input.venueId === undefined ? existingMatch.venueId : input.venueId,
+      phase: input.phase || existingMatch.phase,
+      scheduledAt: input.scheduledAt === undefined ? existingMatch.scheduledAt : input.scheduledAt,
+      homeTeamId:
+        input.homeTeamId === undefined ? existingMatch.homeTeamId : input.homeTeamId,
+      awayTeamId:
+        input.awayTeamId === undefined ? existingMatch.awayTeamId : input.awayTeamId,
+      homeParticipantId:
+        input.homeParticipantId === undefined
+          ? existingMatch.homeParticipantId
+          : input.homeParticipantId,
+      awayParticipantId:
+        input.awayParticipantId === undefined
+          ? existingMatch.awayParticipantId
+          : input.awayParticipantId,
+    });
+  }
+
   const match = await prisma.match.update({
     where: { id: matchId },
     data: {
+      groupId: input.groupId === undefined ? undefined : input.groupId,
       venueId: input.venueId === undefined ? undefined : input.venueId,
+      phase: input.phase,
       scheduledAt: input.scheduledAt === undefined ? undefined : input.scheduledAt,
-      status: input.status,
+      status: competitorFieldsWereEdited ? MatchStatus.SCHEDULED : input.status,
+      homeTeamId:
+        tournament.mode === CompetitionMode.TEAM && input.homeTeamId !== undefined
+          ? input.homeTeamId
+          : undefined,
+      awayTeamId:
+        tournament.mode === CompetitionMode.TEAM && input.awayTeamId !== undefined
+          ? input.awayTeamId
+          : undefined,
+      homeParticipantId:
+        tournament.mode === CompetitionMode.INDIVIDUAL && input.homeParticipantId !== undefined
+          ? input.homeParticipantId
+          : undefined,
+      awayParticipantId:
+        tournament.mode === CompetitionMode.INDIVIDUAL && input.awayParticipantId !== undefined
+          ? input.awayParticipantId
+          : undefined,
+      winnerTeamId: competitorFieldsWereEdited ? null : undefined,
+      winnerParticipantId: competitorFieldsWereEdited ? null : undefined,
+      homeScore: competitorFieldsWereEdited ? 0 : undefined,
+      awayScore: competitorFieldsWereEdited ? 0 : undefined,
+      startedAt: competitorFieldsWereEdited ? null : undefined,
+      finishedAt: competitorFieldsWereEdited ? null : undefined,
     },
     include: matchInclude,
   });
@@ -1727,6 +1840,10 @@ export async function updateMatchSchedule(
     oldValues: { scheduledAt: existingMatch.scheduledAt, status: existingMatch.status },
     newValues: { scheduledAt: match.scheduledAt, status: match.status },
   });
+
+  if (competitorFieldsWereEdited) {
+    await recalculateTournamentStandings(prisma, tournamentId);
+  }
 
   return match;
 }
@@ -1948,7 +2065,120 @@ function getWinnerData(
     : {
         winnerTeamId: null,
         winnerParticipantId: homeWins ? match.homeParticipantId : match.awayParticipantId,
-      };
+    };
+}
+
+function ensureMatchHasBothCompetitors(
+  tournament: Awaited<ReturnType<typeof getTournamentById>>,
+  match: Prisma.MatchGetPayload<{}>
+) {
+  const hasBothCompetitors =
+    tournament.mode === CompetitionMode.TEAM
+      ? Boolean(match.homeTeamId && match.awayTeamId)
+      : Boolean(match.homeParticipantId && match.awayParticipantId);
+
+  if (!hasBothCompetitors) {
+    throw new AppError(
+      'El partido aun no tiene los dos competidores definidos',
+      400,
+      'MATCH_COMPETITORS_PENDING'
+    );
+  }
+}
+
+function getNextKnockoutPhase(phase: TournamentPhase) {
+  const nextPhaseByCurrentPhase: Partial<Record<TournamentPhase, TournamentPhase>> = {
+    [TournamentPhase.OCTAVOS]: TournamentPhase.CUARTOS,
+    [TournamentPhase.CUARTOS]: TournamentPhase.SEMIFINAL,
+    [TournamentPhase.SEMIFINAL]: TournamentPhase.FINAL,
+  };
+
+  return nextPhaseByCurrentPhase[phase] || null;
+}
+
+async function advanceWinnerToNextKnockoutMatch(
+  prisma: ReturnType<typeof requirePrisma>,
+  tournament: Awaited<ReturnType<typeof getTournamentById>>,
+  match: Prisma.MatchGetPayload<{}>
+) {
+  const nextPhase = getNextKnockoutPhase(match.phase);
+
+  if (!nextPhase) {
+    return;
+  }
+
+  const winnerId =
+    tournament.mode === CompetitionMode.TEAM ? match.winnerTeamId : match.winnerParticipantId;
+
+  if (!winnerId) {
+    return;
+  }
+
+  const phaseMatches = await prisma.match.findMany({
+    where: {
+      tournamentId: tournament.id,
+      phase: match.phase,
+      deletedAt: null,
+    },
+    orderBy: [{ scheduledAt: 'asc' }, { createdAt: 'asc' }],
+    select: { id: true },
+  });
+  const matchIndex = phaseMatches.findIndex((phaseMatch) => phaseMatch.id === match.id);
+
+  if (matchIndex < 0) {
+    return;
+  }
+
+  const nextMatchIndex = Math.floor(matchIndex / 2);
+  const winnerGoesHome = matchIndex % 2 === 0;
+  const nextPhaseMatches = await prisma.match.findMany({
+    where: {
+      tournamentId: tournament.id,
+      phase: nextPhase,
+      deletedAt: null,
+    },
+    orderBy: [{ scheduledAt: 'asc' }, { createdAt: 'asc' }],
+    select: { id: true },
+  });
+  const orderedNextPhaseMatches = [...nextPhaseMatches];
+  const createPlaceholderData = {
+    tournamentId: tournament.id,
+    venueId: match.venueId || tournament.venueId || null,
+    phase: nextPhase,
+    status: MatchStatus.SCHEDULED,
+  };
+
+  while (orderedNextPhaseMatches.length <= nextMatchIndex) {
+    const placeholder = await prisma.match.create({
+      data: createPlaceholderData,
+      select: { id: true },
+    });
+    orderedNextPhaseMatches.push(placeholder);
+  }
+
+  const nextMatch = orderedNextPhaseMatches[nextMatchIndex];
+  const teamData =
+    tournament.mode === CompetitionMode.TEAM
+      ? {
+          homeTeamId: winnerGoesHome ? winnerId : undefined,
+          awayTeamId: winnerGoesHome ? undefined : winnerId,
+        }
+      : {};
+  const participantData =
+    tournament.mode === CompetitionMode.INDIVIDUAL
+      ? {
+          homeParticipantId: winnerGoesHome ? winnerId : undefined,
+          awayParticipantId: winnerGoesHome ? undefined : winnerId,
+        }
+      : {};
+
+  await prisma.match.update({
+    where: { id: nextMatch.id },
+    data: {
+      ...teamData,
+      ...participantData,
+    },
+  });
 }
 
 export async function updateMatchScore(
@@ -1969,6 +2199,9 @@ export async function updateMatchScore(
   if (existingMatch.status === MatchStatus.FINISHED) {
     throw new AppError('No puedes editar marcador de un partido finalizado', 400, 'MATCH_ALREADY_FINISHED');
   }
+
+  const tournament = await getTournamentById(tournamentId);
+  ensureMatchHasBothCompetitors(tournament, existingMatch);
 
   const match = await prisma.match.update({
     where: { id: matchId },
@@ -2014,6 +2247,7 @@ export async function closeMatch(
     throw new AppError('El partido ya esta cerrado', 400, 'MATCH_ALREADY_FINISHED');
   }
 
+  ensureMatchHasBothCompetitors(tournament, existingMatch);
   const winnerData = getWinnerData(tournament, existingMatch, input);
   const match = await prisma.match.update({
     where: { id: matchId },
@@ -2028,6 +2262,7 @@ export async function closeMatch(
     include: matchInclude,
   });
 
+  await advanceWinnerToNextKnockoutMatch(prisma, tournament, match);
   await recalculateTournamentStandings(prisma, tournamentId);
 
   await createAuditLog({

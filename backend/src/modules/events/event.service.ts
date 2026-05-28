@@ -36,7 +36,15 @@ const publicEventInclude = {
   venue: true,
   talk: {
     include: {
-      speaker: true,
+      speaker: {
+        select: {
+          id: true,
+          fullName: true,
+          company: true,
+          bio: true,
+          photoUrl: true,
+        },
+      },
     },
   },
 } satisfies Prisma.EventInclude;

@@ -17,6 +17,7 @@ import PublicTournamentsPage from './pages/Public/PublicTournamentsPage';
 import PublicTournamentFormPage from './pages/Public/PublicTournamentFormPage';
 import ReportsPage from './pages/Reports/ReportsPage';
 import SettingsPage from './pages/Settings/SettingsPage';
+import SpeakersPage from './pages/Speakers/SpeakersPage';
 import TournamentsPage from './pages/Tournaments/TournamentsPage';
 import UsersPage from './pages/Users/UsersPage';
 import VenuesPage from './pages/Venues/VenuesPage';
@@ -68,6 +69,16 @@ const App = () => {
             }
           />
           <Route path="/charlas" element={<Navigate to="/eventos" replace />} />
+          <Route
+            path="/ponentes"
+            element={
+              <AppLayout>
+                <SpeakersPage />
+              </AppLayout>
+            }
+          />
+          <Route path="/ponenentes" element={<Navigate to="/ponentes" replace />} />
+          <Route path="/ponenetes" element={<Navigate to="/ponentes" replace />} />
           <Route
             path="/asistencia"
             element={

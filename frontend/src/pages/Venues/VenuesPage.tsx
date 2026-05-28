@@ -74,8 +74,8 @@ const VenuesPage = () => {
       return;
     }
 
-    if (file.size > 1_500_000) {
-      setError('La foto del espacio no puede superar 1.5 MB.');
+    if (file.size > 5_000_000) {
+      setError('La foto del espacio no puede superar 5 MB.');
       return;
     }
 

@@ -34,6 +34,7 @@ export type EventItem = {
       fullName: string;
       email?: string | null;
       company?: string | null;
+      bio?: string | null;
       photoUrl?: string | null;
     } | null;
   } | null;
@@ -45,6 +46,8 @@ export type AttendanceItem = {
   email?: string | null;
   identifier?: string | null;
   category?: string | null;
+  semester?: string | null;
+  career?: string | null;
   status: string;
   method: string;
   qrCode?: string | null;
@@ -177,7 +180,14 @@ export async function listAttendanceRequest(eventId: string) {
 
 export async function createAttendanceRequest(
   eventId: string,
-  input: { fullName: string; email?: string; identifier?: string; category?: string }
+  input: {
+    fullName: string;
+    email?: string;
+    identifier?: string;
+    category?: string;
+    semester?: string;
+    career?: string;
+  }
 ) {
   const response = await client.post<ApiResponse<AttendanceItem>>(
     endpoints.events.attendance(eventId),
@@ -186,6 +196,8 @@ export async function createAttendanceRequest(
       email: input.email || null,
       identifier: input.identifier || null,
       category: input.category || null,
+      semester: input.semester || null,
+      career: input.career || null,
       method: 'MANUAL',
       status: 'CHECKED_IN',
     }
@@ -293,7 +305,14 @@ export async function getPublicEventQrSvgRequest(
 
 export async function publicRegisterEventRequest(
   eventId: string,
-  input: { fullName: string; identifier: string; category: string; email?: string | null }
+  input: {
+    fullName: string;
+    identifier: string;
+    category: string;
+    semester: string;
+    career: string;
+    email?: string | null;
+  }
 ) {
   const response = await client.post<ApiResponse<AttendanceItem>>(
     endpoints.public.eventRegister(eventId),
@@ -305,7 +324,14 @@ export async function publicRegisterEventRequest(
 
 export async function publicCheckInEventRequest(
   eventId: string,
-  input: { fullName?: string; identifier: string; category?: string; email?: string | null }
+  input: {
+    fullName?: string;
+    identifier: string;
+    category?: string;
+    semester?: string;
+    career?: string;
+    email?: string | null;
+  }
 ) {
   const response = await client.post<ApiResponse<AttendanceItem>>(
     endpoints.public.eventCheckIn(eventId),
