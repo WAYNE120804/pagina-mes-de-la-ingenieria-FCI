@@ -9,6 +9,6 @@ CREATE TABLE "site_settings" (
   CONSTRAINT "site_settings_pkey" PRIMARY KEY ("id")
 );
 
-INSERT INTO "site_settings" ("id", "brand_name", "hero_title")
-VALUES ('public', 'Mes de la Ingenieria', 'Innovacion que transforma el futuro.')
+INSERT INTO "site_settings" ("id", "brand_name", "hero_title", "updated_at")
+VALUES ('public', 'Mes de la Ingenieria', 'Innovacion que transforma el futuro.', CURRENT_TIMESTAMP)
 ON CONFLICT ("id") DO NOTHING;
