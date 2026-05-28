@@ -8,9 +8,6 @@ services:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-    environment:
-      APP_DOMAIN: ${APP_DOMAIN}
-      API_DOMAIN: ${API_DOMAIN}
     depends_on:
       frontend:
         condition: service_healthy

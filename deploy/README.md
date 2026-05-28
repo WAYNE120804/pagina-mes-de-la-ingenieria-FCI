@@ -42,7 +42,7 @@ nano deploy/.env.production
 
 Reemplaza obligatoriamente:
 
-- `APP_DOMAIN` y `API_DOMAIN`. Para prueba por IP puedes poner ambos en `10.60.15.125`.
+- `APP_DOMAIN`. Para prueba por IP puedes poner `10.60.15.125`.
 - `HTTP_PORT`. Para prueba interna puedes dejar `5173`.
 - `FRONTEND_VITE_API_URL`, usando `http://APP_DOMAIN:HTTP_PORT/api` si pruebas por IP.
 - `POSTGRES_PASSWORD` y la misma clave codificada si contiene caracteres especiales en `BACKEND_DATABASE_URL`.
