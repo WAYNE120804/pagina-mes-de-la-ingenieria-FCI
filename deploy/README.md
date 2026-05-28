@@ -11,8 +11,8 @@ La aplicacion queda contenida en cuatro servicios:
 
 - Ubuntu Server 22.04 LTS, 24.04 LTS o una version soportada por Docker Engine.
 - Docker Engine y el plugin Docker Compose instalados desde el repositorio oficial de Docker.
-- Dos registros DNS apuntando a la IP publica de la VM: uno para la web y otro para el API.
-- Puertos TCP `80` y `443` disponibles hacia Internet para que Caddy genere y renueve certificados HTTPS.
+- Para prueba interna puede usarse la IP de la VM por HTTP. Para produccion publica usa dominio.
+- Puerto TCP `80` disponible hacia la red donde se consumira la aplicacion.
 - Puerto `22` restringido a las IP desde las que administraras el servidor.
 
 Guias oficiales:
@@ -42,8 +42,8 @@ nano deploy/.env.production
 
 Reemplaza obligatoriamente:
 
-- `APP_DOMAIN` y `API_DOMAIN`.
-- `FRONTEND_VITE_API_URL`, usando `https://API_DOMAIN/api`.
+- `APP_DOMAIN` y `API_DOMAIN`. Para prueba por IP puedes poner ambos en `10.60.15.125`.
+- `FRONTEND_VITE_API_URL`, usando `http://APP_DOMAIN/api` si pruebas por IP.
 - `POSTGRES_PASSWORD` y la misma clave codificada si contiene caracteres especiales en `BACKEND_DATABASE_URL`.
 - `BACKEND_JWT_ACCESS_SECRET`, con una cadena aleatoria larga.
 - `SEED_ADMIN_EMAIL` y `SEED_ADMIN_PASSWORD`.
@@ -117,4 +117,4 @@ de datos.
 - Haz respaldos antes de desplegar migraciones.
 - Renueva claves si un archivo `.env` llega al repositorio por error.
 - Revisa el firewall: Docker puede publicar puertos sin pasar por algunas reglas de `ufw`.
-- Verifica despues del despliegue `https://APP_DOMAIN` y `https://API_DOMAIN/api/health`.
+- Verifica despues del despliegue `http://APP_DOMAIN` y `http://APP_DOMAIN/api/health`.

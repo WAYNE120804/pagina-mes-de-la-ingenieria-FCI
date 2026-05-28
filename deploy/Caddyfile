@@ -1,9 +1,32 @@
-{$APP_DOMAIN} {
-  encode gzip zstd
-  reverse_proxy frontend:80
+{
+  auto_https off
 }
 
-{$API_DOMAIN} {
+http://{$APP_DOMAIN} {
+  encode gzip zstd
+
+  handle /api/* {
+    reverse_proxy backend:3002
+  }
+
+  handle {
+    reverse_proxy frontend:80
+  }
+}
+
+http://{$API_DOMAIN} {
   encode gzip zstd
   reverse_proxy backend:3002
+}
+
+:80 {
+  encode gzip zstd
+
+  handle /api/* {
+    reverse_proxy backend:3002
+  }
+
+  handle {
+    reverse_proxy frontend:80
+  }
 }
