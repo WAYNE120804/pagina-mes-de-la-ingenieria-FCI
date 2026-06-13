@@ -6,9 +6,19 @@ export const endpoints = {
     logout: () => '/auth/logout',
     me: () => '/auth/me',
   },
+  audit: {
+    list: () => '/audit',
+  },
+  notifications: {
+    list: () => '/notifications',
+    send: () => '/notifications',
+    sendList: () => '/notifications/send-list',
+  },
   users: {
     list: () => '/users',
     create: () => '/users',
+    updateMe: () => '/users/me',
+    changePassword: () => '/users/me/password',
     detail: (id: string) => `/users/${id}`,
     resetPassword: (id: string) => `/users/${id}/reset-password`,
   },
@@ -65,6 +75,7 @@ export const endpoints = {
     fixture: (id: string) => `/tournaments/${id}/fixture`,
     standings: (id: string) => `/tournaments/${id}/standings`,
     recalculateStandings: (id: string) => `/tournaments/${id}/standings/recalculate`,
+    standingDetail: (id: string, standingId: string) => `/tournaments/${id}/standings/${standingId}`,
     exportExcel: (id: string) => `/tournaments/${id}/export.xlsx`,
     generateGroups: (id: string) => `/tournaments/${id}/groups/generate`,
     generateFixture: (id: string) => `/tournaments/${id}/fixture/generate`,

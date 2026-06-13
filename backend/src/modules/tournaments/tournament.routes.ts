@@ -21,6 +21,7 @@ import {
   registerTeam,
   refreshStandings,
   scoreMatch,
+  updateStanding,
   updateIndividualParticipant,
   updateMatch,
   updateTeamRegistration,
@@ -37,8 +38,10 @@ import {
   teamRegistrationSchema,
   tournamentMatchIdParamsSchema,
   tournamentParticipantIdParamsSchema,
+  tournamentStandingIdParamsSchema,
   tournamentTeamIdParamsSchema,
   tournamentIdParamsSchema,
+  updateStandingSchema,
   updateIndividualRegistrationSchema,
   updateMatchSchema,
   updateTeamRegistrationSchema,
@@ -84,6 +87,12 @@ tournamentRouter.post(
   permissionMiddleware('tournaments.write'),
   validateRequest({ params: tournamentIdParamsSchema }),
   refreshStandings
+);
+tournamentRouter.patch(
+  '/:id/standings/:standingId',
+  permissionMiddleware('tournaments.write'),
+  validateRequest({ params: tournamentStandingIdParamsSchema, body: updateStandingSchema }),
+  updateStanding
 );
 tournamentRouter.get(
   '/:id/export.xlsx',

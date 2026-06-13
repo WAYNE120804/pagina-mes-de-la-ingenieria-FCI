@@ -61,14 +61,28 @@ export async function updateUserRequest(id: string, input: Partial<UserInput>) {
   return response.data.data;
 }
 
+export async function updateOwnProfileRequest(input: Partial<Omit<UserInput, 'password' | 'roles' | 'status'>>) {
+  const response = await client.patch<ApiResponse<UserRow>>(endpoints.users.updateMe(), input);
+
+  return response.data.data;
+}
+
+export async function changeOwnPasswordRequest(input: {
+  currentPassword: string;
+  password: string;
+  confirmPassword: string;
+}) {
+  const response = await client.patch<ApiResponse<UserRow>>(endpoints.users.changePassword(), input);
+
+  return response.data.data;
+}
+
 export async function deleteUserRequest(id: string) {
   await client.delete(endpoints.users.detail(id));
 }
 
-export async function resetUserPasswordRequest(id: string, password: string) {
-  const response = await client.post<ApiResponse<UserRow>>(endpoints.users.resetPassword(id), {
-    password,
-  });
+export async function resetUserPasswordRequest(id: string) {
+  const response = await client.post<ApiResponse<UserRow>>(endpoints.users.resetPassword(id), {});
 
   return response.data.data;
 }

@@ -8,6 +8,7 @@ import { getPrisma } from '../../lib/prisma';
 import { createAuditLog } from '../../utils/audit';
 import { buildPaginationMeta, type PaginationParams } from '../../utils/pagination';
 import { onlyActive } from '../../utils/soft-delete';
+import { sendEmailSafe } from '../../services/email.service';
 import type {
   CreateAttendanceInput,
   ListAttendanceQuery,
@@ -45,14 +46,112 @@ function requirePrisma() {
   return prisma;
 }
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+function formatEventDate(event: Awaited<ReturnType<typeof getActiveEvent>>) {
+  return new Intl.DateTimeFormat('es-CO', {
+    dateStyle: 'full',
+    timeStyle: 'short',
+    timeZone: 'America/Bogota',
+  }).format(event.startsAt);
+}
+
+function attendanceEmail(attendance: Prisma.AttendanceGetPayload<{ include: typeof attendanceInclude }>) {
+  return attendance.user?.email || attendance.email || '';
+}
+
+function attendanceName(attendance: Prisma.AttendanceGetPayload<{ include: typeof attendanceInclude }>) {
+  return attendance.user?.name || attendance.fullName || 'Asistente';
+}
+
+function sendEventRegistrationEmail(
+  event: Awaited<ReturnType<typeof getActiveEvent>>,
+  attendance: Prisma.AttendanceGetPayload<{ include: typeof attendanceInclude }>
+) {
+  const email = attendanceEmail(attendance);
+
+  if (!email) {
+    return;
+  }
+
+  void sendEmailSafe({
+    to: { email, name: attendanceName(attendance) },
+    subject: `Confirmacion de inscripcion - ${event.title}`,
+    text: [
+      `Hola ${attendanceName(attendance)},`,
+      '',
+      `Tu inscripcion al evento "${event.title}" fue registrada correctamente.`,
+      `Fecha y hora: ${formatEventDate(event)}`,
+      '',
+      'Conserva este correo como soporte de tu registro.',
+    ].join('\n'),
+    html: `<p>Hola ${attendanceName(attendance)},</p><p>Tu inscripcion al evento <strong>${event.title}</strong> fue registrada correctamente.</p><p><strong>Fecha y hora:</strong> ${formatEventDate(event)}</p><p>Conserva este correo como soporte de tu registro.</p>`,
+  });
+}
+
+function sendEventCheckInEmail(
+  event: Awaited<ReturnType<typeof getActiveEvent>>,
+  attendance: Prisma.AttendanceGetPayload<{ include: typeof attendanceInclude }>
+) {
+  const email = attendanceEmail(attendance);
+
+  if (!email) {
+    return;
+  }
+
+  void sendEmailSafe({
+    to: { email, name: attendanceName(attendance) },
+    subject: `Asistencia confirmada - ${event.title}`,
+    text: [
+      `Hola ${attendanceName(attendance)},`,
+      '',
+      `Tu asistencia al evento "${event.title}" fue registrada correctamente.`,
+      `Fecha y hora del evento: ${formatEventDate(event)}`,
+      attendance.checkedInAt ? `Registro de asistencia: ${formatEventDate({ ...event, startsAt: attendance.checkedInAt } as any)}` : '',
+      '',
+      'Este correo sirve como soporte de asistencia.',
+    ].filter(Boolean).join('\n'),
+    html: `<p>Hola ${attendanceName(attendance)},</p><p>Tu asistencia al evento <strong>${event.title}</strong> fue registrada correctamente.</p><p><strong>Fecha y hora del evento:</strong> ${formatEventDate(event)}</p><p>Este correo sirve como soporte de asistencia.</p>`,
+  });
+}
+
 async function getActiveEvent(eventId: string) {
   const prisma = requirePrisma();
-  const event = await prisma.event.findFirst({
+  const normalizedEventId = slugify(eventId);
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId);
+  const directEvent = await prisma.event.findFirst({
     where: {
-      id: eventId,
+      OR: [
+        isUuid ? { id: eventId } : undefined,
+        { slug: eventId },
+      ].filter(Boolean) as Prisma.EventWhereInput[],
       ...onlyActive,
     },
   });
+
+  if (directEvent) {
+    return directEvent;
+  }
+
+  const publicSlugEvent = await prisma.event.findFirst({
+    where: {
+      ...onlyActive,
+      title: {
+        equals: eventId.replace(/-/g, ' '),
+        mode: 'insensitive',
+      },
+    },
+  });
+
+  const event = publicSlugEvent || (await prisma.event.findMany({ where: onlyActive }))
+    .find((item) => slugify(item.title) === normalizedEventId);
 
   if (!event) {
     throw new AppError('Evento no encontrado', 404, 'EVENT_NOT_FOUND');
@@ -141,7 +240,7 @@ export async function listAttendance(
 ) {
   const prisma = requirePrisma();
 
-  await getActiveEvent(eventId);
+  const event = await getActiveEvent(eventId);
 
   const where: Prisma.AttendanceWhereInput = {
     eventId,
@@ -205,6 +304,12 @@ export async function createAttendance(
     newValues: { eventId, userId: input.userId, email: input.email },
   });
 
+  if (attendance.status === AttendanceStatus.CHECKED_IN) {
+    sendEventCheckInEmail(event, attendance);
+  } else {
+    sendEventRegistrationEmail(event, attendance);
+  }
+
   return attendance;
 }
 
@@ -248,6 +353,8 @@ export async function preregisterAttendance(
     newValues: { eventId, userId: input.userId, email: input.email, method: AttendanceMethod.QR },
   });
 
+  sendEventRegistrationEmail(event, attendance);
+
   return attendance;
 }
 
@@ -258,7 +365,7 @@ export async function scanAttendance(
 ) {
   const prisma = requirePrisma();
 
-  await getActiveEvent(eventId);
+  const event = await getActiveEvent(eventId);
 
   const codeFilters: Prisma.AttendanceWhereInput[] = [];
 
@@ -305,6 +412,8 @@ export async function scanAttendance(
     oldValues: { status: attendance.status },
     newValues: { status: updatedAttendance.status, scanned: true },
   });
+
+  sendEventCheckInEmail(event, updatedAttendance);
 
   return updatedAttendance;
 }
@@ -388,10 +497,11 @@ function assertAttendanceWindow(event: Awaited<ReturnType<typeof getActiveEvent>
   }
 }
 
-function buildPublicFormUrl(origin: string, eventId: string, mode: 'registration' | 'attendance') {
+function buildPublicFormUrl(origin: string, eventTitle: string, fallbackSlug: string, mode: 'registration' | 'attendance') {
   const pathMode = mode === 'registration' ? 'inscripcion' : 'asistencia';
+  const eventSlug = slugify(eventTitle) || fallbackSlug;
 
-  return `${origin.replace(/\/$/, '')}/public/eventos/${eventId}/${pathMode}`;
+  return `${origin.replace(/\/$/, '')}/public/eventos/${eventSlug}/${pathMode}`;
 }
 
 export async function getPublicEventForm(
@@ -417,7 +527,7 @@ export async function getPublicEventForm(
       capacity: event.capacity,
     },
     mode,
-    url: buildPublicFormUrl(origin, eventId, mode),
+    url: buildPublicFormUrl(origin, event.title, event.slug || event.id, mode),
     attendanceOpensAt: new Date(event.startsAt.getTime() - 30 * 60 * 1000),
     attendanceClosesAt: new Date(event.endsAt.getTime() + 30 * 60 * 1000),
   };
@@ -428,9 +538,9 @@ export async function getPublicFormQrSvg(
   mode: 'registration' | 'attendance',
   origin: string
 ) {
-  await getPublicEventForm(eventId, mode, origin);
+  const form = await getPublicEventForm(eventId, mode, origin);
 
-  return QRCode.toString(buildPublicFormUrl(origin, eventId, mode), {
+  return QRCode.toString(form.url, {
     type: 'svg',
     margin: 1,
     width: 256,
@@ -441,10 +551,11 @@ export async function getPublicFormQrSvg(
 export async function publicRegisterAttendance(eventId: string, input: PublicAttendanceInput) {
   const prisma = requirePrisma();
   const event = await getActiveEvent(eventId);
+  const resolvedEventId = event.id;
 
   assertWorkshopEvent(event);
-  await assertCapacity(eventId, event.capacity);
-  await assertNoDuplicate(eventId, {
+  await assertCapacity(resolvedEventId, event.capacity);
+  await assertNoDuplicate(resolvedEventId, {
     ...input,
     method: AttendanceMethod.QR,
     status: AttendanceStatus.REGISTERED,
@@ -452,7 +563,7 @@ export async function publicRegisterAttendance(eventId: string, input: PublicAtt
 
   const attendance = await prisma.attendance.create({
     data: {
-      eventId,
+      eventId: resolvedEventId,
       fullName: input.fullName,
       email: input.email || null,
       identifier: input.identifier,
@@ -461,7 +572,7 @@ export async function publicRegisterAttendance(eventId: string, input: PublicAtt
       career: input.career,
       method: AttendanceMethod.QR,
       status: AttendanceStatus.REGISTERED,
-      qrCode: createQrToken(eventId),
+      qrCode: createQrToken(resolvedEventId),
       tempCode: createTempCode(),
     },
     include: attendanceInclude,
@@ -472,8 +583,10 @@ export async function publicRegisterAttendance(eventId: string, input: PublicAtt
     action: AuditAction.CREATE,
     entity: 'Attendance',
     entityId: attendance.id,
-    newValues: { eventId, identifier: input.identifier, publicRegistration: true },
+    newValues: { eventId: resolvedEventId, identifier: input.identifier, publicRegistration: true },
   });
+
+  sendEventRegistrationEmail(event, attendance);
 
   return attendance;
 }
@@ -481,13 +594,14 @@ export async function publicRegisterAttendance(eventId: string, input: PublicAtt
 export async function publicCheckInAttendance(eventId: string, input: PublicCheckInInput) {
   const prisma = requirePrisma();
   const event = await getActiveEvent(eventId);
+  const resolvedEventId = event.id;
 
   assertPublicEventType(event);
   assertAttendanceWindow(event);
 
   const existingAttendance = await prisma.attendance.findFirst({
     where: {
-      eventId,
+      eventId: resolvedEventId,
       deletedAt: null,
       OR: [
         { identifier: input.identifier },
@@ -520,6 +634,8 @@ export async function publicCheckInAttendance(eventId: string, input: PublicChec
       newValues: { status: attendance.status, publicCheckIn: true },
     });
 
+    sendEventCheckInEmail(event, attendance);
+
     return attendance;
   }
 
@@ -531,11 +647,11 @@ export async function publicCheckInAttendance(eventId: string, input: PublicChec
     );
   }
 
-  await assertCapacity(eventId, event.capacity);
+  await assertCapacity(resolvedEventId, event.capacity);
 
   const attendance = await prisma.attendance.create({
     data: {
-      eventId,
+      eventId: resolvedEventId,
       fullName: input.fullName,
       email: input.email || null,
       identifier: input.identifier,
@@ -545,7 +661,7 @@ export async function publicCheckInAttendance(eventId: string, input: PublicChec
       method: AttendanceMethod.QR,
       status: AttendanceStatus.CHECKED_IN,
       checkedInAt: new Date(),
-      qrCode: createQrToken(eventId),
+      qrCode: createQrToken(resolvedEventId),
       tempCode: createTempCode(),
     },
     include: attendanceInclude,
@@ -556,8 +672,10 @@ export async function publicCheckInAttendance(eventId: string, input: PublicChec
     action: AuditAction.CREATE,
     entity: 'Attendance',
     entityId: attendance.id,
-    newValues: { eventId, identifier: input.identifier, publicCheckIn: true },
+    newValues: { eventId: resolvedEventId, identifier: input.identifier, publicCheckIn: true },
   });
+
+  sendEventCheckInEmail(event, attendance);
 
   return attendance;
 }

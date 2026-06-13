@@ -1,16 +1,20 @@
 import { AuditAction, Prisma, RoleCode } from '../../lib/prisma-client';
 import { AppError } from '../../lib/app-error';
 import { getPrisma } from '../../lib/prisma';
-import { hashPassword } from '../../lib/password';
+import { hashPassword, verifyPassword } from '../../lib/password';
 import { createAuditLog } from '../../utils/audit';
 import { buildPaginationMeta, type PaginationParams } from '../../utils/pagination';
 import { onlyActive, softDeleteData } from '../../utils/soft-delete';
 import type {
+  ChangeOwnPasswordInput,
   CreateUserInput,
   ListUsersQuery,
   ResetUserPasswordInput,
+  UpdateOwnProfileInput,
   UpdateUserInput,
 } from './user.schemas';
+
+const DEFAULT_RESET_PASSWORD = 'UmzFCI2026*$';
 
 const userInclude = {
   program: true,
@@ -175,8 +179,6 @@ export async function updateUser(id: string, input: UpdateUserInput, actorId?: s
   }
 
   const roleIds = input.roles ? await resolveRoleIds(input.roles) : null;
-  const passwordHash = input.password ? await hashPassword(input.password) : undefined;
-
   const user = await prisma.$transaction(async (tx) => {
     if (roleIds) {
       await tx.userRoleAssignment.deleteMany({
@@ -190,7 +192,6 @@ export async function updateUser(id: string, input: UpdateUserInput, actorId?: s
         name: input.name,
         email: input.email,
         position: input.position,
-        passwordHash,
         phone: input.phone,
         programId: input.programId === undefined ? undefined : input.programId,
         semester: input.semester === undefined ? undefined : input.semester,
@@ -227,9 +228,108 @@ export async function updateUser(id: string, input: UpdateUserInput, actorId?: s
   return sanitizeUser(user);
 }
 
+export async function updateOwnProfile(
+  id: string,
+  input: UpdateOwnProfileInput,
+  actorId?: string
+) {
+  const prisma = requirePrisma();
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      id,
+      ...onlyActive,
+    },
+    include: userInclude,
+  });
+
+  if (!existingUser) {
+    throw new AppError('Usuario no encontrado', 404, 'USER_NOT_FOUND');
+  }
+
+  const user = await prisma.user.update({
+    where: { id },
+    data: {
+      name: input.name,
+      email: input.email,
+      position: input.position,
+      phone: input.phone,
+      programId: input.programId === undefined ? undefined : input.programId,
+      semester: input.semester === undefined ? undefined : input.semester,
+      universityCode:
+        input.universityCode === undefined ? undefined : input.universityCode,
+      photoUrl: input.photoUrl === undefined ? undefined : input.photoUrl,
+    },
+    include: userInclude,
+  });
+
+  await createAuditLog({
+    prisma,
+    actorId,
+    action: AuditAction.UPDATE,
+    entity: 'User',
+    entityId: id,
+    oldValues: {
+      email: existingUser.email,
+      name: existingUser.name,
+    },
+    newValues: {
+      email: user.email,
+      name: user.name,
+    },
+  });
+
+  return sanitizeUser(user);
+}
+
+export async function changeOwnPassword(
+  id: string,
+  input: ChangeOwnPasswordInput,
+  actorId?: string
+) {
+  const prisma = requirePrisma();
+  const user = await prisma.user.findFirst({
+    where: {
+      id,
+      ...onlyActive,
+    },
+    include: userInclude,
+  });
+
+  if (!user || !user.passwordHash) {
+    throw new AppError('Usuario no encontrado', 404, 'USER_NOT_FOUND');
+  }
+
+  const isValidPassword = await verifyPassword(input.currentPassword, user.passwordHash);
+
+  if (!isValidPassword) {
+    throw new AppError('La contrasena actual no es correcta', 400, 'INVALID_CURRENT_PASSWORD');
+  }
+
+  const passwordHash = await hashPassword(input.password);
+  const updatedUser = await prisma.user.update({
+    where: { id },
+    data: {
+      passwordHash,
+    },
+    include: userInclude,
+  });
+
+  await createAuditLog({
+    prisma,
+    actorId,
+    action: AuditAction.UPDATE,
+    entity: 'User',
+    entityId: id,
+    oldValues: { passwordChanged: false },
+    newValues: { passwordChanged: true },
+  });
+
+  return sanitizeUser(updatedUser);
+}
+
 export async function resetUserPassword(
   id: string,
-  input: ResetUserPasswordInput,
+  _input: ResetUserPasswordInput,
   actorId?: string
 ) {
   const prisma = requirePrisma();
@@ -245,7 +345,7 @@ export async function resetUserPassword(
     throw new AppError('Usuario no encontrado', 404, 'USER_NOT_FOUND');
   }
 
-  const passwordHash = await hashPassword(input.password);
+  const passwordHash = await hashPassword(DEFAULT_RESET_PASSWORD);
   const updatedUser = await prisma.user.update({
     where: { id },
     data: {

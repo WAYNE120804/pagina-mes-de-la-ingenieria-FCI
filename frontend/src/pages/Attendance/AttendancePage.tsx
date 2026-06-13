@@ -8,12 +8,14 @@ import {
   getAttendanceStatsRequest,
   listAttendanceRequest,
   listEventsRequest,
+  sendEventAttendanceListRequest,
   updateAttendanceStatusRequest,
   type AttendanceItem,
   type AttendanceStats,
   type EventItem,
 } from '../../api/events.api';
 import Topbar from '../../components/Layout/Topbar';
+import FormModal from '../../components/common/FormModal';
 import {
   attendanceMethodLabels,
   attendanceStatusLabels,
@@ -268,6 +270,10 @@ const AttendancePage = () => {
   const [career, setCareer] = useState('');
   const [publicQrSvg, setPublicQrSvg] = useState('');
   const [publicLink, setPublicLink] = useState('');
+  const [showListModal, setShowListModal] = useState(false);
+  const [listRecipients, setListRecipients] = useState('');
+  const [listSubject, setListSubject] = useState('');
+  const [listBody, setListBody] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -383,6 +389,34 @@ const AttendancePage = () => {
     setNotice(`${emails.length} correos copiados.`);
   }
 
+  async function sendAttendanceList(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!eventId) {
+      return;
+    }
+
+    const recipients = listRecipients
+      .split(/[;,\n]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    try {
+      setError('');
+      setNotice('');
+      await sendEventAttendanceListRequest(eventId, {
+        recipients,
+        subject: listSubject || `Lista de asistencia - ${selectedEvent?.title || 'Evento'}`,
+        body: listBody || 'Adjunto la lista de asistencia para soporte de permiso academico.',
+      });
+      setShowListModal(false);
+      setListRecipients('');
+      setNotice('Lista enviada por correo. Si SMTP falla, la app sigue funcionando y queda registrado.');
+    } catch {
+      setError('No fue posible enviar la lista. Revisa correos destino o configuracion SMTP.');
+    }
+  }
+
   function downloadAttendanceExcel() {
     setError('');
 
@@ -403,6 +437,28 @@ const AttendancePage = () => {
     <div>
       <Topbar title="Asistencia" />
       <div className="space-y-6 px-6 py-6">
+        <FormModal
+          open={showListModal}
+          title="Enviar lista de asistencia"
+          description="Envia a profesores o responsables un Excel con los inscritos/asistentes."
+          onClose={() => setShowListModal(false)}
+        >
+          <form className="mt-4 space-y-4" onSubmit={sendAttendanceList}>
+            <label className="block text-sm font-medium text-slate-700">
+              Correos destino
+              <textarea className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={listRecipients} onChange={(event) => setListRecipients(event.target.value)} placeholder="profesor@umanizales.edu.co; otro@umanizales.edu.co" required />
+            </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Asunto
+              <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={listSubject} onChange={(event) => setListSubject(event.target.value)} placeholder={`Lista de asistencia - ${selectedEvent?.title || 'Evento'}`} />
+            </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Mensaje
+              <textarea className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={listBody} onChange={(event) => setListBody(event.target.value)} placeholder="Adjunto la lista para permiso academico." />
+            </label>
+            <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white">Enviar lista</button>
+          </form>
+        </FormModal>
         <div className="grid gap-4 md:grid-cols-4">
           <div className="rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Registrados</p>
@@ -494,6 +550,9 @@ const AttendancePage = () => {
                 </button>
                 <button className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50" type="button" disabled={attendance.length === 0} onClick={downloadAttendanceExcel}>
                   Descargar Excel
+                </button>
+                <button className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50" type="button" disabled={attendance.length === 0} onClick={() => setShowListModal(true)}>
+                  Enviar lista
                 </button>
               </div>
             </div>

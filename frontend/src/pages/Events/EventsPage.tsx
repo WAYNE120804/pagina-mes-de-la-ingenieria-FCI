@@ -128,6 +128,161 @@ function formatAttendanceWindow(event: EventItem) {
   return `${formatTime(opensAt)} - ${formatTime(closesAt)}`;
 }
 
+function fileSafeName(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+}
+
+function wrapCanvasText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number
+) {
+  const words = text.split(' ');
+  let line = '';
+  let currentY = y;
+
+  for (const word of words) {
+    const nextLine = line ? `${line} ${word}` : word;
+    if (context.measureText(nextLine).width > maxWidth && line) {
+      context.fillText(line, x, currentY);
+      line = word;
+      currentY += lineHeight;
+    } else {
+      line = nextLine;
+    }
+  }
+
+  if (line) {
+    context.fillText(line, x, currentY);
+  }
+
+  return currentY;
+}
+
+async function downloadPublicEventCard(
+  svg: string,
+  event: EventItem,
+  mode: 'registration' | 'attendance',
+  publicLink: string
+) {
+  const image = new Image();
+  const imageLoaded = new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve();
+    image.onerror = () => reject(new Error('No fue posible preparar el QR.'));
+  });
+
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  await imageLoaded;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    throw new Error('No fue posible crear la tarjeta.');
+  }
+
+  context.fillStyle = '#0d1210';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  context.fillStyle = '#18261c';
+  for (let x = 0; x < canvas.width; x += 30) {
+    for (let y = 0; y < canvas.height; y += 30) {
+      context.beginPath();
+      context.arc(x, y, 1.2, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+
+  context.fillStyle = '#1a1f1d';
+  context.strokeStyle = '#5adf82';
+  context.lineWidth = 3;
+  context.beginPath();
+  context.roundRect(54, 54, canvas.width - 108, canvas.height - 108, 28);
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = '#5adf82';
+  context.font = '800 24px Arial';
+  context.textAlign = 'center';
+  context.fillText('MES DE LA INGENIERIA', canvas.width / 2, 128);
+
+  context.fillStyle = '#f4fff0';
+  context.font = '900 48px Arial';
+  const titleBottom = wrapCanvasText(context, event.title, canvas.width / 2, 208, 850, 58);
+
+  const modeLabel = mode === 'registration' ? 'INSCRIPCION' : 'ASISTENCIA';
+  const day = new Date(event.startsAt).toLocaleDateString('es-CO', { weekday: 'long' });
+  const date = new Date(event.startsAt).toLocaleDateString('es-CO', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+  const schedule = `${formatTime(event.startsAt)} - ${formatTime(event.endsAt)}`;
+  const venue = event.venue?.name || 'Sin espacio asignado';
+
+  context.fillStyle = '#8be694';
+  context.font = '800 24px Arial';
+  context.fillText(modeLabel, canvas.width / 2, titleBottom + 54);
+
+  const detailsY = titleBottom + 118;
+  context.textAlign = 'left';
+  context.fillStyle = '#cfe6ca';
+  context.font = '700 30px Arial';
+  context.fillText('Fecha', 130, detailsY);
+  context.fillText('Dia', 130, detailsY + 92);
+  context.fillText('Horario', 130, detailsY + 184);
+  context.fillText('Lugar', 130, detailsY + 276);
+
+  context.fillStyle = '#f4fff0';
+  context.font = '700 34px Arial';
+  context.fillText(date, 330, detailsY);
+  context.fillText(day.charAt(0).toUpperCase() + day.slice(1), 330, detailsY + 92);
+  context.fillText(schedule, 330, detailsY + 184);
+  wrapCanvasText(context, venue, 330, detailsY + 276, 590, 42);
+
+  const qrSize = 560;
+  const qrX = (canvas.width - qrSize) / 2;
+  const qrY = 710;
+  context.fillStyle = '#f8fff7';
+  context.beginPath();
+  context.roundRect(qrX - 28, qrY - 28, qrSize + 56, qrSize + 56, 24);
+  context.fill();
+  context.strokeStyle = '#8be694';
+  context.lineWidth = 3;
+  context.stroke();
+  context.drawImage(image, qrX, qrY, qrSize, qrSize);
+
+  context.fillStyle = '#9fb39d';
+  context.font = '600 20px Arial';
+  context.textAlign = 'center';
+  context.fillText(publicLink, canvas.width / 2, 1310);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, 'image/png');
+  });
+
+  if (!blob) {
+    throw new Error('No fue posible descargar la tarjeta.');
+  }
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `tarjeta-${mode === 'registration' ? 'inscripcion' : 'asistencia'}-${fileSafeName(event.title) || 'evento'}.png`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function readImageAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -153,6 +308,8 @@ const EventsPage = () => {
   const [publicQrSvg, setPublicQrSvg] = useState('');
   const [publicLink, setPublicLink] = useState('');
   const [publicLinkTitle, setPublicLinkTitle] = useState('');
+  const [publicLinkEvent, setPublicLinkEvent] = useState<EventItem | null>(null);
+  const [publicLinkMode, setPublicLinkMode] = useState<'registration' | 'attendance'>('attendance');
   const [showEventModal, setShowEventModal] = useState(false);
   const [error, setError] = useState('');
 
@@ -326,13 +483,16 @@ const EventsPage = () => {
   async function showPublicLink(event: EventItem, mode: 'registration' | 'attendance') {
     setError('');
     try {
+      const publicEventKey = event.slug || event.id;
       const [formData, svg] = await Promise.all([
-        getPublicEventFormRequest(event.id, mode),
-        getPublicEventQrSvgRequest(event.id, mode),
+        getPublicEventFormRequest(publicEventKey, mode),
+        getPublicEventQrSvgRequest(publicEventKey, mode),
       ]);
       setPublicLink(formData.url);
       setPublicQrSvg(svg);
       setPublicLinkTitle(`${mode === 'registration' ? 'Inscripcion' : 'Asistencia'} - ${event.title}`);
+      setPublicLinkEvent(event);
+      setPublicLinkMode(mode);
     } catch {
       setError('No fue posible generar el link y QR para este evento.');
     }
@@ -548,15 +708,67 @@ const EventsPage = () => {
           </section>
 
           {publicQrSvg ? (
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-base font-semibold text-slate-950">{publicLinkTitle}</h3>
-                  <p className="mt-1 break-all text-sm text-slate-600">{publicLink}</p>
+            <section className="overflow-hidden rounded-xl border border-[#5adf82]/35 bg-[#191d1c] shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#5adf82]/20 px-5 py-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8be694]">
+                    Link publico
+                  </p>
+                  <h3 className="mt-1 text-lg font-semibold text-[#f4fff0]">{publicLinkTitle}</h3>
                 </div>
-                <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => void navigator.clipboard.writeText(publicLink)}>Copiar link</button>
+                <div className="flex flex-wrap gap-2">
+                  <button className="rounded-md border border-[#5adf82]/35 px-3 py-2 text-sm font-semibold text-[#f4fff0]" type="button" onClick={() => void navigator.clipboard.writeText(publicLink)}>Copiar link</button>
+                  {publicLinkEvent ? (
+                    <button
+                      className="rounded-md bg-[#8be694] px-3 py-2 text-sm font-semibold text-[#0d1210]"
+                      type="button"
+                      onClick={() => {
+                        downloadPublicEventCard(publicQrSvg, publicLinkEvent, publicLinkMode, publicLink)
+                          .catch(() => setError('No fue posible descargar la tarjeta QR.'));
+                      }}
+                    >
+                      Descargar tarjeta
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              <div className="mt-4 h-48 w-48 rounded-md border border-slate-200 bg-slate-50 p-3" dangerouslySetInnerHTML={{ __html: publicQrSvg }} />
+              <div className="grid gap-5 p-5 lg:grid-cols-[320px_1fr]">
+                <div className="rounded-xl border border-[#5adf82]/35 bg-[#0f1513] p-5">
+                  <div
+                    className="qr-svg-fit mx-auto aspect-square w-full max-w-[260px] rounded-lg border border-[#8be694]/50 bg-white p-3 shadow-[0_0_28px_rgba(90,223,130,0.16)]"
+                    dangerouslySetInnerHTML={{ __html: publicQrSvg }}
+                  />
+                </div>
+                <div className="flex min-w-0 flex-col justify-center rounded-xl border border-[#5adf82]/25 bg-[#101613] p-5">
+                  {publicLinkEvent ? (
+                    <>
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8be694]">
+                        {publicLinkMode === 'registration' ? 'Inscripcion' : 'Asistencia'}
+                      </p>
+                      <h4 className="mt-2 text-2xl font-extrabold text-[#f4fff0]">{publicLinkEvent.title}</h4>
+                      <dl className="mt-5 grid gap-3 text-sm text-[#cfe6ca] sm:grid-cols-2">
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8aa08a]">Fecha</dt>
+                          <dd className="mt-1 font-semibold">{formatDate(publicLinkEvent.startsAt)}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8aa08a]">Horario</dt>
+                          <dd className="mt-1 font-semibold">{formatTime(publicLinkEvent.startsAt)} - {formatTime(publicLinkEvent.endsAt)}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8aa08a]">Lugar</dt>
+                          <dd className="mt-1 font-semibold">{publicLinkEvent.venue?.name || 'Sin espacio'}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8aa08a]">Tipo</dt>
+                          <dd className="mt-1 font-semibold">{labelFor(eventTypeLabels, publicLinkEvent.type)}</dd>
+                        </div>
+                      </dl>
+                    </>
+                  ) : null}
+                  <p className="mt-5 break-all rounded-lg border border-[#5adf82]/20 bg-[#0b100e] px-3 py-2 text-xs text-[#b9cbb8]">{publicLink}</p>
+                </div>
+              </div>
             </section>
           ) : null}
 

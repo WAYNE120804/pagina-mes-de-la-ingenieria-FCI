@@ -423,6 +423,25 @@ export async function refreshStandings(
   }
 }
 
+export async function updateStanding(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const standing = await tournamentService.updateTournamentStanding(
+      String(req.params.id),
+      String(req.params.standingId),
+      req.body,
+      req.user?.id
+    );
+
+    res.json(successResponse('Tabla actualizada', standing));
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function exportTournamentExcel(
   req: AuthenticatedRequest,
   res: Response,

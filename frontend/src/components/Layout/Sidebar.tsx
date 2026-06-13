@@ -5,15 +5,13 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
-  { to: '/', label: 'Inicio' },
+  { to: '/admin', label: 'Inicio' },
   { to: '/usuarios', label: 'Usuarios' },
   { to: '/espacios', label: 'Espacios' },
   { to: '/eventos', label: 'Eventos' },
   { to: '/ponentes', label: 'Ponentes' },
   { to: '/asistencia', label: 'Asistencia' },
   { to: '/torneos', label: 'Torneos' },
-  { to: '/hackathon', label: 'Hackathon' },
-  { to: '/evaluacion', label: 'Evaluacion' },
   { to: '/reportes', label: 'Reportes' },
   { to: '/notificaciones', label: 'Notificaciones' },
   { to: '/auditoria', label: 'Auditoria' },

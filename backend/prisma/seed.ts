@@ -68,25 +68,18 @@ const permissions = [
   ['audit.read', 'audit', 'read', 'Consultar auditoria'],
 ] as const;
 
+const nonSuperAdminPermissionCodes = permissions
+  .map(([code]) => code)
+  .filter((code) => !['users.write', 'roles.manage'].includes(code));
+
 const rolePermissionCodes: Record<RoleCode, string[]> = {
   SUPER_ADMIN: permissions.map(([code]) => code),
-  ADMIN: permissions
-    .map(([code]) => code)
-    .filter((code) => code !== 'roles.manage'),
-  COORDINADOR: [
-    'events.read',
-    'events.write',
-    'attendance.read',
-    'tournaments.read',
-    'tournaments.write',
-    'hackathon.read',
-    'hackathon.write',
-    'reports.read',
-  ],
-  JURADO: ['hackathon.read', 'evaluations.read', 'evaluations.write'],
-  PONENTE: ['events.read', 'attendance.read'],
-  LOGISTICA: ['events.read', 'attendance.read', 'attendance.write'],
-  PARTICIPANTE: ['events.read', 'tournaments.read', 'hackathon.read'],
+  ADMIN: nonSuperAdminPermissionCodes,
+  COORDINADOR: nonSuperAdminPermissionCodes,
+  JURADO: nonSuperAdminPermissionCodes,
+  PONENTE: nonSuperAdminPermissionCodes,
+  LOGISTICA: nonSuperAdminPermissionCodes,
+  PARTICIPANTE: nonSuperAdminPermissionCodes,
 };
 
 const academicPrograms = [
@@ -159,6 +152,17 @@ async function seedRolePermissions(
     if (!role) {
       continue;
     }
+
+    const allowedPermissionIds = permissionCodes
+      .map((permissionCode) => seededPermissions.get(permissionCode)?.id)
+      .filter((permissionId): permissionId is string => Boolean(permissionId));
+
+    await prisma.rolePermission.deleteMany({
+      where: {
+        roleId: role.id,
+        permissionId: { notIn: allowedPermissionIds },
+      },
+    });
 
     for (const permissionCode of permissionCodes) {
       const permission = seededPermissions.get(permissionCode);

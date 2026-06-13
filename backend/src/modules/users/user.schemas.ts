@@ -28,17 +28,34 @@ export const createUserSchema = z.object({
 });
 
 export const updateUserSchema = createUserSchema
+  .omit({ password: true })
   .partial()
   .extend({
-    password: z.string().min(8).optional(),
     roles: z.array(z.nativeEnum(RoleCode)).optional(),
   });
 
+export const updateOwnProfileSchema = createUserSchema
+  .omit({ password: true, roles: true, status: true })
+  .partial();
+
 export const resetUserPasswordSchema = z.object({
-  password: z.string().min(8),
+  password: z.string().min(8).optional(),
 });
+
+export const changeOwnPasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'La contrasena actual es obligatoria'),
+    password: z.string().min(8, 'La nueva contrasena debe tener minimo 8 caracteres'),
+    confirmPassword: z.string().min(8, 'Debes repetir la nueva contrasena'),
+  })
+  .refine((input) => input.password === input.confirmPassword, {
+    message: 'Las contrasenas no coinciden',
+    path: ['confirmPassword'],
+  });
 
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type UpdateOwnProfileInput = z.infer<typeof updateOwnProfileSchema>;
 export type ResetUserPasswordInput = z.infer<typeof resetUserPasswordSchema>;
+export type ChangeOwnPasswordInput = z.infer<typeof changeOwnPasswordSchema>;

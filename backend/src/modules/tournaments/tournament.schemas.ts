@@ -48,11 +48,15 @@ export const tournamentParticipantIdParamsSchema = tournamentIdParamsSchema.exte
 });
 
 export const publicTournamentParamsSchema = z.object({
-  tournamentId: z.string().uuid(),
+  tournamentId: z.string().trim().min(1).max(160),
 });
 
 export const tournamentMatchIdParamsSchema = tournamentIdParamsSchema.extend({
   matchId: z.string().uuid(),
+});
+
+export const tournamentStandingIdParamsSchema = tournamentIdParamsSchema.extend({
+  standingId: z.string().uuid(),
 });
 
 export const listTournamentsQuerySchema = z.object({
@@ -213,6 +217,12 @@ export const scoreMatchSchema = z.object({
   awayScore: z.number().int().min(0),
 });
 
+export const updateStandingSchema = z.object({
+  points: z.number().int().min(0).optional(),
+  rank: z.number().int().positive().nullable().optional(),
+  qualified: z.boolean().optional(),
+});
+
 export type ListTournamentsQuery = z.infer<typeof listTournamentsQuerySchema>;
 export type CreateTournamentInput = z.infer<typeof createTournamentSchema>;
 export type UpdateTournamentInput = z.infer<typeof updateTournamentSchema>;
@@ -226,3 +236,4 @@ export type GenerateFixtureInput = z.infer<typeof generateFixtureSchema>;
 export type CreateMatchInput = z.infer<typeof createMatchSchema>;
 export type UpdateMatchInput = z.infer<typeof updateMatchSchema>;
 export type ScoreMatchInput = z.infer<typeof scoreMatchSchema>;
+export type UpdateStandingInput = z.infer<typeof updateStandingSchema>;

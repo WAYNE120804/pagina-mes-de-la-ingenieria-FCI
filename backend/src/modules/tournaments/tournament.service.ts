@@ -27,6 +27,7 @@ import type {
   PublicTournamentRegistrationInput,
   ScoreMatchInput,
   TeamRegistrationInput,
+  UpdateStandingInput,
   UpdateMatchInput,
   UpdateIndividualRegistrationInput,
   UpdateTeamRegistrationInput,
@@ -124,8 +125,40 @@ const matchInclude = {
 
 const standingInclude = {
   group: true,
-  team: true,
+  team: {
+    include: teamInclude,
+  },
   participant: true,
+} satisfies Prisma.TournamentStandingInclude;
+
+const publicStandingInclude = {
+  group: true,
+  team: {
+    select: {
+      id: true,
+      name: true,
+      members: {
+        select: {
+          id: true,
+          fullName: true,
+          isCaptain: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+  },
+  participant: {
+    select: {
+      id: true,
+      displayName: true,
+    },
+  },
 } satisfies Prisma.TournamentStandingInclude;
 
 function requirePrisma() {
@@ -136,6 +169,15 @@ function requirePrisma() {
   }
 
   return prisma;
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
 }
 
 function getDefaultMode(sport: Sport) {
@@ -155,6 +197,8 @@ function getDefaultRulePreset(sport: Sport) {
     AJEDREZ: TournamentRulePreset.CHESS,
     ROBOTICA: TournamentRulePreset.ROBOTICS_BATTLE,
     VOLEIBOL: TournamentRulePreset.CUSTOM,
+    MARATON_PROGRAMACION: TournamentRulePreset.CUSTOM,
+    CAPTURA_BANDERA: TournamentRulePreset.CUSTOM,
   };
 
   return presets[sport];
@@ -180,7 +224,12 @@ function normalizeInput(input: CreateTournamentInput | UpdateTournamentInput) {
 
   if (
     sport &&
-    (sport === Sport.FUTBOL || sport === Sport.BALONCESTO || sport === Sport.ROBOTICA) &&
+    (sport === Sport.FUTBOL ||
+      sport === Sport.BALONCESTO ||
+      sport === Sport.ROBOTICA ||
+      sport === Sport.VOLEIBOL ||
+      sport === Sport.MARATON_PROGRAMACION ||
+      sport === Sport.CAPTURA_BANDERA) &&
     mode === CompetitionMode.INDIVIDUAL
   ) {
     throw new AppError('Esta disciplina debe configurarse por equipos', 400, 'INVALID_COMPETITION_MODE');
@@ -270,7 +319,7 @@ export async function listPublicTournaments() {
         orderBy: [{ scheduledAt: 'asc' }, { createdAt: 'asc' }],
       },
       standings: {
-        include: standingInclude,
+        include: publicStandingInclude,
         orderBy: [{ group: { name: 'asc' } }, { rank: 'asc' }, { points: 'desc' }],
       },
     },
@@ -422,8 +471,45 @@ export async function deleteTournament(id: string, actorId?: string) {
   });
 }
 
-async function getTournamentForRegistration(id: string) {
-  const tournament = await getTournamentById(id);
+async function resolveTournamentByPublicKey(tournamentKey: string) {
+  const prisma = requirePrisma();
+  const normalizedKey = slugify(tournamentKey);
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tournamentKey);
+
+  if (isUuid) {
+    return getTournamentById(tournamentKey);
+  }
+
+  const directNameMatch = await prisma.tournament.findFirst({
+    where: {
+      ...onlyActive,
+      name: {
+        equals: tournamentKey.replace(/-/g, ' '),
+        mode: 'insensitive',
+      },
+    },
+    include: tournamentInclude,
+  });
+
+  if (directNameMatch) {
+    return directNameMatch;
+  }
+
+  const tournaments = await prisma.tournament.findMany({
+    where: onlyActive,
+    include: tournamentInclude,
+  });
+  const tournament = tournaments.find((item) => slugify(item.name) === normalizedKey);
+
+  if (!tournament) {
+    throw new AppError('Torneo no encontrado', 404, 'TOURNAMENT_NOT_FOUND');
+  }
+
+  return tournament;
+}
+
+async function getTournamentForRegistration(tournamentKey: string) {
+  const tournament = await resolveTournamentByPublicKey(tournamentKey);
 
   if (tournament.status === TournamentStatus.CANCELLED || tournament.status === TournamentStatus.FINISHED) {
     throw new AppError('El torneo no recibe inscripciones en este estado', 400, 'TOURNAMENT_NOT_OPEN');
@@ -432,8 +518,8 @@ async function getTournamentForRegistration(id: string) {
   return tournament;
 }
 
-function buildPublicTournamentUrl(origin: string, tournamentId: string) {
-  return `${origin.replace(/\/$/, '')}/public/torneos/${tournamentId}/inscripcion`;
+function buildPublicTournamentUrl(origin: string, tournament: { id: string; name: string }) {
+  return `${origin.replace(/\/$/, '')}/public/torneos/${slugify(tournament.name) || tournament.id}/inscripcion`;
 }
 
 function uniqueIds(ids: string[]) {
@@ -1052,20 +1138,23 @@ export async function getPublicTournamentForm(tournamentId: string, origin: stri
       sport: tournament.sport,
       mode: tournament.mode,
       status: tournament.status,
+      description: tournament.description,
+      rules: tournament.rules,
       maxTeams: tournament.maxTeams,
       maxMembersPerTeam: tournament.maxMembersPerTeam,
       maxParticipants: tournament.maxParticipants,
       startsAt: tournament.startsAt,
       endsAt: tournament.endsAt,
+      venue: tournament.venue,
     },
-    url: buildPublicTournamentUrl(origin, tournamentId),
+    url: buildPublicTournamentUrl(origin, tournament),
   };
 }
 
 export async function getPublicTournamentFormQrSvg(tournamentId: string, origin: string) {
-  await getPublicTournamentForm(tournamentId, origin);
+  const form = await getPublicTournamentForm(tournamentId, origin);
 
-  return QRCode.toString(buildPublicTournamentUrl(origin, tournamentId), {
+  return QRCode.toString(form.url, {
     type: 'svg',
     margin: 1,
     width: 256,
@@ -1079,6 +1168,7 @@ export async function publicRegisterTournament(
 ) {
   const prisma = requirePrisma();
   const tournament = await getTournamentForRegistration(tournamentId);
+  const resolvedTournamentId = tournament.id;
   const emails = uniqueValues(input.members.map((member) => member.email));
   const identifiers = uniqueValues(input.members.map((member) => member.identifier));
 
@@ -1103,13 +1193,17 @@ export async function publicRegisterTournament(
       throw new AppError('El equipo supera el maximo de integrantes', 400, 'TEAM_MEMBER_LIMIT_REACHED');
     }
 
-    const captainIndex = input.captainIndex ?? 0;
+    if (input.captainIndex === undefined || input.captainIndex === null) {
+      throw new AppError('Debes seleccionar el capitan del equipo', 400, 'TEAM_CAPTAIN_REQUIRED');
+    }
+
+    const captainIndex = input.captainIndex;
 
     if (!input.members[captainIndex]) {
       throw new AppError('Debes seleccionar un capitan valido', 400, 'CAPTAIN_NOT_IN_TEAM');
     }
 
-    await ensureTeamCapacity(prisma, tournamentId, tournament.maxTeams);
+    await ensureTeamCapacity(prisma, resolvedTournamentId, tournament.maxTeams);
     const members = await normalizeTeamMembers(prisma, {
       members: input.members.map((member, index) => ({
         ...member,
@@ -1117,11 +1211,11 @@ export async function publicRegisterTournament(
       })),
     });
 
-    await ensureTeamMembersAreNotInAnotherTeam(prisma, tournamentId, members);
+    await ensureTeamMembersAreNotInAnotherTeam(prisma, resolvedTournamentId, members);
 
     const team = await prisma.team.create({
       data: {
-        tournamentId,
+        tournamentId: resolvedTournamentId,
         name: input.teamName,
         logoUrl: input.logoUrl || null,
         status: 'APPROVED',
@@ -1144,7 +1238,7 @@ export async function publicRegisterTournament(
       action: AuditAction.CREATE,
       entity: 'Team',
       entityId: team.id,
-      newValues: { tournamentId, publicRegistration: true, teamName: team.name, members },
+      newValues: { tournamentId: resolvedTournamentId, publicRegistration: true, teamName: team.name, members },
     });
 
     return { mode: tournament.mode, team, participant: null };
@@ -1158,10 +1252,10 @@ export async function publicRegisterTournament(
     );
   }
 
-  await ensureIndividualCapacity(prisma, tournamentId, tournament.maxParticipants);
+  await ensureIndividualCapacity(prisma, resolvedTournamentId, tournament.maxParticipants);
   const member = input.members[0];
 
-  await ensureNoDuplicateIndividual(prisma, tournamentId, {
+  await ensureNoDuplicateIndividual(prisma, resolvedTournamentId, {
     email: member.email,
     identifier: member.identifier,
   });
@@ -1172,7 +1266,7 @@ export async function publicRegisterTournament(
 
   const participant = await prisma.tournamentParticipant.create({
     data: {
-      tournamentId,
+      tournamentId: resolvedTournamentId,
       displayName: member.fullName,
       email: member.email,
       identifier: member.identifier,
@@ -1188,7 +1282,7 @@ export async function publicRegisterTournament(
     action: AuditAction.CREATE,
     entity: 'TournamentParticipant',
     entityId: participant.id,
-    newValues: { tournamentId, publicRegistration: true, displayName: participant.displayName },
+    newValues: { tournamentId: resolvedTournamentId, publicRegistration: true, displayName: participant.displayName },
   });
 
   return { mode: tournament.mode, team: null, participant };
@@ -2304,6 +2398,55 @@ export async function refreshTournamentStandings(tournamentId: string, actorId?:
   });
 
   return getTournamentStandings(tournamentId);
+}
+
+export async function updateTournamentStanding(
+  tournamentId: string,
+  standingId: string,
+  input: UpdateStandingInput,
+  actorId?: string
+) {
+  const prisma = requirePrisma();
+  await getTournamentById(tournamentId);
+
+  const existingStanding = await prisma.tournamentStanding.findFirst({
+    where: { id: standingId, tournamentId },
+    include: standingInclude,
+  });
+
+  if (!existingStanding) {
+    throw new AppError('Registro de tabla no encontrado', 404, 'STANDING_NOT_FOUND');
+  }
+
+  const standing = await prisma.tournamentStanding.update({
+    where: { id: standingId },
+    data: {
+      points: input.points,
+      rank: input.rank === undefined ? undefined : input.rank,
+      qualified: input.qualified,
+    },
+    include: standingInclude,
+  });
+
+  await createAuditLog({
+    prisma,
+    actorId,
+    action: AuditAction.ADMIN_CHANGE,
+    entity: 'TournamentStanding',
+    entityId: standing.id,
+    oldValues: {
+      points: existingStanding.points,
+      rank: existingStanding.rank,
+      qualified: existingStanding.qualified,
+    },
+    newValues: {
+      points: standing.points,
+      rank: standing.rank,
+      qualified: standing.qualified,
+    },
+  });
+
+  return standing;
 }
 
 export async function buildTournamentExcelReport(tournamentId: string) {

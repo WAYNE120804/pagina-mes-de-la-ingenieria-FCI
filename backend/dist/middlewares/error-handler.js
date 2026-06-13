@@ -5,13 +5,18 @@ const logger_1 = require("../lib/logger");
 const api_response_1 = require("../utils/api-response");
 function errorHandler(error, _req, res, _next) {
     logger_1.logger.error('Unhandled error', error);
-    const statusCode = error.statusCode || error.status || 500;
+    const rawMessage = error.message || '';
+    const isMissingSportMigration = rawMessage.includes('enum "Sport"') &&
+        (rawMessage.includes('MARATON_PROGRAMACION') || rawMessage.includes('CAPTURA_BANDERA'));
+    const statusCode = isMissingSportMigration ? 500 : error.statusCode || error.status || 500;
     const isPayloadTooLarge = statusCode === 413 || error.type === 'entity.too.large';
-    const message = isPayloadTooLarge
-        ? 'La imagen es demasiado pesada. Intenta con un logo mas liviano.'
-        : statusCode >= 500
-            ? 'Error interno del servidor'
-            : error.message;
+    const message = isMissingSportMigration
+        ? 'La base de datos no tiene aplicada la migracion de las nuevas competencias. Aplica las migraciones de Prisma y reinicia el backend.'
+        : isPayloadTooLarge
+            ? 'La imagen es demasiado pesada. Intenta con un logo mas liviano.'
+            : statusCode >= 500
+                ? 'Error interno del servidor'
+                : error.message;
     res
         .status(statusCode)
         .json((0, api_response_1.errorResponse)(message, error.errorCode, error.details));

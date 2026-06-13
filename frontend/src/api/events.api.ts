@@ -1,5 +1,6 @@
 import client from './client';
 import { endpoints } from './endpoints';
+import { sendListEmailRequest } from './notifications.api';
 
 export type EventItem = {
   id: string;
@@ -259,6 +260,17 @@ export async function getAttendanceCertificateRequest(attendanceId: string) {
   });
 
   return response.data;
+}
+
+export async function sendEventAttendanceListRequest(
+  eventId: string,
+  input: { recipients: string[]; subject: string; body: string }
+) {
+  return sendListEmailRequest({
+    targetType: 'EVENT',
+    targetId: eventId,
+    ...input,
+  });
 }
 
 export async function updateAttendanceStatusRequest(attendanceId: string, status: string) {

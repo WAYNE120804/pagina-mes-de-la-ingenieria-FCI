@@ -19,11 +19,17 @@ export function errorHandler(
 ) {
   logger.error('Unhandled error', error);
 
-  const statusCode = error.statusCode || error.status || 500;
+  const rawMessage = error.message || '';
+  const isMissingSportMigration =
+    rawMessage.includes('enum "Sport"') &&
+    (rawMessage.includes('MARATON_PROGRAMACION') || rawMessage.includes('CAPTURA_BANDERA'));
+  const statusCode = isMissingSportMigration ? 500 : error.statusCode || error.status || 500;
   const isPayloadTooLarge =
     statusCode === 413 || error.type === 'entity.too.large';
   const message =
-    isPayloadTooLarge
+    isMissingSportMigration
+      ? 'La base de datos no tiene aplicada la migracion de las nuevas competencias. Aplica las migraciones de Prisma y reinicia el backend.'
+      : isPayloadTooLarge
       ? 'La imagen es demasiado pesada. Intenta con un logo mas liviano.'
       : statusCode >= 500
         ? 'Error interno del servidor'

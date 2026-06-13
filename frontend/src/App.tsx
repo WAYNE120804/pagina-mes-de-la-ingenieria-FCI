@@ -6,8 +6,6 @@ import AttendancePage from './pages/Attendance/AttendancePage';
 import AuditPage from './pages/Audit/AuditPage';
 import Dashboard from './pages/Dashboard';
 import EventsPage from './pages/Events/EventsPage';
-import EvaluationPage from './pages/Evaluation/EvaluationPage';
-import HackathonPage from './pages/Hackathon/HackathonPage';
 import LoginPage from './pages/Auth/LoginPage';
 import NotificationsPage from './pages/Notifications/NotificationsPage';
 import PublicEventFormPage from './pages/Public/PublicEventFormPage';
@@ -26,6 +24,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Navigate to="/public" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/public" element={<PublicHomePage />} />
         <Route path="/public/cronograma" element={<PublicSchedulePage />} />
@@ -37,7 +36,7 @@ const App = () => {
         <Route path="/public/torneos/:tournamentId/inscripcion" element={<PublicTournamentFormPage />} />
         <Route element={<ProtectedRoute />}>
           <Route
-            path="/"
+            path="/admin"
             element={
               <AppLayout>
                 <Dashboard />
@@ -92,22 +91,6 @@ const App = () => {
             element={
               <AppLayout>
                 <TournamentsPage />
-              </AppLayout>
-            }
-          />
-          <Route
-            path="/hackathon"
-            element={
-              <AppLayout>
-                <HackathonPage />
-              </AppLayout>
-            }
-          />
-          <Route
-            path="/evaluacion"
-            element={
-              <AppLayout>
-                <EvaluationPage />
               </AppLayout>
             }
           />

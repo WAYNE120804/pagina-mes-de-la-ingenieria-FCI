@@ -11,9 +11,12 @@ const not_found_handler_1 = require("./middlewares/not-found-handler");
 const serialize_response_1 = require("./middlewares/serialize-response");
 const routes_1 = require("./routes");
 const api_response_1 = require("./utils/api-response");
+const request_context_1 = require("./utils/request-context");
 function createApp() {
     const app = (0, express_1.default)();
+    app.set('trust proxy', true);
     app.use((0, cors_1.default)());
+    app.use(request_context_1.requestContextMiddleware);
     app.use(express_1.default.json({ limit: '10mb' }));
     app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
     app.use(serialize_response_1.serializeResponse);

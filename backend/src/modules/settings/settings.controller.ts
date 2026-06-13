@@ -5,14 +5,15 @@ import { successResponse } from '../../utils/api-response';
 import * as settingsService from './settings.service';
 
 export async function getSiteSettings(
-  _req: AuthenticatedRequest,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) {
   try {
     const settings = await settingsService.getSiteSettings();
+    const isAdminRequest = Boolean(req.user);
 
-    res.json(successResponse('Configuracion publica consultada', settings));
+    res.json(successResponse('Configuracion publica consultada', settingsService.sanitizeSiteSettings(settings, isAdminRequest)));
   } catch (error) {
     next(error);
   }
@@ -26,7 +27,7 @@ export async function updateSiteSettings(
   try {
     const settings = await settingsService.updateSiteSettings(req.body, req.user?.id);
 
-    res.json(successResponse('Configuracion publica actualizada', settings));
+    res.json(successResponse('Configuracion publica actualizada', settingsService.sanitizeSiteSettings(settings, true)));
   } catch (error) {
     next(error);
   }

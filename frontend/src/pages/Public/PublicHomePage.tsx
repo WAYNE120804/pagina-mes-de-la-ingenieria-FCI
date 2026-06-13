@@ -15,6 +15,17 @@ import { eventTypeLabels, labelFor, tournamentSportLabels } from '../../utils/la
 import PublicLayout from './PublicLayout';
 import { publicHeroImage, roboticsImage } from './publicContent';
 
+function tournamentSlug(tournament: { id: string; name: string }) {
+  const slug = tournament.name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+  return slug || tournament.id;
+}
+
 function formatEventDate(value: string) {
   return new Date(value)
     .toLocaleDateString('es-CO', {
@@ -224,7 +235,11 @@ const PublicHomePage = () => {
                       ? 'sports_soccer'
                       : item.sport === 'ROBOTICA'
                         ? 'smart_toy'
-                        : 'grid_view'}
+                        : item.sport === 'MARATON_PROGRAMACION'
+                          ? 'code'
+                          : item.sport === 'CAPTURA_BANDERA'
+                            ? 'flag'
+                            : 'grid_view'}
                 </span>
                 <h3 className="mt-4 font-display text-xl font-bold text-[#f0ffed]">{item.name}</h3>
                 <p className="mt-3 text-sm leading-6 text-[#b9cbb8]">
@@ -233,7 +248,7 @@ const PublicHomePage = () => {
                 {item.status === 'REGISTRATION_OPEN' ? (
                   <Link
                     className="mt-5 inline-flex rounded-lg bg-[#5adf82] px-4 py-2 text-sm font-bold text-[#003917]"
-                    to={`/public/torneos/${item.id}/inscripcion`}
+                    to={`/public/torneos/${tournamentSlug(item)}/inscripcion`}
                   >
                     Inscribirse
                   </Link>

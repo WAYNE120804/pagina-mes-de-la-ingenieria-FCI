@@ -67,6 +67,9 @@ export const tournamentSportLabels: Record<string, string> = {
   PING_PONG: 'Ping pong',
   AJEDREZ: 'Ajedrez',
   ROBOTICA: 'Robotica',
+  VOLEIBOL: 'Voleibol',
+  MARATON_PROGRAMACION: 'Maraton de programacion',
+  CAPTURA_BANDERA: 'Captura la bandera',
 };
 
 export const competitionModeLabels: Record<string, string> = {

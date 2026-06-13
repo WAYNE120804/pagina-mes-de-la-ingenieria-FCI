@@ -68,10 +68,11 @@ function slugify(value: string) {
     .replace(/(^-|-$)/g, '');
 }
 
-function buildPublicFormUrl(origin: string, eventId: string, mode: 'registration' | 'attendance') {
+function buildPublicFormUrl(origin: string, eventTitle: string, fallbackSlug: string, mode: 'registration' | 'attendance') {
   const pathMode = mode === 'registration' ? 'inscripcion' : 'asistencia';
+  const eventSlug = slugify(eventTitle) || fallbackSlug;
 
-  return `${origin.replace(/\/$/, '')}/public/eventos/${eventId}/${pathMode}`;
+  return `${origin.replace(/\/$/, '')}/public/eventos/${eventSlug}/${pathMode}`;
 }
 
 async function assertVenueAvailability(input: {
@@ -152,13 +153,13 @@ export async function listPublicEvents(origin: string) {
     ...event,
     registrationUrl:
       event.type === EventType.WORKSHOP
-        ? buildPublicFormUrl(origin, event.id, 'registration')
+        ? buildPublicFormUrl(origin, event.title, event.slug || event.id, 'registration')
         : null,
     attendanceUrl:
       event.type === EventType.TALK ||
       event.type === EventType.ACADEMIC ||
       event.type === EventType.WORKSHOP
-        ? buildPublicFormUrl(origin, event.id, 'attendance')
+        ? buildPublicFormUrl(origin, event.title, event.slug || event.id, 'attendance')
         : null,
     attendanceOpensAt: new Date(event.startsAt.getTime() - 30 * 60 * 1000),
     attendanceClosesAt: new Date(event.endsAt.getTime() + 30 * 60 * 1000),

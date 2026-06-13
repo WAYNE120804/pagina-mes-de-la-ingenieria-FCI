@@ -62,6 +62,34 @@ export async function updateUser(
   }
 }
 
+export async function updateOwnProfile(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const user = await userService.updateOwnProfile(String(req.user?.id), req.body, req.user?.id);
+
+    res.json(successResponse('Perfil actualizado', user));
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function changeOwnPassword(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const user = await userService.changeOwnPassword(String(req.user?.id), req.body, req.user?.id);
+
+    res.json(successResponse('Contrasena actualizada', user));
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function resetUserPassword(
   req: AuthenticatedRequest,
   res: Response,

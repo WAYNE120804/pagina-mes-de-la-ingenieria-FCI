@@ -1,4 +1,5 @@
 import type { AuditAction, Prisma, PrismaClient } from '../lib/prisma-client';
+import { getRequestContext } from './request-context';
 
 type CreateAuditLogInput = {
   prisma: PrismaClient;
@@ -23,6 +24,8 @@ export async function createAuditLog({
   ipAddress,
   userAgent,
 }: CreateAuditLogInput) {
+  const context = getRequestContext();
+
   return prisma.auditLog.create({
     data: {
       actorId: actorId || null,
@@ -31,8 +34,8 @@ export async function createAuditLog({
       entityId: entityId || null,
       oldValues: oldValues === undefined ? undefined : oldValues,
       newValues: newValues === undefined ? undefined : newValues,
-      ipAddress: ipAddress || null,
-      userAgent: userAgent || null,
+      ipAddress: ipAddress || context.ipAddress || null,
+      userAgent: userAgent || context.userAgent || null,
     },
   });
 }

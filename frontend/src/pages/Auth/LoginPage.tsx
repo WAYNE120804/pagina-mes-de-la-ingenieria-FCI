@@ -13,10 +13,10 @@ const LoginPage = () => {
   const [submitting, setSubmitting] = useState(false);
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/admin" replace />;
   }
 
-  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/admin';
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

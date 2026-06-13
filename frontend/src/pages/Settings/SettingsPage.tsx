@@ -21,6 +21,7 @@ const SettingsPage = () => {
   const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [smtpPassword, setSmtpPassword] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -62,8 +63,20 @@ const SettingsPage = () => {
         brandName: settings.brandName,
         heroTitle: settings.heroTitle,
         logoUrl: settings.logoUrl || null,
+        smtpEnabled: Boolean(settings.smtpEnabled),
+        smtpHost: settings.smtpHost || 'smtp.gmail.com',
+        smtpPort: Number(settings.smtpPort || 587),
+        smtpSecure: Boolean(settings.smtpSecure),
+        smtpUser: settings.smtpUser || null,
+        ...(smtpPassword ? { smtpPassword } : {}),
+        smtpFromName: settings.smtpFromName || settings.brandName,
+        smtpFromEmail: settings.smtpFromEmail || null,
+        smtpReplyTo: settings.smtpReplyTo || null,
+        smtpBatchSize: Number(settings.smtpBatchSize || 40),
+        smtpBatchDelayMs: Number(settings.smtpBatchDelayMs ?? 1500),
       });
       setSettings(nextSettings);
+      setSmtpPassword('');
       setMessage('Configuracion guardada.');
     } catch {
       setError('No fue posible guardar la configuracion.');
@@ -123,6 +136,62 @@ const SettingsPage = () => {
             </div>
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
             {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
+            <div className="border-t border-slate-200 pt-4">
+              <h4 className="text-sm font-semibold text-slate-950">Correo SMTP de Google</h4>
+              <p className="mt-1 text-xs text-slate-500">
+                Usa una contrasena de aplicacion de Google. Si SMTP falla, los registros siguen funcionando sin bloquear la app.
+              </p>
+              <label className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-700">
+                <input
+                  checked={Boolean(settings.smtpEnabled)}
+                  type="checkbox"
+                  onChange={(event) => setSettings({ ...settings, smtpEnabled: event.target.checked })}
+                />
+                Activar envio de correos
+              </label>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Host
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={settings.smtpHost || ''} onChange={(event) => setSettings({ ...settings, smtpHost: event.target.value })} placeholder="smtp.gmail.com" />
+                </label>
+                <label className="block text-sm font-medium text-slate-700">
+                  Puerto
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" value={settings.smtpPort || 587} onChange={(event) => setSettings({ ...settings, smtpPort: Number(event.target.value) })} />
+                </label>
+                <label className="block text-sm font-medium text-slate-700">
+                  Usuario Gmail
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={settings.smtpUser || ''} onChange={(event) => setSettings({ ...settings, smtpUser: event.target.value })} placeholder="correo@gmail.com" />
+                </label>
+                <label className="block text-sm font-medium text-slate-700">
+                  Contrasena de aplicacion
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="password" value={smtpPassword} onChange={(event) => setSmtpPassword(event.target.value)} placeholder={settings.smtpPasswordConfigured ? 'Configurada, escribir solo para cambiar' : 'Pegar clave SMTP'} />
+                </label>
+                <label className="block text-sm font-medium text-slate-700">
+                  Nombre remitente
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={settings.smtpFromName || ''} onChange={(event) => setSettings({ ...settings, smtpFromName: event.target.value })} />
+                </label>
+                <label className="block text-sm font-medium text-slate-700">
+                  Correo remitente
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="email" value={settings.smtpFromEmail || ''} onChange={(event) => setSettings({ ...settings, smtpFromEmail: event.target.value })} />
+                </label>
+                <label className="block text-sm font-medium text-slate-700">
+                  Responder a
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="email" value={settings.smtpReplyTo || ''} onChange={(event) => setSettings({ ...settings, smtpReplyTo: event.target.value })} />
+                </label>
+                <label className="block text-sm font-medium text-slate-700">
+                  Tamano de lote
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min={1} max={100} value={settings.smtpBatchSize || 40} onChange={(event) => setSettings({ ...settings, smtpBatchSize: Number(event.target.value) })} />
+                </label>
+                <label className="block text-sm font-medium text-slate-700">
+                  Pausa entre lotes (ms)
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min={0} value={settings.smtpBatchDelayMs ?? 1500} onChange={(event) => setSettings({ ...settings, smtpBatchDelayMs: Number(event.target.value) })} />
+                </label>
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <input checked={Boolean(settings.smtpSecure)} type="checkbox" onChange={(event) => setSettings({ ...settings, smtpSecure: event.target.checked })} />
+                  Usar SSL directo
+                </label>
+              </div>
+            </div>
             <button
               className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300"
               disabled={saving || loading}

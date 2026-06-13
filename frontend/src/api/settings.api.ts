@@ -6,6 +6,17 @@ export type SiteSettings = {
   brandName: string;
   heroTitle: string;
   logoUrl?: string | null;
+  smtpEnabled?: boolean;
+  smtpHost?: string | null;
+  smtpPort?: number | null;
+  smtpSecure?: boolean;
+  smtpUser?: string | null;
+  smtpPasswordConfigured?: boolean;
+  smtpFromName?: string | null;
+  smtpFromEmail?: string | null;
+  smtpReplyTo?: string | null;
+  smtpBatchSize?: number;
+  smtpBatchDelayMs?: number;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -21,6 +32,17 @@ export const defaultSiteSettings: SiteSettings = {
   brandName: 'Mes de la Ingenieria',
   heroTitle: 'Innovacion que transforma el futuro.',
   logoUrl: null,
+  smtpEnabled: false,
+  smtpHost: 'smtp.gmail.com',
+  smtpPort: 587,
+  smtpSecure: false,
+  smtpUser: '',
+  smtpPasswordConfigured: false,
+  smtpFromName: 'Mes de la Ingenieria',
+  smtpFromEmail: '',
+  smtpReplyTo: '',
+  smtpBatchSize: 40,
+  smtpBatchDelayMs: 1500,
 };
 
 export async function getPublicSettingsRequest() {
@@ -39,6 +61,17 @@ export async function updateSettingsRequest(input: {
   brandName?: string;
   heroTitle?: string;
   logoUrl?: string | null;
+  smtpEnabled?: boolean;
+  smtpHost?: string | null;
+  smtpPort?: number | null;
+  smtpSecure?: boolean;
+  smtpUser?: string | null;
+  smtpPassword?: string | null;
+  smtpFromName?: string | null;
+  smtpFromEmail?: string | null;
+  smtpReplyTo?: string | null;
+  smtpBatchSize?: number;
+  smtpBatchDelayMs?: number;
 }) {
   const response = await client.patch<ApiResponse<SiteSettings>>(endpoints.settings.detail(), input);
 

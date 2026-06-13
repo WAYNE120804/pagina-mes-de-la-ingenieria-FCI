@@ -5,6 +5,7 @@ import {
   listPublicTournamentsRequest,
   type PublicTournamentOverview,
   type TournamentMatch,
+  type TournamentTeam,
 } from '../../api/tournaments.api';
 import {
   competitionModeLabels,
@@ -26,6 +27,7 @@ function competitorName(match: TournamentMatch, side: 'home' | 'away') {
 }
 
 const phaseOrder = ['FASE_GRUPOS', 'OCTAVOS', 'CUARTOS', 'SEMIFINAL', 'FINAL'];
+const judgedSports = ['MARATON_PROGRAMACION', 'CAPTURA_BANDERA'];
 
 function formatMatchDate(value?: string | null) {
   if (!value) {
@@ -50,6 +52,30 @@ function groupMatchesByGroup(matches: TournamentMatch[]) {
       return groups;
     }, {})
   ).sort(([first], [second]) => first.localeCompare(second, 'es'));
+}
+
+function sportIcon(sport: string) {
+  if (sport === 'FUTBOL') return 'sports_soccer';
+  if (sport === 'ROBOTICA') return 'smart_toy';
+  if (sport === 'VIDEOJUEGOS') return 'sports_esports';
+  if (sport === 'MARATON_PROGRAMACION') return 'code';
+  if (sport === 'CAPTURA_BANDERA') return 'flag';
+  return 'grid_view';
+}
+
+function tournamentSlug(tournament: Pick<PublicTournamentOverview, 'id' | 'name'>) {
+  const slug = tournament.name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+  return slug || tournament.id;
+}
+
+function memberName(member: TournamentTeam['members'][number]) {
+  return member.fullName || member.user?.name || 'Integrante';
 }
 
 const PublicTournamentsPage = () => {
@@ -103,6 +129,12 @@ const PublicTournamentsPage = () => {
     : 0;
   const activeVenue = activeTournament?.venue || activeTournament?.matches?.find((match) => match.venue)?.venue || null;
   const activeVenueImage = activeVenue?.photoUrl || campusImage;
+  const isJudgedTournament = Boolean(activeTournament && judgedSports.includes(activeTournament.sport));
+  const rankedStandings = [...(activeTournament?.standings || [])].sort((first, second) => {
+    const firstRank = first.rank || 999;
+    const secondRank = second.rank || 999;
+    return firstRank - secondRank || second.points - first.points;
+  });
 
   return (
     <PublicLayout>
@@ -140,13 +172,7 @@ const PublicTournamentsPage = () => {
                   onClick={() => setActiveId(tournament.id)}
                 >
                   <span className="material-symbols-outlined">
-                    {tournament.sport === 'FUTBOL'
-                      ? 'sports_soccer'
-                      : tournament.sport === 'ROBOTICA'
-                        ? 'smart_toy'
-                        : tournament.sport === 'VIDEOJUEGOS'
-                          ? 'sports_esports'
-                          : 'grid_view'}
+                    {sportIcon(tournament.sport)}
                   </span>
                   {tournament.name}
                 </button>
@@ -178,14 +204,73 @@ const PublicTournamentsPage = () => {
                   {activeTournament?.status === 'REGISTRATION_OPEN' ? (
                     <Link
                       className="rounded-xl bg-[#5adf82] px-5 py-3 font-bold text-[#003917]"
-                      to={`/public/torneos/${activeTournament.id}/inscripcion`}
+                      to={`/public/torneos/${tournamentSlug(activeTournament)}/inscripcion`}
                     >
                       Inscribirse
                     </Link>
                   ) : null}
                 </div>
 
-                {matchesByPhase.length === 0 ? (
+                {isJudgedTournament ? (
+                  <section className="rounded-3xl border border-[#3b4b3c] bg-[#0b0f10]/70 p-4 shadow-2xl md:p-5">
+                    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[#3b4b3c] pb-4">
+                      <div>
+                        <p className="font-mono text-xs font-bold uppercase tracking-[0.35em] text-[#5adf82]">
+                          Ranking publico
+                        </p>
+                        <h3 className="mt-1 font-display text-2xl font-bold text-[#f0ffed]">
+                          Resultados por jurados
+                        </h3>
+                      </div>
+                      <span className="rounded-full bg-[#5adf82]/10 px-3 py-1 font-mono text-xs font-bold text-[#5adf82]">
+                        {rankedStandings.length} equipos
+                      </span>
+                    </div>
+
+                    {rankedStandings.length ? (
+                      <div className="grid gap-4">
+                        {rankedStandings.map((standing, index) => {
+                          const rank = standing.rank || index + 1;
+                          return (
+                            <article key={standing.id} className="rounded-2xl border border-[#3b4b3c] bg-[#101415] p-5">
+                              <div className="flex flex-wrap items-start justify-between gap-4">
+                                <div className="flex min-w-0 items-start gap-4">
+                                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#5adf82] font-display text-2xl font-extrabold text-[#003917]">
+                                    {rank}
+                                  </span>
+                                  <div className="min-w-0">
+                                    <p className="font-display text-xl font-bold text-[#f0ffed]">
+                                      {standing.team?.name || 'Equipo'}
+                                    </p>
+                                    <p className="mt-1 text-sm text-[#b9cbb8]">
+                                      {standing.team?.members?.length || 0} integrantes registrados
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="rounded-2xl bg-[#1d2022] px-4 py-3 text-right">
+                                  <p className="font-mono text-xs uppercase tracking-widest text-[#849584]">Puntos</p>
+                                  <p className="font-mono text-2xl font-extrabold text-[#5adf82]">{standing.points}</p>
+                                </div>
+                              </div>
+                              <div className="mt-4 flex flex-wrap gap-2 border-t border-[#3b4b3c] pt-4">
+                                {(standing.team?.members || []).map((member) => (
+                                  <span key={member.id} className="rounded-full bg-[#1d2022] px-3 py-1 text-xs text-[#d8f3d5]">
+                                    {memberName(member)}
+                                    {member.isCaptain ? ' - Capitan' : ''}
+                                  </span>
+                                ))}
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-[#3b4b3c] bg-[#101415] p-8 text-center text-[#b9cbb8]">
+                        Aun no hay resultados publicados por jurados.
+                      </div>
+                    )}
+                  </section>
+                ) : matchesByPhase.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-[#3b4b3c] bg-[#101415] p-8 text-center text-[#b9cbb8]">
                     No hay partidos publicados para este torneo.
                   </div>
@@ -325,7 +410,7 @@ const PublicTournamentsPage = () => {
                   {activeTournament?.status === 'REGISTRATION_OPEN' ? (
                     <Link
                       className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#003917] px-5 py-3 font-bold text-[#5adf82]"
-                      to={`/public/torneos/${activeTournament.id}/inscripcion`}
+                      to={`/public/torneos/${tournamentSlug(activeTournament)}/inscripcion`}
                     >
                       Inscribete aqui
                       <span className="material-symbols-outlined">arrow_forward</span>

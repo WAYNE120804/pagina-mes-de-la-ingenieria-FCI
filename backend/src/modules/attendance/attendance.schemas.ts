@@ -59,7 +59,7 @@ export const createAttendanceSchema = z
   });
 
 export const publicEventParamsSchema = z.object({
-  eventId: z.string().uuid(),
+  eventId: z.string().trim().min(1).max(160),
 });
 
 export const publicFormQuerySchema = z.object({

@@ -60,18 +60,24 @@ const PublicTournamentFormPage = () => {
   const [form, setForm] = useState<PublicTournamentForm | null>(null);
   const [teamName, setTeamName] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
-  const [captainIndex, setCaptainIndex] = useState(0);
+  const [captainIndex, setCaptainIndex] = useState<number | null>(null);
+  const [memberCount, setMemberCount] = useState(2);
   const [members, setMembers] = useState<MemberForm[]>([{ ...emptyMember }, { ...emptyMember }]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   const isTeam = form?.tournament.mode === 'TEAM';
+  const minTeamMembers = 2;
+  const maxTeamMembers = Math.max(form?.tournament.maxMembersPerTeam || 20, minTeamMembers);
 
   useEffect(() => {
     getPublicTournamentFormRequest(tournamentId)
       .then((data) => {
         setForm(data);
-        setMembers(data.tournament.mode === 'TEAM' ? [{ ...emptyMember }, { ...emptyMember }] : [{ ...emptyMember }]);
+        const initialCount = data.tournament.mode === 'TEAM' ? minTeamMembers : 1;
+        setMemberCount(initialCount);
+        setCaptainIndex(null);
+        setMembers(Array.from({ length: initialCount }, () => ({ ...emptyMember })));
       })
       .catch(() => setError('No fue posible cargar el formulario del torneo.'));
   }, [tournamentId]);
@@ -85,15 +91,55 @@ const PublicTournamentFormPage = () => {
   }
 
   function addMember() {
-    setMembers((current) => [...current, { ...emptyMember }]);
+    setMembers((current) => {
+      const nextMembers = current.length >= maxTeamMembers ? current : [...current, { ...emptyMember }];
+      setMemberCount(nextMembers.length);
+      return nextMembers;
+    });
   }
 
   function removeMember(index: number) {
     setMembers((current) => {
       const nextMembers = current.filter((_, memberIndex) => memberIndex !== index);
-      setCaptainIndex(Math.min(captainIndex, Math.max(nextMembers.length - 1, 0)));
+      setCaptainIndex((currentCaptain) => {
+        if (currentCaptain === null) {
+          return null;
+        }
+
+        if (currentCaptain === index) {
+          return null;
+        }
+
+        return currentCaptain > index ? currentCaptain - 1 : currentCaptain;
+      });
+      setMemberCount(nextMembers.length);
       return nextMembers;
     });
+  }
+
+  function updateMemberCount(value: string) {
+    const requestedCount = Number(value || minTeamMembers);
+    const parsedCount = Number.isFinite(requestedCount) ? requestedCount : minTeamMembers;
+    const nextCount = Math.min(Math.max(parsedCount, minTeamMembers), maxTeamMembers);
+
+    setMemberCount(nextCount);
+    setMembers((current) => {
+      if (current.length === nextCount) {
+        return current;
+      }
+
+      if (current.length > nextCount) {
+        return current.slice(0, nextCount);
+      }
+
+      return [
+        ...current,
+        ...Array.from({ length: nextCount - current.length }, () => ({ ...emptyMember })),
+      ];
+    });
+    setCaptainIndex((currentCaptain) =>
+      currentCaptain !== null && currentCaptain >= nextCount ? null : currentCaptain
+    );
   }
 
   function readImageAsDataUrl(file: File) {
@@ -134,17 +180,24 @@ const PublicTournamentFormPage = () => {
     setMessage('');
 
     try {
+      if (isTeam && captainIndex === null) {
+        setError('Debes seleccionar quien sera el capitan del equipo.');
+        return;
+      }
+
       await publicRegisterTournamentRequest(form.tournament.id, {
         teamName: isTeam ? teamName : undefined,
         logoUrl: isTeam ? logoUrl || null : undefined,
-        captainIndex: isTeam ? captainIndex : undefined,
+        captainIndex: isTeam ? captainIndex ?? undefined : undefined,
         members,
       });
       setMessage(isTeam ? 'Equipo inscrito correctamente.' : 'Participante inscrito correctamente.');
       setTeamName('');
       setLogoUrl('');
-      setCaptainIndex(0);
-      setMembers(isTeam ? [{ ...emptyMember }, { ...emptyMember }] : [{ ...emptyMember }]);
+      setCaptainIndex(null);
+      const resetCount = isTeam ? minTeamMembers : 1;
+      setMemberCount(resetCount);
+      setMembers(Array.from({ length: resetCount }, () => ({ ...emptyMember })));
     } catch {
       setError('No fue posible completar la inscripcion. Revisa cupos, datos repetidos o inscripciones previas.');
     }
@@ -178,8 +231,19 @@ const PublicTournamentFormPage = () => {
           </div>
 
           <form className="space-y-6" onSubmit={submitRegistration}>
+            {form?.tournament.description ? (
+              <section className="rounded-2xl border border-[#5adf82]/25 bg-[#5adf82]/10 p-5">
+                <p className="font-mono text-xs font-bold uppercase tracking-[0.22em] text-[#5adf82]">
+                  Descripcion
+                </p>
+                <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#d8f3d5]">
+                  {form.tournament.description}
+                </p>
+              </section>
+            ) : null}
+
             {isTeam ? (
-              <div className="grid gap-5 rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-5 md:grid-cols-[1fr_240px]">
+              <div className="grid gap-5 rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-5 md:grid-cols-[1fr_180px_240px]">
                 <label className="block text-sm font-semibold text-[#e0e3e5]">
                   Nombre del equipo
                   <input
@@ -188,6 +252,21 @@ const PublicTournamentFormPage = () => {
                     onChange={(event) => setTeamName(event.target.value)}
                     required
                   />
+                </label>
+                <label className="block text-sm font-semibold text-[#e0e3e5]">
+                  Cantidad de integrantes
+                  <input
+                    className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#101415] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                    type="number"
+                    min={minTeamMembers}
+                    max={maxTeamMembers}
+                    value={memberCount}
+                    onChange={(event) => updateMemberCount(event.target.value)}
+                    required
+                  />
+                  <span className="mt-1 block text-xs font-normal text-[#849584]">
+                    Minimo {minTeamMembers}, maximo {maxTeamMembers}.
+                  </span>
                 </label>
                 <div className="flex gap-3">
                   <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl border border-[#3b4b3c] bg-[#101415]">
@@ -211,6 +290,11 @@ const PublicTournamentFormPage = () => {
             ) : null}
 
             <div className="space-y-4">
+              {isTeam ? (
+                <div className="rounded-2xl border border-[#5adf82]/25 bg-[#5adf82]/10 px-4 py-3 text-sm text-[#cfe6ca]">
+                  Registra todos los integrantes y marca exactamente quien sera el capitan. Con los equipos inscritos, la organizacion creara manualmente los partidos.
+                </div>
+              ) : null}
               {members.map((member, index) => (
                 <div key={index} className="rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -225,6 +309,7 @@ const PublicTournamentFormPage = () => {
                           name="captain"
                           checked={captainIndex === index}
                           onChange={() => setCaptainIndex(index)}
+                          required={isTeam}
                         />
                         Capitan
                       </label>
@@ -280,7 +365,7 @@ const PublicTournamentFormPage = () => {
                       ))}
                     </select>
                   </div>
-                  {isTeam && members.length > 2 ? (
+                  {isTeam && members.length > minTeamMembers ? (
                     <button
                       className="mt-4 rounded-xl border border-[#ffb4ab]/30 px-4 py-2 text-xs font-bold text-[#ffb4ab]"
                       type="button"
@@ -299,6 +384,7 @@ const PublicTournamentFormPage = () => {
                   className="rounded-xl border border-[#849584] px-5 py-3 text-sm font-bold text-[#e0e3e5] transition-colors hover:bg-[#1d2022]"
                   type="button"
                   onClick={addMember}
+                  disabled={members.length >= maxTeamMembers}
                 >
                   Agregar integrante
                 </button>
@@ -310,6 +396,17 @@ const PublicTournamentFormPage = () => {
                 Enviar inscripcion
               </button>
             </div>
+
+            {form?.tournament.rules ? (
+              <section className="rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-5">
+                <p className="font-mono text-xs font-bold uppercase tracking-[0.22em] text-[#5adf82]">
+                  Reglas
+                </p>
+                <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#d8f3d5]">
+                  {form.tournament.rules}
+                </p>
+              </section>
+            ) : null}
 
             {error ? (
               <p className="rounded-xl border border-[#ffb4ab]/30 bg-[#93000a]/20 px-4 py-3 text-sm text-[#ffb4ab]">

@@ -8,8 +8,6 @@ import {
   deleteTeamRegistrationRequest,
   deleteTournamentRequest,
   exportTournamentExcelRequest,
-  generateTournamentFixtureRequest,
-  generateTournamentGroupsRequest,
   getTournamentStandingsRequest,
   getTournamentFixtureRequest,
   getTournamentRegistrationsRequest,
@@ -17,9 +15,11 @@ import {
   getPublicTournamentQrSvgRequest,
   listTournamentsRequest,
   recalculateTournamentStandingsRequest,
+  sendTournamentRegistrationListRequest,
   updateIndividualParticipantRequest,
   updateMatchScheduleRequest,
   updateMatchScoreRequest,
+  updateTournamentStandingRequest,
   updateTeamRegistrationRequest,
   updateTournamentRequest,
   type Tournament,
@@ -29,6 +29,7 @@ import {
   type TournamentStanding,
   type TournamentTeam,
 } from '../../api/tournaments.api';
+import { getApiErrorMessage } from '../../api/client';
 import Topbar from '../../components/Layout/Topbar';
 import FormModal from '../../components/common/FormModal';
 import { listVenuesRequest, type Venue } from '../../api/venues.api';
@@ -49,6 +50,7 @@ const formats = Object.keys(tournamentFormatLabels);
 const statuses = Object.keys(tournamentStatusLabels);
 const videoGames = Object.keys(videoGameTitleLabels);
 const phases = Object.keys(tournamentPhaseLabels);
+const judgedSports = ['MARATON_PROGRAMACION', 'CAPTURA_BANDERA'];
 
 type TournamentForm = {
   id?: string;
@@ -67,16 +69,6 @@ type TournamentForm = {
   endsAt: string;
 };
 
-type FixtureForm = {
-  groupCount: string;
-  overwriteGroups: boolean;
-  overwriteFixture: boolean;
-  scheduledStartAt: string;
-  matchIntervalMinutes: string;
-  matchesPerDay: string;
-  venueId: string;
-};
-
 type MatchForm = {
   groupId: string;
   venueId: string;
@@ -87,6 +79,7 @@ type MatchForm = {
 };
 
 type ScoreInputs = Record<string, { homeScore: string; awayScore: string }>;
+type StandingInputs = Record<string, { points: string; rank: string; qualified: boolean }>;
 type MatchScheduleInputs = Record<string, {
   scheduledAt: string;
   venueId: string;
@@ -132,16 +125,6 @@ const emptyForm: TournamentForm = {
   endsAt: '',
 };
 
-const emptyFixtureForm: FixtureForm = {
-  groupCount: '2',
-  overwriteGroups: false,
-  overwriteFixture: false,
-  scheduledStartAt: '',
-  matchIntervalMinutes: '60',
-  matchesPerDay: '1',
-  venueId: '',
-};
-
 const emptyMatchForm: MatchForm = {
   groupId: '',
   venueId: '',
@@ -168,7 +151,7 @@ function defaultFormatForSport(sport: string) {
     return 'MIXED';
   }
 
-  if (sport === 'ROBOTICA' || sport === 'VIDEOJUEGOS') {
+  if (sport === 'ROBOTICA' || sport === 'VIDEOJUEGOS' || judgedSports.includes(sport)) {
     return 'ROUND_ROBIN';
   }
 
@@ -194,6 +177,197 @@ function formatDateTime(value?: string | null) {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));
+}
+
+function formatDate(value?: string | null) {
+  if (!value) {
+    return 'Fecha por confirmar';
+  }
+
+  return new Intl.DateTimeFormat('es-CO', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(value));
+}
+
+function formatDay(value?: string | null) {
+  if (!value) {
+    return 'Dia por confirmar';
+  }
+
+  const day = new Intl.DateTimeFormat('es-CO', { weekday: 'long' }).format(new Date(value));
+  return day.charAt(0).toUpperCase() + day.slice(1);
+}
+
+function formatTime(value?: string | null) {
+  if (!value) {
+    return 'Por confirmar';
+  }
+
+  return new Intl.DateTimeFormat('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
+function fileSafeName(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+}
+
+function wrapCanvasText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number
+) {
+  const words = text.split(' ');
+  let line = '';
+  let currentY = y;
+
+  for (const word of words) {
+    const nextLine = line ? `${line} ${word}` : word;
+    if (context.measureText(nextLine).width > maxWidth && line) {
+      context.fillText(line, x, currentY);
+      line = word;
+      currentY += lineHeight;
+    } else {
+      line = nextLine;
+    }
+  }
+
+  if (line) {
+    context.fillText(line, x, currentY);
+  }
+
+  return currentY;
+}
+
+async function downloadPublicTournamentCard(
+  svg: string,
+  tournament: Tournament,
+  publicLink: string
+) {
+  const image = new Image();
+  const imageLoaded = new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve();
+    image.onerror = () => reject(new Error('No fue posible preparar el QR.'));
+  });
+
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  await imageLoaded;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    throw new Error('No fue posible crear la tarjeta.');
+  }
+
+  context.fillStyle = '#0d1210';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  context.fillStyle = '#17241b';
+  for (let x = 0; x < canvas.width; x += 30) {
+    for (let y = 0; y < canvas.height; y += 30) {
+      context.beginPath();
+      context.arc(x, y, 1.25, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+
+  context.fillStyle = '#1a1f1d';
+  context.strokeStyle = '#5adf82';
+  context.lineWidth = 3;
+  context.beginPath();
+  context.roundRect(54, 54, canvas.width - 108, canvas.height - 108, 32);
+  context.fill();
+  context.stroke();
+
+  context.textAlign = 'center';
+  context.fillStyle = '#5adf82';
+  context.font = '800 24px Arial';
+  context.fillText('MES DE LA INGENIERIA', canvas.width / 2, 126);
+
+  context.fillStyle = '#8be694';
+  context.font = '800 28px Arial';
+  context.fillText('FORMULARIO DE INSCRIPCION', canvas.width / 2, 178);
+
+  context.fillStyle = '#f4fff0';
+  context.font = '900 50px Arial';
+  const titleBottom = wrapCanvasText(context, tournament.name, canvas.width / 2, 260, 850, 58);
+
+  context.fillStyle = '#cfe6ca';
+  context.font = '700 26px Arial';
+  context.fillText(labelFor(tournamentSportLabels, tournament.sport), canvas.width / 2, titleBottom + 54);
+
+  const detailsY = titleBottom + 120;
+  context.textAlign = 'left';
+  context.fillStyle = '#8be694';
+  context.font = '800 24px Arial';
+  context.fillText('Fecha', 130, detailsY);
+  context.fillText('Dia', 130, detailsY + 78);
+  context.fillText('Horario', 130, detailsY + 156);
+  context.fillText('Lugar', 130, detailsY + 234);
+
+  context.fillStyle = '#f4fff0';
+  context.font = '700 30px Arial';
+  context.fillText(formatDate(tournament.startsAt), 330, detailsY);
+  context.fillText(formatDay(tournament.startsAt), 330, detailsY + 78);
+  context.fillText(`${formatTime(tournament.startsAt)} - ${formatTime(tournament.endsAt)}`, 330, detailsY + 156);
+  wrapCanvasText(context, tournament.venue?.name || 'Sitio por confirmar', 330, detailsY + 234, 590, 38);
+
+  const qrSize = 560;
+  const qrX = (canvas.width - qrSize) / 2;
+  const qrY = 700;
+  context.fillStyle = '#f8fff7';
+  context.beginPath();
+  context.roundRect(qrX - 28, qrY - 28, qrSize + 56, qrSize + 56, 24);
+  context.fill();
+  context.strokeStyle = '#8be694';
+  context.lineWidth = 3;
+  context.stroke();
+  context.drawImage(image, qrX, qrY, qrSize, qrSize);
+
+  context.fillStyle = '#9fb39d';
+  context.font = '600 20px Arial';
+  context.textAlign = 'center';
+  wrapCanvasText(context, publicLink, canvas.width / 2, 1310, 900, 24);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, 'image/png');
+  });
+
+  if (!blob) {
+    throw new Error('No fue posible descargar la tarjeta.');
+  }
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `tarjeta-inscripcion-${fileSafeName(tournament.name) || 'torneo'}.png`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function buildStandingInputs(rows: TournamentStanding[]) {
+  return rows.reduce<StandingInputs>((acc, standing) => {
+    acc[standing.id] = {
+      points: String(standing.points),
+      rank: standing.rank ? String(standing.rank) : '',
+      qualified: standing.qualified,
+    };
+    return acc;
+  }, {});
 }
 
 function readImageAsDataUrl(file: File) {
@@ -223,7 +397,7 @@ const TournamentsPage = () => {
     matches: [],
   });
   const [standings, setStandings] = useState<TournamentStanding[]>([]);
-  const [fixtureForm, setFixtureForm] = useState<FixtureForm>(emptyFixtureForm);
+  const [standingInputs, setStandingInputs] = useState<StandingInputs>({});
   const [matchForm, setMatchForm] = useState<MatchForm>(emptyMatchForm);
   const [registrationError, setRegistrationError] = useState('');
   const [fixtureError, setFixtureError] = useState('');
@@ -234,6 +408,10 @@ const TournamentsPage = () => {
   const [publicRegistrationQrSvg, setPublicRegistrationQrSvg] = useState('');
   const [publicFormTournament, setPublicFormTournament] = useState<Tournament | null>(null);
   const [showTournamentModal, setShowTournamentModal] = useState(false);
+  const [showListModal, setShowListModal] = useState(false);
+  const [listRecipients, setListRecipients] = useState('');
+  const [listSubject, setListSubject] = useState('');
+  const [listBody, setListBody] = useState('');
   const [selectedTeam, setSelectedTeam] = useState<TournamentTeam | null>(null);
   const [teamEditForm, setTeamEditForm] = useState<TeamEditForm>({ name: '', logoUrl: '', members: [] });
   const [selectedParticipant, setSelectedParticipant] = useState<TournamentParticipant | null>(null);
@@ -245,6 +423,7 @@ const TournamentsPage = () => {
   });
 
   const mode = useMemo(() => modeForSport(form.sport), [form.sport]);
+  const isJudgedTournament = Boolean(selectedTournament && judgedSports.includes(selectedTournament.sport));
 
   async function loadTournaments() {
     const [data, venueData] = await Promise.all([
@@ -262,6 +441,11 @@ const TournamentsPage = () => {
   useEffect(() => {
     loadTournaments().catch(() => setError('No fue posible cargar los torneos.'));
   }, []);
+
+  function syncStandings(rows: TournamentStanding[]) {
+    setStandings(rows);
+    setStandingInputs(buildStandingInputs(rows));
+  }
 
   function resetForm() {
     setForm(emptyForm);
@@ -342,8 +526,8 @@ const TournamentsPage = () => {
       resetForm();
       setShowTournamentModal(false);
       await loadTournaments();
-    } catch {
-      setError('No fue posible guardar el torneo. Revisa la modalidad y los datos.');
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, 'No fue posible guardar el torneo.'));
     }
   }
 
@@ -363,7 +547,7 @@ const TournamentsPage = () => {
       setSelectedTournament(null);
       setRegistrations({ teams: [], participants: [] });
       setFixture({ groups: [], matches: [] });
-      setStandings([]);
+      syncStandings([]);
     }
   }
 
@@ -381,7 +565,7 @@ const TournamentsPage = () => {
     ]);
     setRegistrations(registrationData);
     setFixture(fixtureData);
-    setStandings(standingsData);
+    syncStandings(standingsData);
     setScoreInputs(
       fixtureData.matches.reduce<ScoreInputs>((acc, match) => {
         acc[match.id] = {
@@ -603,63 +787,6 @@ const TournamentsPage = () => {
     }, {});
   }
 
-  async function generateGroups() {
-    if (!selectedTournament) {
-      return;
-    }
-
-    try {
-      setFixtureError('');
-      const data = await generateTournamentGroupsRequest(selectedTournament.id, {
-        groupCount: Number(fixtureForm.groupCount || 2),
-        overwrite: fixtureForm.overwriteGroups,
-      });
-      setFixture(data);
-      setMatchScheduleInputs(buildScheduleInputs(data.matches));
-      const registrationData = await getTournamentRegistrationsRequest(selectedTournament.id);
-      setRegistrations(registrationData);
-    } catch {
-      setFixtureError('No fue posible generar grupos. Revisa inscritos, formato o grupos existentes.');
-    }
-  }
-
-  async function generateFixture() {
-    if (!selectedTournament) {
-      return;
-    }
-
-    try {
-      setFixtureError('');
-      let registrationData = registrations;
-
-      if (
-        (selectedTournament.format === 'GROUPS' || selectedTournament.format === 'MIXED') &&
-        (!fixture.groups.length || fixtureForm.overwriteGroups)
-      ) {
-        await generateTournamentGroupsRequest(selectedTournament.id, {
-          groupCount: Number(fixtureForm.groupCount || 2),
-          overwrite: fixtureForm.overwriteGroups,
-        });
-        registrationData = await getTournamentRegistrationsRequest(selectedTournament.id);
-        setRegistrations(registrationData);
-      }
-
-      const data = await generateTournamentFixtureRequest(selectedTournament.id, {
-        overwrite: fixtureForm.overwriteFixture,
-        scheduledStartAt: fixtureForm.scheduledStartAt || null,
-        matchIntervalMinutes: Number(fixtureForm.matchIntervalMinutes || 60),
-        matchesPerDay: Number(fixtureForm.matchesPerDay || 1),
-        venueId: fixtureForm.venueId || selectedTournament.venue?.id || null,
-      });
-      setFixture(data);
-      setMatchScheduleInputs(buildScheduleInputs(data.matches));
-      setStandings(await getTournamentStandingsRequest(selectedTournament.id));
-      await loadTournaments();
-    } catch {
-      setFixtureError('No fue posible generar los partidos. Revisa inscritos, grupos o si ya existen partidos finalizados.');
-    }
-  }
-
   async function submitManualMatch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedTournament) {
@@ -682,7 +809,7 @@ const TournamentsPage = () => {
       const data = await getTournamentFixtureRequest(selectedTournament.id);
       setFixture(data);
       setMatchScheduleInputs(buildScheduleInputs(data.matches));
-      setStandings(await getTournamentStandingsRequest(selectedTournament.id));
+      syncStandings(await getTournamentStandingsRequest(selectedTournament.id));
       await loadTournaments();
     } catch {
       setFixtureError('No fue posible crear el partido manual. Selecciona rivales diferentes.');
@@ -710,6 +837,42 @@ const TournamentsPage = () => {
         [key]: value,
       },
     });
+  }
+
+  function standingFor(standing: TournamentStanding) {
+    return standingInputs[standing.id] || {
+      points: String(standing.points),
+      rank: standing.rank ? String(standing.rank) : '',
+      qualified: standing.qualified,
+    };
+  }
+
+  function setStandingInput(
+    standing: TournamentStanding,
+    key: 'points' | 'rank' | 'qualified',
+    value: string | boolean
+  ) {
+    setStandingInputs({
+      ...standingInputs,
+      [standing.id]: {
+        ...standingFor(standing),
+        [key]: value,
+      },
+    });
+  }
+
+  async function saveStanding(standing: TournamentStanding) {
+    if (!selectedTournament) {
+      return;
+    }
+
+    const input = standingFor(standing);
+    await updateTournamentStandingRequest(selectedTournament.id, standing.id, {
+      points: Number(input.points || 0),
+      rank: input.rank ? Number(input.rank) : null,
+      qualified: input.qualified,
+    });
+    syncStandings(await getTournamentStandingsRequest(selectedTournament.id));
   }
 
   function scheduleFor(matchId: string) {
@@ -803,7 +966,7 @@ const TournamentsPage = () => {
       ]);
       setFixture(fixtureData);
       setMatchScheduleInputs(buildScheduleInputs(fixtureData.matches));
-      setStandings(standingsData);
+      syncStandings(standingsData);
     } catch {
       setFixtureError('No fue posible cerrar el partido. Revisa si el empate esta permitido.');
     }
@@ -814,7 +977,7 @@ const TournamentsPage = () => {
       return;
     }
 
-    setStandings(await recalculateTournamentStandingsRequest(selectedTournament.id));
+    syncStandings(await recalculateTournamentStandingsRequest(selectedTournament.id));
   }
 
   async function exportExcel(tournament = selectedTournament) {
@@ -831,10 +994,59 @@ const TournamentsPage = () => {
     URL.revokeObjectURL(url);
   }
 
+  async function sendRegistrationList(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!selectedTournament) {
+      return;
+    }
+
+    const recipients = listRecipients
+      .split(/[;,\n]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    try {
+      setRegistrationError('');
+      await sendTournamentRegistrationListRequest(selectedTournament.id, {
+        recipients,
+        subject: listSubject || `Lista de inscritos - ${selectedTournament.name}`,
+        body: listBody || 'Adjunto la lista de inscritos para soporte de permiso academico.',
+      });
+      setShowListModal(false);
+      setListRecipients('');
+      setRegistrationError('');
+    } catch {
+      setRegistrationError('No fue posible enviar la lista. Revisa correos destino o configuracion SMTP.');
+    }
+  }
+
   return (
     <div>
       <Topbar title="Torneos" />
       <div className="px-6 py-6">
+        <FormModal
+          open={showListModal}
+          title="Enviar lista de inscritos"
+          description="Envia a profesores o responsables un Excel con equipos o participantes inscritos."
+          onClose={() => setShowListModal(false)}
+        >
+          <form className="mt-4 space-y-4" onSubmit={sendRegistrationList}>
+            <label className="block text-sm font-medium text-slate-700">
+              Correos destino
+              <textarea className="mt-1 min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={listRecipients} onChange={(event) => setListRecipients(event.target.value)} placeholder="profesor@umanizales.edu.co; otro@umanizales.edu.co" required />
+            </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Asunto
+              <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={listSubject} onChange={(event) => setListSubject(event.target.value)} placeholder={`Lista de inscritos - ${selectedTournament?.name || 'Torneo'}`} />
+            </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Mensaje
+              <textarea className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={listBody} onChange={(event) => setListBody(event.target.value)} placeholder="Adjunto la lista para permiso academico." />
+            </label>
+            <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white">Enviar lista</button>
+          </form>
+        </FormModal>
         <FormModal
           open={showTournamentModal}
           title={form.id ? 'Editar torneo' : 'Nuevo torneo'}
@@ -897,23 +1109,26 @@ const TournamentsPage = () => {
               </select>
             </label>
             <div className="grid grid-cols-2 gap-3">
-              {mode === 'TEAM' ? (
-                <>
+                  {mode === 'TEAM' ? (
+                  <>
                   <label className="block text-sm font-medium text-slate-700">
                     Max. equipos
-                    <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" value={form.maxTeams} onChange={(event) => setForm({ ...form, maxTeams: event.target.value })} />
+                    <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Sin limite" type="number" min="1" value={form.maxTeams} onChange={(event) => setForm({ ...form, maxTeams: event.target.value })} />
+                    <span className="mt-1 block text-xs text-slate-500">Opcional. Dejalo vacio para permitir cualquier cantidad de equipos.</span>
                   </label>
                   <label className="block text-sm font-medium text-slate-700">
                     Max. integrantes
                     <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" value={form.maxMembersPerTeam} onChange={(event) => setForm({ ...form, maxMembersPerTeam: event.target.value })} />
+                    <span className="mt-1 block text-xs text-slate-500">Opcional. Por ejemplo, 2 limita cada equipo a dos integrantes.</span>
                   </label>
-                </>
-              ) : (
-                <label className="block text-sm font-medium text-slate-700">
-                  Max. participantes
-                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" value={form.maxParticipants} onChange={(event) => setForm({ ...form, maxParticipants: event.target.value })} />
-                </label>
-              )}
+                  </>
+                  ) : (
+                  <label className="block text-sm font-medium text-slate-700">
+                    Max. participantes
+                    <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Sin limite" type="number" min="1" value={form.maxParticipants} onChange={(event) => setForm({ ...form, maxParticipants: event.target.value })} />
+                    <span className="mt-1 block text-xs text-slate-500">Opcional. Dejalo vacio para permitir cualquier cantidad de participantes.</span>
+                  </label>
+                  )}
             </div>
             <textarea
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -1031,12 +1246,50 @@ const TournamentsPage = () => {
           <div className="space-y-4">
             {publicRegistrationQrSvg ? (
               <>
-                <div className="mx-auto h-48 w-48 rounded-md border border-slate-200 bg-white p-3 [&_svg]:h-full [&_svg]:w-full" dangerouslySetInnerHTML={{ __html: publicRegistrationQrSvg }} />
-                <p className="break-all rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700">{publicRegistrationLink}</p>
+                <div className="rounded-xl border border-[#5adf82]/30 bg-[#0f1513] p-5">
+                  <div
+                    className="qr-svg-fit mx-auto aspect-square w-full max-w-[260px] rounded-lg border border-[#8be694]/50 bg-white p-3 shadow-[0_0_28px_rgba(90,223,130,0.16)]"
+                    dangerouslySetInnerHTML={{ __html: publicRegistrationQrSvg }}
+                  />
+                </div>
+                <div className="rounded-xl border border-[#5adf82]/25 bg-[#101613] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8be694]">
+                    Link publico
+                  </p>
+                  <p className="mt-2 break-all text-sm font-medium text-[#d8f3d5]">{publicRegistrationLink}</p>
+                  {publicFormTournament ? (
+                    <dl className="mt-4 grid gap-3 text-sm text-[#cfe6ca] sm:grid-cols-2">
+                      <div>
+                        <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8aa08a]">Fecha</dt>
+                        <dd className="mt-1 font-semibold">{formatDate(publicFormTournament.startsAt)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8aa08a]">Horario</dt>
+                        <dd className="mt-1 font-semibold">{formatTime(publicFormTournament.startsAt)} - {formatTime(publicFormTournament.endsAt)}</dd>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8aa08a]">Lugar</dt>
+                        <dd className="mt-1 font-semibold">{publicFormTournament.venue?.name || 'Sitio por confirmar'}</dd>
+                      </div>
+                    </dl>
+                  ) : null}
+                </div>
                 <div className="flex flex-wrap justify-center gap-2">
-                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void navigator.clipboard.writeText(publicRegistrationLink)}>
+                  <button className="rounded-md border border-[#5adf82]/35 px-4 py-2 text-sm font-semibold text-[#f4fff0]" type="button" onClick={() => void navigator.clipboard.writeText(publicRegistrationLink)}>
                     Copiar link
                   </button>
+                  {publicFormTournament ? (
+                    <button
+                      className="rounded-md bg-[#8be694] px-4 py-2 text-sm font-semibold text-[#0d1210]"
+                      type="button"
+                      onClick={() => {
+                        downloadPublicTournamentCard(publicRegistrationQrSvg, publicFormTournament, publicRegistrationLink)
+                          .catch(() => setRegistrationError('No fue posible descargar la tarjeta QR.'));
+                      }}
+                    >
+                      Descargar tarjeta
+                    </button>
+                  ) : null}
                   <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={() => setPublicFormTournament(null)}>
                     Cerrar
                   </button>
@@ -1121,9 +1374,14 @@ const TournamentsPage = () => {
                     {selectedTournament.name} - {labelFor(competitionModeLabels, selectedTournament.mode)}
                   </p>
                 </div>
-                <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void exportExcel(selectedTournament)}>
-                  Descargar Excel
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void exportExcel(selectedTournament)}>
+                    Descargar Excel
+                  </button>
+                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => setShowListModal(true)}>
+                    Enviar lista
+                  </button>
+                </div>
               </div>
               <div className="space-y-5 p-5">
                 {registrationError ? <p className="mb-3 text-sm text-red-600">{registrationError}</p> : null}
@@ -1271,106 +1529,123 @@ const TournamentsPage = () => {
               <div className="border-b border-slate-200 px-5 py-4">
                 <h3 className="text-base font-semibold text-slate-950">Organizar partidos</h3>
                 <p className="mt-1 text-sm text-slate-600">
-                  Usa el modo automatico para crear los cruces iniciales con fecha y hora. Usa el modo manual para semifinales, finales o ajustes puntuales.
+                  Crea los partidos manualmente con los equipos o participantes inscritos. Puedes ajustar rivales, fase, lugar, fecha y hora antes de registrar resultados.
                 </p>
               </div>
               <div className="space-y-5 p-5">
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h4 className="font-semibold text-slate-950">Automatico</h4>
-                      <p className="mt-1 text-sm text-slate-600">
-                        Genera todos contra todos por grupo o la primera ronda de eliminacion directa.
-                      </p>
-                    </div>
-                    <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={() => void generateFixture()}>
-                      Organizar automaticamente
-                    </button>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700">
-                      Fecha y hora inicial
-                      <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="datetime-local" value={fixtureForm.scheduledStartAt} onChange={(event) => setFixtureForm({ ...fixtureForm, scheduledStartAt: event.target.value })} />
-                    </label>
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700">
-                      Intervalo
-                      <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={fixtureForm.matchIntervalMinutes} onChange={(event) => setFixtureForm({ ...fixtureForm, matchIntervalMinutes: event.target.value })}>
-                        <option value="30">30 minutos</option>
-                        <option value="45">45 minutos</option>
-                        <option value="60">1 hora</option>
-                        <option value="90">1 hora 30 min</option>
-                        <option value="120">2 horas</option>
-                      </select>
-                    </label>
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700">
-                      Partidos por dia
-                      <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" max="12" value={fixtureForm.matchesPerDay} onChange={(event) => setFixtureForm({ ...fixtureForm, matchesPerDay: event.target.value })} />
-                    </label>
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700">
-                      Lugar
-                      <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={fixtureForm.venueId || selectedTournament.venue?.id || ''} onChange={(event) => setFixtureForm({ ...fixtureForm, venueId: event.target.value })}>
-                        <option value="">Lugar del torneo</option>
-                        {venues.map((venue) => (
-                          <option key={venue.id} value={venue.id}>{venue.name}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="grid gap-1 text-sm font-semibold text-slate-700">
-                      Grupos
-                      <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" max="16" value={fixtureForm.groupCount} onChange={(event) => setFixtureForm({ ...fixtureForm, groupCount: event.target.value })} />
-                    </label>
-                    <label className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700">
-                      <input type="checkbox" checked={fixtureForm.overwriteGroups} onChange={(event) => setFixtureForm({ ...fixtureForm, overwriteGroups: event.target.checked })} />
-                      Rehacer grupos
-                    </label>
-                    <label className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700">
-                      <input type="checkbox" checked={fixtureForm.overwriteFixture} onChange={(event) => setFixtureForm({ ...fixtureForm, overwriteFixture: event.target.checked })} />
-                      Rehacer partidos
-                    </label>
-                  </div>
-                </div>
                 <div className="flex flex-wrap gap-2">
-                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void generateGroups()}>Solo generar grupos</button>
-                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void recalculateStandings()}>Recalcular tabla</button>
+                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void recalculateStandings()}>
+                    {isJudgedTournament ? 'Crear ranking desde inscritos' : 'Recalcular tabla'}
+                  </button>
                   <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" type="button" onClick={() => void exportExcel()}>Exportar Excel</button>
                 </div>
                 {fixtureError ? <p className="text-sm text-red-600">{fixtureError}</p> : null}
 
                 {standings.length ? (
                   <div className="overflow-x-auto">
-                    <h4 className="text-sm font-semibold text-slate-950">Tabla de posiciones</h4>
-                    <table className="mt-3 min-w-full divide-y divide-slate-200 text-sm">
-                      <thead className="theme-table-head">
-                        <tr>
-                          <th className="px-3 py-2 text-left">Grupo</th>
-                          <th className="px-3 py-2 text-left">Pos.</th>
-                          <th className="px-3 py-2 text-left">Competidor</th>
-                          <th className="px-3 py-2 text-left">PJ</th>
-                          <th className="px-3 py-2 text-left">G</th>
-                          <th className="px-3 py-2 text-left">E</th>
-                          <th className="px-3 py-2 text-left">P</th>
-                          <th className="px-3 py-2 text-left">Pts</th>
-                          <th className="px-3 py-2 text-left">Dif.</th>
-                          <th className="px-3 py-2 text-left">Clasifica</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {standings.map((standing) => (
-                          <tr key={standing.id}>
-                            <td className="px-3 py-2 text-slate-600">{standing.group?.name || 'General'}</td>
-                            <td className="px-3 py-2 text-slate-600">{standing.rank || '-'}</td>
-                            <td className="px-3 py-2 font-medium text-slate-950">{standing.team?.name || standing.participant?.displayName}</td>
-                            <td className="px-3 py-2 text-slate-600">{standing.played}</td>
-                            <td className="px-3 py-2 text-slate-600">{standing.won}</td>
-                            <td className="px-3 py-2 text-slate-600">{standing.drawn}</td>
-                            <td className="px-3 py-2 text-slate-600">{standing.lost}</td>
-                            <td className="px-3 py-2 font-semibold text-slate-950">{standing.points}</td>
-                            <td className="px-3 py-2 text-slate-600">{standing.goalDifference}</td>
-                            <td className="px-3 py-2 text-slate-600">{standing.qualified ? 'Si' : 'No'}</td>
+                    <h4 className="text-sm font-semibold text-slate-950">
+                      {isJudgedTournament ? 'Ranking por jurados' : 'Tabla de posiciones'}
+                    </h4>
+                    {isJudgedTournament ? (
+                      <table className="mt-3 min-w-full divide-y divide-slate-200 text-sm">
+                        <thead className="theme-table-head">
+                          <tr>
+                            <th className="px-3 py-2 text-left">Pos.</th>
+                            <th className="px-3 py-2 text-left">Equipo</th>
+                            <th className="px-3 py-2 text-left">Integrantes</th>
+                            <th className="px-3 py-2 text-left">Puntos jurados</th>
+                            <th className="px-3 py-2 text-left">Podio</th>
+                            <th className="px-3 py-2 text-left">Acciones</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {standings.map((standing) => {
+                            const input = standingFor(standing);
+                            return (
+                              <tr key={standing.id}>
+                                <td className="px-3 py-2">
+                                  <input
+                                    className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                                    min="1"
+                                    type="number"
+                                    value={input.rank}
+                                    onChange={(event) => setStandingInput(standing, 'rank', event.target.value)}
+                                  />
+                                </td>
+                                <td className="px-3 py-2 font-medium text-slate-950">{standing.team?.name || 'Equipo'}</td>
+                                <td className="px-3 py-2 text-slate-600">
+                                  <div className="flex max-w-xl flex-wrap gap-1">
+                                    {(standing.team?.members || []).map((member) => (
+                                      <span key={member.id} className="rounded-full bg-slate-100 px-2 py-1 text-xs">
+                                        {member.fullName || member.user?.name}
+                                        {member.isCaptain ? ' (capitan)' : ''}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2">
+                                  <input
+                                    className="w-28 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                                    min="0"
+                                    type="number"
+                                    value={input.points}
+                                    onChange={(event) => setStandingInput(standing, 'points', event.target.value)}
+                                  />
+                                </td>
+                                <td className="px-3 py-2 text-slate-600">
+                                  <label className="inline-flex items-center gap-2">
+                                    <input
+                                      checked={input.qualified}
+                                      type="checkbox"
+                                      onChange={(event) => setStandingInput(standing, 'qualified', event.target.checked)}
+                                    />
+                                    Mostrar
+                                  </label>
+                                </td>
+                                <td className="px-3 py-2">
+                                  <button className="rounded-md border border-slate-300 px-3 py-1 font-semibold" type="button" onClick={() => void saveStanding(standing)}>
+                                    Guardar
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <table className="mt-3 min-w-full divide-y divide-slate-200 text-sm">
+                        <thead className="theme-table-head">
+                          <tr>
+                            <th className="px-3 py-2 text-left">Grupo</th>
+                            <th className="px-3 py-2 text-left">Pos.</th>
+                            <th className="px-3 py-2 text-left">Competidor</th>
+                            <th className="px-3 py-2 text-left">PJ</th>
+                            <th className="px-3 py-2 text-left">G</th>
+                            <th className="px-3 py-2 text-left">E</th>
+                            <th className="px-3 py-2 text-left">P</th>
+                            <th className="px-3 py-2 text-left">Pts</th>
+                            <th className="px-3 py-2 text-left">Dif.</th>
+                            <th className="px-3 py-2 text-left">Clasifica</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {standings.map((standing) => (
+                            <tr key={standing.id}>
+                              <td className="px-3 py-2 text-slate-600">{standing.group?.name || 'General'}</td>
+                              <td className="px-3 py-2 text-slate-600">{standing.rank || '-'}</td>
+                              <td className="px-3 py-2 font-medium text-slate-950">{standing.team?.name || standing.participant?.displayName}</td>
+                              <td className="px-3 py-2 text-slate-600">{standing.played}</td>
+                              <td className="px-3 py-2 text-slate-600">{standing.won}</td>
+                              <td className="px-3 py-2 text-slate-600">{standing.drawn}</td>
+                              <td className="px-3 py-2 text-slate-600">{standing.lost}</td>
+                              <td className="px-3 py-2 font-semibold text-slate-950">{standing.points}</td>
+                              <td className="px-3 py-2 text-slate-600">{standing.goalDifference}</td>
+                              <td className="px-3 py-2 text-slate-600">{standing.qualified ? 'Si' : 'No'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 ) : null}
 

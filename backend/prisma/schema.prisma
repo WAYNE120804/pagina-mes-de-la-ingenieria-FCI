@@ -77,6 +77,8 @@ enum Sport {
   AJEDREZ
   ROBOTICA
   VOLEIBOL
+  MARATON_PROGRAMACION
+  CAPTURA_BANDERA
 }
 
 enum CompetitionMode {
@@ -897,12 +899,23 @@ model StorageAsset {
 }
 
 model SiteSetting {
-  id        String   @id @default("public")
-  brandName String   @default("Mes de la Ingenieria") @map("brand_name")
-  heroTitle String   @default("Innovacion que transforma el futuro.") @map("hero_title")
-  logoUrl   String?  @map("logo_url")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  id               String   @id @default("public")
+  brandName        String   @default("Mes de la Ingenieria") @map("brand_name")
+  heroTitle        String   @default("Innovacion que transforma el futuro.") @map("hero_title")
+  logoUrl          String?  @map("logo_url")
+  smtpEnabled      Boolean  @default(false) @map("smtp_enabled")
+  smtpHost         String?  @map("smtp_host")
+  smtpPort         Int?     @map("smtp_port")
+  smtpSecure       Boolean  @default(false) @map("smtp_secure")
+  smtpUser         String?  @map("smtp_user")
+  smtpPassword     String?  @map("smtp_password")
+  smtpFromName     String?  @map("smtp_from_name")
+  smtpFromEmail    String?  @map("smtp_from_email")
+  smtpReplyTo      String?  @map("smtp_reply_to")
+  smtpBatchSize    Int      @default(40) @map("smtp_batch_size")
+  smtpBatchDelayMs Int      @default(1500) @map("smtp_batch_delay_ms")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   @@map("site_settings")
 }

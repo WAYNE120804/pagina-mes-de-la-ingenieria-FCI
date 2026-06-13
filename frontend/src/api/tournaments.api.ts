@@ -1,5 +1,6 @@
 import client from './client';
 import { endpoints } from './endpoints';
+import { sendListEmailRequest } from './notifications.api';
 import type { Venue } from './venues.api';
 
 export type Tournament = {
@@ -54,7 +55,7 @@ export type TournamentTeam = {
     user?: {
       id: string;
       name: string;
-      email: string;
+      email?: string;
       universityCode?: string | null;
       program?: {
         name: string;
@@ -101,11 +102,14 @@ export type PublicTournamentForm = {
     sport: string;
     mode: string;
     status: string;
+    description?: string | null;
+    rules?: string | null;
     maxTeams?: number | null;
     maxMembersPerTeam?: number | null;
     maxParticipants?: number | null;
     startsAt?: string | null;
     endsAt?: string | null;
+    venue?: Venue | null;
   };
   url: string;
 };
@@ -189,6 +193,7 @@ export type TournamentStanding = {
   team?: {
     id: string;
     name: string;
+    members?: TournamentTeam['members'];
   } | null;
   participant?: {
     id: string;
@@ -407,12 +412,36 @@ export async function recalculateTournamentStandingsRequest(id: string) {
   return response.data.data;
 }
 
+export async function updateTournamentStandingRequest(
+  id: string,
+  standingId: string,
+  input: { points?: number; rank?: number | null; qualified?: boolean }
+) {
+  const response = await client.patch<ApiResponse<TournamentStanding>>(
+    endpoints.tournaments.standingDetail(id, standingId),
+    input
+  );
+
+  return response.data.data;
+}
+
 export async function exportTournamentExcelRequest(id: string) {
   const response = await client.get<Blob>(endpoints.tournaments.exportExcel(id), {
     responseType: 'blob',
   });
 
   return response.data;
+}
+
+export async function sendTournamentRegistrationListRequest(
+  tournamentId: string,
+  input: { recipients: string[]; subject: string; body: string }
+) {
+  return sendListEmailRequest({
+    targetType: 'TOURNAMENT',
+    targetId: tournamentId,
+    ...input,
+  });
 }
 
 export async function registerTeamRequest(id: string, input: TeamRegistrationInput) {
