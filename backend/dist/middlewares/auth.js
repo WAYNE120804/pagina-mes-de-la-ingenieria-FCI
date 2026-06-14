@@ -33,7 +33,7 @@ function authMiddleware(req, _res, next) {
             permissions: payload.permissions || [],
         };
         if (!req.user.id) {
-            throw new app_error_1.AppError('Token invalido', 401, 'INVALID_TOKEN');
+            throw new app_error_1.AppError('Token inválido', 401, 'INVALID_TOKEN');
         }
         next();
     }
@@ -42,14 +42,14 @@ function authMiddleware(req, _res, next) {
             next(error);
             return;
         }
-        next(new app_error_1.AppError('Token invalido o expirado', 401, 'INVALID_TOKEN'));
+        next(new app_error_1.AppError('Token inválido o expirado', 401, 'INVALID_TOKEN'));
     }
 }
 function roleMiddleware(...roles) {
     return (req, _res, next) => {
         const hasRole = req.user?.roles.some((role) => roles.includes(role));
         if (!hasRole) {
-            next(new app_error_1.AppError('No tienes rol suficiente para esta accion', 403, 'ROLE_FORBIDDEN'));
+            next(new app_error_1.AppError('No tienes rol suficiente para esta acción', 403, 'ROLE_FORBIDDEN'));
             return;
         }
         next();
@@ -59,7 +59,7 @@ function permissionMiddleware(...permissions) {
     return (req, _res, next) => {
         const hasPermission = req.user?.permissions.some((permission) => permissions.includes(permission));
         if (!hasPermission) {
-            next(new app_error_1.AppError('No tienes permiso suficiente para esta accion', 403, 'PERMISSION_FORBIDDEN'));
+            next(new app_error_1.AppError('No tienes permiso suficiente para esta acción', 403, 'PERMISSION_FORBIDDEN'));
             return;
         }
         next();

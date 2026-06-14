@@ -7,7 +7,7 @@ const Dashboard = () => {
       <div className="space-y-6 px-6 py-6">
         <section className="theme-section-card rounded-lg p-6 shadow-sm">
           <h3 className="theme-main-title theme-content-title text-2xl font-semibold">
-            Semana de Ingenieria
+            Semana de Ingeniería
           </h3>
           <p className="theme-content-subtitle mt-2 text-sm">
             Base operativa con autenticacion, roles, usuarios y conexion real a PostgreSQL.
@@ -28,7 +28,7 @@ const Dashboard = () => {
           <div className="theme-summary-card rounded-lg p-5 shadow-sm">
             <p className="theme-summary-label">Programas</p>
             <p className="mt-3 text-3xl font-semibold text-slate-900">5</p>
-            <p className="mt-2 text-sm text-slate-500">Ingenierias configuradas</p>
+            <p className="mt-2 text-sm text-slate-500">Ingenierías configuradas</p>
           </div>
           <div className="theme-summary-card rounded-lg p-5 shadow-sm">
             <p className="theme-summary-label">Base de datos</p>
@@ -39,11 +39,11 @@ const Dashboard = () => {
 
         <section className="theme-section-card rounded-lg p-6 shadow-sm">
           <h3 className="theme-main-title theme-content-title text-2xl font-semibold">
-            Siguiente modulo
+            Siguiente módulo
           </h3>
           <p className="theme-content-subtitle mt-2 max-w-3xl text-sm">
             La siguiente fase funcional es eventos, charlas y asistencia. Esta pantalla ya
-            consume la sesion real del backend y puede crecer con metricas del dashboard.
+            consume la sesión real del backend y puede crecer con métricas del dashboard.
           </p>
         </section>
       </div>

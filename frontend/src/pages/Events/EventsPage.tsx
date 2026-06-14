@@ -278,7 +278,7 @@ async function downloadPublicEventCard(
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `tarjeta-${mode === 'registration' ? 'inscripcion' : 'asistencia'}-${fileSafeName(event.title) || 'evento'}.png`;
+  link.download = `tarjeta-${mode === 'registration' ? 'inscripción' : 'asistencia'}-${fileSafeName(event.title) || 'evento'}.png`;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -490,7 +490,7 @@ const EventsPage = () => {
       ]);
       setPublicLink(formData.url);
       setPublicQrSvg(svg);
-      setPublicLinkTitle(`${mode === 'registration' ? 'Inscripcion' : 'Asistencia'} - ${event.title}`);
+      setPublicLinkTitle(`${mode === 'registration' ? 'Inscripción' : 'Asistencia'} - ${event.title}`);
       setPublicLinkEvent(event);
       setPublicLinkMode(mode);
     } catch {
@@ -544,7 +544,7 @@ const EventsPage = () => {
         >
           <form className="space-y-4" onSubmit={handleSubmit}>
             <label className="block text-sm font-medium text-slate-700">
-              Titulo
+              Título
               <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required />
             </label>
             <label className="block text-sm font-medium text-slate-700">
@@ -598,7 +598,7 @@ const EventsPage = () => {
                 </p>
                 <label className="block text-sm font-medium text-slate-700">
                   Tema
-                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.topic} onChange={(event) => setForm({ ...form, topic: event.target.value })} placeholder="Tema o titulo academico" />
+                  <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.topic} onChange={(event) => setForm({ ...form, topic: event.target.value })} placeholder="Tema o título académico" />
                 </label>
                 <label className="block text-sm font-medium text-slate-700">
                   Ponente registrado
@@ -694,7 +694,7 @@ const EventsPage = () => {
                           <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => void openDetail(event.id)}>Detalle</button>
                           <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => void showPublicLink(event, 'attendance')}>Asistencia</button>
                           {event.type === 'WORKSHOP' ? (
-                            <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => void showPublicLink(event, 'registration')}>Inscripcion</button>
+                            <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => void showPublicLink(event, 'registration')}>Inscripción</button>
                           ) : null}
                           <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => editEvent(event)}>Editar</button>
                           <button className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-700" onClick={() => void removeEvent(event.id)}>Eliminar</button>
@@ -712,7 +712,7 @@ const EventsPage = () => {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#5adf82]/20 px-5 py-4">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8be694]">
-                    Link publico
+                    Link público
                   </p>
                   <h3 className="mt-1 text-lg font-semibold text-[#f4fff0]">{publicLinkTitle}</h3>
                 </div>
@@ -743,7 +743,7 @@ const EventsPage = () => {
                   {publicLinkEvent ? (
                     <>
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8be694]">
-                        {publicLinkMode === 'registration' ? 'Inscripcion' : 'Asistencia'}
+                        {publicLinkMode === 'registration' ? 'Inscripción' : 'Asistencia'}
                       </p>
                       <h4 className="mt-2 text-2xl font-extrabold text-[#f4fff0]">{publicLinkEvent.title}</h4>
                       <dl className="mt-5 grid gap-3 text-sm text-[#cfe6ca] sm:grid-cols-2">
@@ -785,7 +785,7 @@ const EventsPage = () => {
                 <div className="flex flex-wrap gap-2">
                   <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => void showPublicLink(selectedEvent, 'attendance')}>Asistencia</button>
                   {selectedEvent.type === 'WORKSHOP' ? (
-                    <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => void showPublicLink(selectedEvent, 'registration')}>Inscripcion</button>
+                    <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => void showPublicLink(selectedEvent, 'registration')}>Inscripción</button>
                   ) : null}
                   <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => setSelectedEvent(null)}>Cerrar detalle</button>
                 </div>
@@ -800,11 +800,11 @@ const EventsPage = () => {
                 <div className="rounded-lg border border-slate-200 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Preinscritos</p>
                   <p className="mt-2 text-2xl font-semibold text-slate-950">{selectedRegistered}</p>
-                  <p className="mt-1 text-xs text-slate-500">{selectedEvent.type === 'WORKSHOP' ? 'Inscripcion previa' : 'Registros pendientes'}</p>
+                  <p className="mt-1 text-xs text-slate-500">{selectedEvent.type === 'WORKSHOP' ? 'Inscripción previa' : 'Registros pendientes'}</p>
                 </div>
                 <div className="rounded-lg border border-slate-200 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Capacidad</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-950">{selectedEvent.capacity || 'Sin limite'}</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{selectedEvent.capacity || 'Sin límite'}</p>
                   <p className="mt-1 text-xs text-slate-500">{selectedAvailable === null ? 'Sin cupo maximo' : `${selectedAvailable} disponibles`}</p>
                 </div>
                 <div className="rounded-lg border border-slate-200 p-4">
@@ -845,8 +845,8 @@ const EventsPage = () => {
                       <dd className="mt-1 font-semibold text-slate-950">{selectedEvent.venue?.name || 'Sin espacio asignado'}</dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Ubicacion</dt>
-                      <dd className="mt-1 font-semibold text-slate-950">{selectedEvent.venue?.location || 'Sin ubicacion'}</dd>
+                      <dt className="text-slate-500">Ubicación</dt>
+                      <dd className="mt-1 font-semibold text-slate-950">{selectedEvent.venue?.location || 'Sin ubicación'}</dd>
                     </div>
                     <div>
                       <dt className="text-slate-500">Estado</dt>
@@ -894,7 +894,7 @@ const EventsPage = () => {
                     </div>
                     <div>
                       <dt className="text-slate-500">Formulario</dt>
-                      <dd className="mt-1 font-semibold text-slate-950">{selectedEvent.type === 'WORKSHOP' ? 'Inscripcion y asistencia' : 'Asistencia'}</dd>
+                      <dd className="mt-1 font-semibold text-slate-950">{selectedEvent.type === 'WORKSHOP' ? 'Inscripción y asistencia' : 'Asistencia'}</dd>
                     </div>
                   </dl>
                 </div>

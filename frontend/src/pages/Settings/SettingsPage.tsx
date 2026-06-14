@@ -28,7 +28,7 @@ const SettingsPage = () => {
   useEffect(() => {
     getSettingsRequest()
       .then(setSettings)
-      .catch(() => setError('No fue posible cargar la configuracion.'))
+      .catch(() => setError('No fue posible cargar la configuración.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -77,9 +77,9 @@ const SettingsPage = () => {
       });
       setSettings(nextSettings);
       setSmtpPassword('');
-      setMessage('Configuracion guardada.');
+      setMessage('Configuración guardada.');
     } catch {
-      setError('No fue posible guardar la configuracion.');
+      setError('No fue posible guardar la configuración.');
     } finally {
       setSaving(false);
     }
@@ -87,17 +87,17 @@ const SettingsPage = () => {
 
   return (
     <div>
-      <Topbar title="Configuracion publica" />
+      <Topbar title="Configuración publica" />
       <div className="grid gap-6 px-6 py-6 xl:grid-cols-[420px_1fr]">
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-base font-semibold text-slate-950">Marca del panel publico</h3>
+          <h3 className="text-base font-semibold text-slate-950">Marca del panel público</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Estos datos se muestran en la pagina publica del Mes de la Ingenieria.
+            Estos datos se muestran en la pagina publica del Mes de la Ingeniería.
           </p>
 
           <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
             <label className="block text-sm font-medium text-slate-700">
-              Nombre publico
+              Nombre público
               <input
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 value={settings.brandName}
@@ -139,7 +139,7 @@ const SettingsPage = () => {
             <div className="border-t border-slate-200 pt-4">
               <h4 className="text-sm font-semibold text-slate-950">Correo SMTP de Google</h4>
               <p className="mt-1 text-xs text-slate-500">
-                Usa una contrasena de aplicacion de Google. Si SMTP falla, los registros siguen funcionando sin bloquear la app.
+                Usa una contraseña de aplicacion de Google. Si SMTP falla, los registros siguen funcionando sin bloquear la app.
               </p>
               <label className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-700">
                 <input
@@ -147,7 +147,7 @@ const SettingsPage = () => {
                   type="checkbox"
                   onChange={(event) => setSettings({ ...settings, smtpEnabled: event.target.checked })}
                 />
-                Activar envio de correos
+                Activar envío de correos
               </label>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <label className="block text-sm font-medium text-slate-700">
@@ -163,7 +163,7 @@ const SettingsPage = () => {
                   <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={settings.smtpUser || ''} onChange={(event) => setSettings({ ...settings, smtpUser: event.target.value })} placeholder="correo@gmail.com" />
                 </label>
                 <label className="block text-sm font-medium text-slate-700">
-                  Contrasena de aplicacion
+                  Contraseña de aplicacion
                   <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="password" value={smtpPassword} onChange={(event) => setSmtpPassword(event.target.value)} placeholder={settings.smtpPasswordConfigured ? 'Configurada, escribir solo para cambiar' : 'Pegar clave SMTP'} />
                 </label>
                 <label className="block text-sm font-medium text-slate-700">
@@ -196,7 +196,7 @@ const SettingsPage = () => {
               className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300"
               disabled={saving || loading}
             >
-              {saving ? 'Guardando...' : 'Guardar configuracion'}
+              {saving ? 'Guardando...' : 'Guardar configuración'}
             </button>
           </form>
         </section>

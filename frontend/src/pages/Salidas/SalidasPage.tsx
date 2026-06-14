@@ -14,7 +14,7 @@ import { formatCOP } from '../../utils/money';
 const tipoOptions = [
   { value: 'PRESTAMO', label: 'Prestamo' },
   { value: 'CONSIGNACION', label: 'Consignacion' },
-  { value: 'ENVIO_OTRO_ALMACEN', label: 'Envio a otro almacen' },
+  { value: 'ENVIO_OTRO_ALMACEN', label: 'Envío a otro almacén' },
   { value: 'TRUEQUE', label: 'Trueque' },
   { value: 'DEVOLUCION', label: 'Devolucion' },
   { value: 'OTRO', label: 'Otro' },
@@ -239,7 +239,7 @@ const SalidasPage = () => {
     const nextQuantity = Math.trunc(Number(selectedQuantity || 1));
 
     if (!variant || nextQuantity <= 0) {
-      setModalError('Debes escoger un producto y una cantidad valida.');
+      setModalError('Debes escoger un producto y una cantidad válida.');
       return;
     }
 
@@ -301,7 +301,7 @@ const SalidasPage = () => {
       return;
     }
 
-    setModalError('Escribe un codigo/SKU completo o usa el boton Agregar del producto correcto.');
+    setModalError('Escribe un código/SKU completo o usa el boton Agregar del producto correcto.');
   };
 
   const handleUpdateItemQuantity = (varianteId: string, rawValue: number) => {
@@ -574,7 +574,7 @@ const SalidasPage = () => {
                     setClientSearch(event.target.value);
                     setModalError(null);
                   }}
-                  placeholder="Nombre, cedula o telefono..."
+                  placeholder="Nombre, cédula o teléfono..."
                 />
               </label>
             </div>
@@ -582,7 +582,7 @@ const SalidasPage = () => {
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
                 <div className="font-semibold text-emerald-900">{selectedClient.nombreCompleto}</div>
                 <div className="text-sm text-emerald-800">
-                  Cedula: {selectedClient.cedula} | Telefono: {selectedClient.telefonoCelular}
+                  Cédula: {selectedClient.cedula} | Teléfono: {selectedClient.telefonoCelular}
                 </div>
               </div>
             ) : null}
@@ -625,15 +625,15 @@ const SalidasPage = () => {
                   <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={clientForm.nombreCompleto} onChange={(event) => setClientForm((current) => ({ ...current, nombreCompleto: event.target.value }))} />
                 </label>
                 <label className="text-sm">
-                  <span className="text-slate-600">Cedula</span>
+                  <span className="text-slate-600">Cédula</span>
                   <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={clientForm.cedula} onChange={(event) => setClientForm((current) => ({ ...current, cedula: event.target.value }))} />
                 </label>
                 <label className="text-sm">
-                  <span className="text-slate-600">Telefono celular</span>
+                  <span className="text-slate-600">Teléfono celular</span>
                   <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={clientForm.telefonoCelular} onChange={(event) => setClientForm((current) => ({ ...current, telefonoCelular: event.target.value }))} />
                 </label>
                 <label className="text-sm">
-                  <span className="text-slate-600">Correo electronico</span>
+                  <span className="text-slate-600">Correo electrónico</span>
                   <input type="email" className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={clientForm.email} onChange={(event) => setClientForm((current) => ({ ...current, email: event.target.value }))} />
                 </label>
                 <label className="text-sm">
@@ -653,11 +653,11 @@ const SalidasPage = () => {
                 <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.responsableNombre} onChange={(event) => setForm((current) => ({ ...current, responsableNombre: event.target.value }))} />
               </label>
               <label className="text-sm">
-                <span className="text-slate-600">Cedula / ID</span>
+                <span className="text-slate-600">Cédula / ID</span>
                 <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.responsableCedula} onChange={(event) => setForm((current) => ({ ...current, responsableCedula: event.target.value }))} />
               </label>
               <label className="text-sm">
-                <span className="text-slate-600">Telefono</span>
+                <span className="text-slate-600">Teléfono</span>
                 <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.responsableTelefono} onChange={(event) => setForm((current) => ({ ...current, responsableTelefono: event.target.value }))} />
               </label>
             </div>
@@ -674,7 +674,7 @@ const SalidasPage = () => {
               </label>
               <label className="text-sm">
                 <span className="text-slate-600">Destino</span>
-                <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.destino} onChange={(event) => setForm((current) => ({ ...current, destino: event.target.value }))} placeholder="Almacen, feria, proveedor..." />
+                <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.destino} onChange={(event) => setForm((current) => ({ ...current, destino: event.target.value }))} placeholder="Almacén, feria, proveedor..." />
               </label>
               <label className="text-sm">
                 <span className="text-slate-600">Fecha compromiso</span>
@@ -684,7 +684,7 @@ const SalidasPage = () => {
             <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_140px]">
               <label className="text-sm">
                 <span className="text-slate-600">Buscar producto</span>
-                <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={variantSearch} onChange={(event) => { setVariantSearch(event.target.value); setModalError(null); }} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); handleVariantSearchSubmit(); } }} placeholder="Nombre, SKU o codigo de barras..." />
+                <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={variantSearch} onChange={(event) => { setVariantSearch(event.target.value); setModalError(null); }} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); handleVariantSearchSubmit(); } }} placeholder="Nombre, SKU o código de barras..." />
               </label>
               <label className="text-sm">
                 <span className="text-slate-600">Cantidad</span>
@@ -694,14 +694,14 @@ const SalidasPage = () => {
             {filteredVariantResults.length > 0 ? (
               <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white">
                 <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_140px_120px_100px_140px_120px] gap-3 border-b border-slate-200 bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-slate-600">
-                  <div>Nombre</div><div>Categoria</div><div>Color</div><div>Talla</div><div>Stock</div><div>Precio</div><div>Accion</div>
+                  <div>Nombre</div><div>Categoría</div><div>Color</div><div>Talla</div><div>Stock</div><div>Precio</div><div>Acción</div>
                 </div>
                 {filteredVariantResults.map((variant: any) => {
                   const barcode = variant.codigos?.find((item: any) => item.principal)?.codigo;
                   return (
                     <div key={variant.id} className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_140px_120px_100px_140px_120px] gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0">
-                      <div><div className="font-semibold text-slate-900">{variant.producto?.nombre}</div><div className="text-xs text-slate-500">SKU: {variant.sku || 'Sin SKU'} | Codigo: {barcode || 'Sin codigo'}</div></div>
-                      <div className="text-sm text-slate-700">{variant.producto?.categoria?.nombre || 'Sin categoria'}</div>
+                      <div><div className="font-semibold text-slate-900">{variant.producto?.nombre}</div><div className="text-xs text-slate-500">SKU: {variant.sku || 'Sin SKU'} | Código: {barcode || 'Sin código'}</div></div>
+                      <div className="text-sm text-slate-700">{variant.producto?.categoria?.nombre || 'Sin categoría'}</div>
                       <div className="text-sm text-slate-700">{String(variant.color || '').toUpperCase() === 'NO APLICA' ? 'No aplica' : variant.color}</div>
                       <div className="text-sm text-slate-700">{String(variant.talla || '').toUpperCase() === 'NO APLICA' ? 'No aplica' : variant.talla}</div>
                       <div className="text-sm text-slate-700">{variant.stockActual}</div>
@@ -715,15 +715,15 @@ const SalidasPage = () => {
             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
               <h4 className="mb-3 text-sm font-semibold text-slate-900">Productos agregados</h4>
               {items.length === 0 ? (
-                <p className="text-sm text-slate-500">Aun no has agregado productos a la salida.</p>
+                <p className="text-sm text-slate-500">Aún no has agregado productos a la salida.</p>
               ) : (
                 <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                   <div className="grid grid-cols-[minmax(0,1.5fr)_130px_140px_120px] gap-3 border-b border-slate-200 bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-slate-600">
-                    <div>Producto</div><div>Cantidad</div><div>Referencia</div><div>Accion</div>
+                    <div>Producto</div><div>Cantidad</div><div>Referencia</div><div>Acción</div>
                   </div>
                   {items.map((item) => (
                     <div key={item.varianteId} className="grid grid-cols-[minmax(0,1.5fr)_130px_140px_120px] gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0">
-                      <div><div className="font-semibold text-slate-900">{item.nombre}</div><div className="text-xs text-slate-500">{item.detalle} | SKU: {item.sku || 'Sin SKU'} | Codigo: {item.codigoBarras || 'Sin codigo'}</div></div>
+                      <div><div className="font-semibold text-slate-900">{item.nombre}</div><div className="text-xs text-slate-500">{item.detalle} | SKU: {item.sku || 'Sin SKU'} | Código: {item.codigoBarras || 'Sin código'}</div></div>
                       <input type="number" min="1" max={item.stockActual} className="w-full rounded-md border border-slate-300 px-3 py-2" value={item.cantidad} onChange={(event) => handleUpdateItemQuantity(item.varianteId, Number(event.target.value || 1))} />
                       <div className="text-sm font-semibold text-slate-900">{formatCOP(item.precioVenta * item.cantidad)}</div>
                       <button type="button" className="text-sm font-semibold text-rose-700 underline" onClick={() => setItems((current) => current.filter((row) => row.varianteId !== item.varianteId))}>Quitar</button>

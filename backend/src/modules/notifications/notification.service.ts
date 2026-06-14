@@ -131,7 +131,7 @@ export async function sendNotification(input: SendNotificationInput, actorId?: s
   const prisma = requirePrisma();
 
   if (input.channel !== NotificationChannel.EMAIL) {
-    throw new AppError('Por ahora el envio operativo esta disponible por correo', 400, 'CHANNEL_NOT_SUPPORTED');
+    throw new AppError('Por ahora el envío operativo está disponible por correo', 400, 'CHANNEL_NOT_SUPPORTED');
   }
 
   const resolved =
@@ -217,7 +217,7 @@ async function buildEventAttendanceWorkbook(prisma: ReturnType<typeof requirePri
   sheet.columns = [
     { header: 'Nombre', key: 'name', width: 34 },
     { header: 'Correo', key: 'email', width: 34 },
-    { header: 'Codigo/Cedula', key: 'identifier', width: 18 },
+    { header: 'Código/Cédula', key: 'identifier', width: 18 },
     { header: 'Cargo', key: 'category', width: 18 },
     { header: 'Semestre', key: 'semester', width: 16 },
     { header: 'Carrera', key: 'career', width: 30 },
@@ -275,7 +275,7 @@ async function buildTournamentWorkbook(prisma: ReturnType<typeof requirePrisma>,
     { header: 'Equipo/Participante', key: 'team', width: 34 },
     { header: 'Nombre', key: 'name', width: 34 },
     { header: 'Correo', key: 'email', width: 34 },
-    { header: 'Codigo/Cedula', key: 'identifier', width: 18 },
+    { header: 'Código/Cédula', key: 'identifier', width: 18 },
     { header: 'Capitan', key: 'captain', width: 12 },
     { header: 'Estado', key: 'status', width: 16 },
   ];

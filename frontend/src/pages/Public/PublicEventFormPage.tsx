@@ -31,7 +31,7 @@ const careerOptions = [
   { value: 'ING_ANALITICA_DATOS', label: 'Ing. Analitica de Datos' },
   { value: 'ING_INDUSTRIAL', label: 'Ing. Industrial' },
   { value: 'ING_LOGISTICA', label: 'Ing. Logistica' },
-  { value: 'ING_SEGURIDAD_INFORMACION', label: 'Ing. Seguridad de Informacion' },
+  { value: 'ING_SEGURIDAD_INFORMACION', label: 'Ing. Seguridad de Información' },
   { value: 'POSGRADOS', label: 'Posgrados' },
   { value: 'NO_APLICA', label: 'No aplica' },
 ];
@@ -68,7 +68,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
 
     getPublicEventFormRequest(eventId, mode)
       .then(setForm)
-      .catch(() => setError('El formulario no esta disponible.'));
+      .catch(() => setError('El formulario no está disponible.'));
   }, [eventId, mode]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -86,7 +86,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
           career,
           email: email || null,
         });
-        setMessage('Inscripcion registrada. Guarda tu codigo o cedula para confirmar asistencia.');
+        setMessage('Inscripción registrada. Guarda tu código o cédula para confirmar asistencia.');
       } else {
         await publicCheckInEventRequest(eventId, {
           fullName: fullName || undefined,
@@ -108,7 +108,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
     } catch {
       setError(
         mode === 'registration'
-          ? 'No fue posible registrar la inscripcion. Revisa cupos o si ya estas inscrito.'
+          ? 'No fue posible registrar la inscripción. Revisa cupos o si ya estás inscrito.'
           : 'No fue posible confirmar la asistencia. Revisa el horario disponible o tus datos.'
       );
     }
@@ -120,15 +120,15 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
         <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <aside className="rounded-3xl border border-[#3b4b3c] bg-[#1d2022]/85 p-8 backdrop-blur">
             <span className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-[#5adf82]">
-              Semana de Ingenieria
+              Semana de Ingeniería
             </span>
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-tight text-[#f0ffed]">
-              {mode === 'registration' ? 'Inscripcion a actividad' : 'Registro de asistencia'}
+              {mode === 'registration' ? 'Inscripción a actividad' : 'Registro de asistencia'}
             </h1>
             <p className="mt-5 text-sm leading-7 text-[#b9cbb8]">
               {mode === 'registration'
-                ? 'Completa tus datos para reservar cupo y recibir el codigo de control de ingreso.'
-                : 'Confirma tu ingreso usando el codigo o cedula asociado a tu registro.'}
+                ? 'Completa tus datos para reservar cupo y recibir el código de control de ingreso.'
+                : 'Confirma tu ingreso usando el código o cédula asociado a tu registro.'}
             </p>
 
             {form ? (
@@ -149,7 +149,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
               </div>
             ) : (
               <div className="mt-8 rounded-2xl border border-[#3b4b3c] bg-[#101415] p-5 text-sm text-[#b9cbb8]">
-                Cargando informacion del formulario...
+                Cargando información del formulario...
               </div>
             )}
           </aside>
@@ -158,7 +158,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
             <form className="space-y-5" onSubmit={submit}>
               {mode === 'attendance' ? (
                 <p className="rounded-2xl border border-[#5adf82]/20 bg-[#5adf82]/10 px-4 py-3 text-sm leading-6 text-[#b9cbb8]">
-                  Si ya te inscribiste, escribe tu codigo o cedula. Si no estabas inscrito,
+                  Si ya te inscribiste, escribe tu código o cédula. Si no estabas inscrito,
                   completa todos los datos y quedaras confirmado.
                 </p>
               ) : null}
@@ -172,7 +172,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
                 />
               </label>
               <label className="block text-sm font-semibold text-[#e0e3e5]">
-                Codigo o cedula
+                Código o cédula
                 <input
                   className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
                   value={identifier}

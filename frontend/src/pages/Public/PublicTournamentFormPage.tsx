@@ -50,7 +50,7 @@ const careerOptions = [
   { value: 'ING_ANALITICA_DATOS', label: 'Ing. Analitica de Datos' },
   { value: 'ING_INDUSTRIAL', label: 'Ing. Industrial' },
   { value: 'ING_LOGISTICA', label: 'Ing. Logistica' },
-  { value: 'ING_SEGURIDAD_INFORMACION', label: 'Ing. Seguridad de Informacion' },
+  { value: 'ING_SEGURIDAD_INFORMACION', label: 'Ing. Seguridad de Información' },
   { value: 'POSGRADOS', label: 'Posgrados' },
   { value: 'NO_APLICA', label: 'No aplica' },
 ];
@@ -199,7 +199,7 @@ const PublicTournamentFormPage = () => {
       setMemberCount(resetCount);
       setMembers(Array.from({ length: resetCount }, () => ({ ...emptyMember })));
     } catch {
-      setError('No fue posible completar la inscripcion. Revisa cupos, datos repetidos o inscripciones previas.');
+      setError('No fue posible completar la inscripción. Revisa cupos, datos repetidos o inscripciones previas.');
     }
   }
 
@@ -210,7 +210,7 @@ const PublicTournamentFormPage = () => {
           <div className="mb-8 flex flex-col gap-5 border-b border-[#3b4b3c] pb-6 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-[#5adf82]">
-                Inscripcion de torneo
+                Inscripción de torneo
               </p>
               <h1 className="mt-3 font-display text-4xl font-extrabold leading-tight text-[#f0ffed]">
                 {form?.tournament.name || 'Torneo'}
@@ -222,7 +222,7 @@ const PublicTournamentFormPage = () => {
                   {labelFor(tournamentStatusLabels, form.tournament.status)}
                 </p>
               ) : (
-                <p className="mt-3 text-sm text-[#b9cbb8]">Cargando informacion del torneo...</p>
+                <p className="mt-3 text-sm text-[#b9cbb8]">Cargando información del torneo...</p>
               )}
             </div>
             <div className="rounded-2xl border border-[#5adf82]/30 bg-[#5adf82]/10 px-4 py-3 font-mono text-xs text-[#5adf82]">
@@ -265,7 +265,7 @@ const PublicTournamentFormPage = () => {
                     required
                   />
                   <span className="mt-1 block text-xs font-normal text-[#849584]">
-                    Minimo {minTeamMembers}, maximo {maxTeamMembers}.
+                    Mínimo {minTeamMembers}, maximo {maxTeamMembers}.
                   </span>
                 </label>
                 <div className="flex gap-3">
@@ -325,7 +325,7 @@ const PublicTournamentFormPage = () => {
                     />
                     <input
                       className="rounded-xl border border-[#3b4b3c] bg-[#101415] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors placeholder:text-[#849584] focus:border-[#5adf82]"
-                      placeholder="Codigo o cedula"
+                      placeholder="Código o cédula"
                       value={member.identifier}
                       onChange={(event) => updateMember(index, 'identifier', event.target.value)}
                       required
@@ -393,7 +393,7 @@ const PublicTournamentFormPage = () => {
               )}
 
               <button className="rounded-xl bg-[#5adf82] px-6 py-3 text-sm font-bold text-[#003917] transition-transform active:scale-95">
-                Enviar inscripcion
+                Enviar inscripción
               </button>
             </div>
 

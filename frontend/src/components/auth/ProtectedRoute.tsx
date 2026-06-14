@@ -9,7 +9,7 @@ const ProtectedRoute = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 text-sm font-semibold text-slate-600">
-        Cargando sesion...
+        Cargando sesión...
       </div>
     );
   }

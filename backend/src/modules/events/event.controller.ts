@@ -21,7 +21,7 @@ export async function listPublicEvents(req: Request, res: Response, next: NextFu
     const origin = String(req.query.origin || req.get('origin') || 'http://localhost:5173');
     const events = await eventService.listPublicEvents(origin);
 
-    res.json(successResponse('Eventos publicos consultados', events));
+    res.json(successResponse('Eventos públicos consultados', events));
   } catch (error) {
     next(error);
   }

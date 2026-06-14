@@ -16,5 +16,11 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "vite.config.ts"],
+  "exclude": [
+    "src/pages/Creditos/**",
+    "src/pages/Informes/**",
+    "src/pages/Salidas/**",
+    "src/pages/Separados/**"
+  ]
 }

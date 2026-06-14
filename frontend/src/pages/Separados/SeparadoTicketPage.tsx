@@ -181,7 +181,7 @@ const SeparadoTicketPage = () => {
               <div className="mt-2">
                 <p className="font-bold">Cliente</p>
                 <p>{separado.cliente?.nombreCompleto || 'N/A'}</p>
-                <p>Cedula: {separado.cliente?.cedula || 'N/A'}</p>
+                <p>Cédula: {separado.cliente?.cedula || 'N/A'}</p>
                 {separado.cliente?.telefonoCelular ? <p>Tel: {separado.cliente.telefonoCelular}</p> : null}
               </div>
             </section>
@@ -273,7 +273,7 @@ const SeparadoTicketPage = () => {
 
             <footer className="pt-3 text-center">
               <p>Conserve esta tirilla para el seguimiento del separado.</p>
-              <p className="mt-2 text-[10px]">Sistema administrativo de almacen</p>
+              <p className="mt-2 text-[10px]">Sistema administrativo de almacén</p>
             </footer>
           </article>
         ) : null}

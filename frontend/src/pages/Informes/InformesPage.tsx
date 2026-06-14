@@ -218,7 +218,7 @@ const InformesPage = () => {
   const utilidadColumns = useMemo(
     () => [
       { key: 'producto', header: 'Producto' },
-      { key: 'categoria', header: 'Categoria' },
+      { key: 'categoria', header: 'Categoría' },
       { key: 'unidades', header: 'Unidades', render: (row) => formatCOPNumber(row.unidades) },
       { key: 'costo', header: 'Cuanto vale', render: (row) => formatCOP(row.costo) },
       { key: 'ventas', header: 'En cuanto se vendio', render: (row) => formatCOP(row.ventas) },
@@ -313,19 +313,19 @@ const InformesPage = () => {
               />
             </Section>
 
-            <Section title="Producto mas vendido" description="Filtra por categoria o deja todas las categorias.">
+            <Section title="Producto mas vendido" description="Filtra por categoría o deja todas las categorías.">
               <div className="flex flex-wrap items-end gap-3">
                 <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
-                  Categoria
+                  Categoría
                   <select
                     value={categoryFilter}
                     onChange={(event) => setCategoryFilter(event.target.value)}
                     className="rounded-md border border-slate-300 px-3 py-2"
                   >
-                    <option value="TODAS">Todas las categorias</option>
+                    <option value="TODAS">Todas las categorías</option>
                     {categorias.map((categoria) => (
                       <option key={categoria} value={categoria}>
-                        {categoria}
+                        {categoría}
                       </option>
                     ))}
                   </select>
@@ -364,7 +364,7 @@ const InformesPage = () => {
               ) : null}
               <UtilityChart items={utilidadProductos.slice(0, 8)} />
               {(utilidadProductos || []).length === 0 ? (
-                <EmptyState title="Sin utilidades" description="No hay ventas para la categoria seleccionada." />
+                <EmptyState title="Sin utilidades" description="No hay ventas para la categoría seleccionada." />
               ) : (
                 <DataTable columns={utilidadColumns} data={utilidadProductos} />
               )}

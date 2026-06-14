@@ -13,7 +13,7 @@ export async function getSiteSettings(
     const settings = await settingsService.getSiteSettings();
     const isAdminRequest = Boolean(req.user);
 
-    res.json(successResponse('Configuracion publica consultada', settingsService.sanitizeSiteSettings(settings, isAdminRequest)));
+    res.json(successResponse('Configuración publica consultada', settingsService.sanitizeSiteSettings(settings, isAdminRequest)));
   } catch (error) {
     next(error);
   }
@@ -27,7 +27,7 @@ export async function updateSiteSettings(
   try {
     const settings = await settingsService.updateSiteSettings(req.body, req.user?.id);
 
-    res.json(successResponse('Configuracion publica actualizada', settingsService.sanitizeSiteSettings(settings, true)));
+    res.json(successResponse('Configuración publica actualizada', settingsService.sanitizeSiteSettings(settings, true)));
   } catch (error) {
     next(error);
   }

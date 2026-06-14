@@ -14,8 +14,8 @@ const navItems = [
   { to: '/torneos', label: 'Torneos' },
   { to: '/reportes', label: 'Reportes' },
   { to: '/notificaciones', label: 'Notificaciones' },
-  { to: '/auditoria', label: 'Auditoria' },
-  { to: '/configuracion', label: 'Configuracion' },
+  { to: '/auditoria', label: 'Auditoría' },
+  { to: '/configuracion', label: 'Configuración' },
 ];
 
 const Sidebar = () => {
@@ -36,7 +36,7 @@ const Sidebar = () => {
         <button
           className="group flex h-12 w-12 flex-col items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
           type="button"
-          aria-label="Abrir menu"
+          aria-label="Abrir menú"
           onClick={() => setOpen(true)}
         >
           <span className="block h-0.5 w-6 rounded-full bg-current transition group-hover:w-7" />
@@ -73,7 +73,7 @@ const Sidebar = () => {
           <button
             className="absolute inset-0 bg-slate-900/30"
             type="button"
-            aria-label="Cerrar menu"
+            aria-label="Cerrar menú"
             onClick={() => setOpen(false)}
           />
           <aside className="theme-sidebar relative flex h-full w-[min(300px,calc(100vw-32px))] flex-col border-r border-slate-200 p-6 shadow-xl">
@@ -132,7 +132,7 @@ const Sidebar = () => {
                 type="button"
                 onClick={() => void logout()}
               >
-                Cerrar sesion
+                Cerrar sesión
               </button>
             </div>
           </aside>

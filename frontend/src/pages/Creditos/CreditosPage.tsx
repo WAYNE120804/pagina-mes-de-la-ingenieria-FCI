@@ -273,7 +273,7 @@ const CreditosPage = () => {
     const nextQuantity = Math.trunc(Number(selectedQuantity || 1));
 
     if (!variant || nextQuantity <= 0) {
-      setModalError('Debes escoger un producto y una cantidad valida.');
+      setModalError('Debes escoger un producto y una cantidad válida.');
       return;
     }
 
@@ -345,7 +345,7 @@ const CreditosPage = () => {
       return;
     }
 
-    setModalError('Escribe un codigo/SKU completo o usa el boton Agregar del producto correcto.');
+    setModalError('Escribe un código/SKU completo o usa el boton Agregar del producto correcto.');
   };
 
   const handleUpdateItemQuantity = (varianteId: string, rawValue: number) => {
@@ -446,7 +446,7 @@ const CreditosPage = () => {
 
       await loadData();
       closeCreateModal();
-      setSuccess(`Credito ${String(data.id).slice(-6).toUpperCase()} creado por ${formatCOP(data.total)}.`);
+      setSuccess(`Crédito ${String(data.id).slice(-6).toUpperCase()} creado por ${formatCOP(data.total)}.`);
     } catch (requestError) {
       setModalError((requestError as Error).message);
     } finally {
@@ -486,7 +486,7 @@ const CreditosPage = () => {
       const latestPago = data.pagos?.[data.pagos.length - 1] || null;
       await loadData();
       closePaymentModal();
-      setSuccess(data.estado === 'PAGADO' ? 'Credito pagado completo.' : 'Cuota registrada.');
+      setSuccess(data.estado === 'PAGADO' ? 'Crédito pagado completo.' : 'Cuota registrada.');
       if (latestPago?.id) {
         navigate(`/creditos/${data.id}/pagos/${latestPago.id}/tirilla`);
       }
@@ -526,7 +526,7 @@ const CreditosPage = () => {
       });
       await loadData();
       closeCancelModal();
-      setSuccess('Credito cancelado.');
+      setSuccess('Crédito cancelado.');
     } catch (requestError) {
       setModalError((requestError as Error).message);
     } finally {
@@ -632,7 +632,7 @@ const CreditosPage = () => {
 
   return (
     <div>
-      <Topbar title="Creditos" />
+      <Topbar title="Créditos" />
       <div className="space-y-6 px-6 py-6">
         <ErrorBanner message={pageError} />
         {success ? (
@@ -644,12 +644,12 @@ const CreditosPage = () => {
         <section className="theme-section-card rounded-2xl p-6 shadow-sm">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_auto] lg:items-end">
             <label className="block text-sm">
-              <span className="text-slate-600">Buscar credito</span>
+              <span className="text-slate-600">Buscar crédito</span>
               <input
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Cliente, cedula, producto, SKU o codigo..."
+                placeholder="Cliente, cédula, producto, SKU o código..."
               />
             </label>
             <label className="block text-sm">
@@ -671,16 +671,16 @@ const CreditosPage = () => {
               className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white"
               onClick={openCreateModal}
             >
-              Crear credito
+              Crear crédito
             </button>
           </div>
         </section>
 
         <section className="theme-section-card rounded-2xl p-6 shadow-sm">
           {loading ? (
-            <Loading label="Cargando creditos..." />
+            <Loading label="Cargando créditos..." />
           ) : filteredCreditos.length === 0 ? (
-            <EmptyState title="Sin creditos" description="Crea el primer credito para entregar productos y controlar cuotas." />
+            <EmptyState title="Sin créditos" description="Crea el primer crédito para entregar productos y controlar cuotas." />
           ) : (
             <DataTable columns={columns} data={filteredCreditos} />
           )}
@@ -689,8 +689,8 @@ const CreditosPage = () => {
 
       <FormModal
         open={isCreateOpen}
-        title="Crear credito"
-        description="Selecciona cliente, productos entregados, fecha limite y pago inicial."
+        title="Crear crédito"
+        description="Selecciona cliente, productos entregados, fecha límite y pago inicial."
         onClose={closeCreateModal}
         size="2xl"
       >
@@ -707,7 +707,7 @@ const CreditosPage = () => {
                   setClientSearch(event.target.value);
                   setModalError(null);
                 }}
-                placeholder="Nombre, cedula o telefono..."
+                placeholder="Nombre, cédula o teléfono..."
               />
             </label>
 
@@ -715,7 +715,7 @@ const CreditosPage = () => {
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
                 <div className="font-semibold text-emerald-900">{selectedClient.nombreCompleto}</div>
                 <div className="text-sm text-emerald-800">
-                  Cedula: {selectedClient.cedula} | Telefono: {selectedClient.telefonoCelular}
+                  Cédula: {selectedClient.cedula} | Teléfono: {selectedClient.telefonoCelular}
                 </div>
               </div>
             ) : null}
@@ -767,7 +767,7 @@ const CreditosPage = () => {
                   />
                 </label>
                 <label className="text-sm">
-                  <span className="text-slate-600">Cedula</span>
+                  <span className="text-slate-600">Cédula</span>
                   <input
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                     value={clientForm.cedula}
@@ -775,7 +775,7 @@ const CreditosPage = () => {
                   />
                 </label>
                 <label className="text-sm">
-                  <span className="text-slate-600">Telefono celular</span>
+                  <span className="text-slate-600">Teléfono celular</span>
                   <input
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                     value={clientForm.telefonoCelular}
@@ -785,7 +785,7 @@ const CreditosPage = () => {
                   />
                 </label>
                 <label className="text-sm">
-                  <span className="text-slate-600">Correo electronico</span>
+                  <span className="text-slate-600">Correo electrónico</span>
                   <input
                     type="email"
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
@@ -811,7 +811,7 @@ const CreditosPage = () => {
                     className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-60"
                     onClick={() => void handleCreateQuickClient()}
                   >
-                    {savingClient ? 'Guardando cliente...' : 'Guardar cliente y usarlo en el credito'}
+                    {savingClient ? 'Guardando cliente...' : 'Guardar cliente y usarlo en el crédito'}
                   </button>
                 </div>
               </div>
@@ -836,7 +836,7 @@ const CreditosPage = () => {
                       handleVariantSearchSubmit();
                     }
                   }}
-                  placeholder="Nombre, SKU o codigo de barras..."
+                  placeholder="Nombre, SKU o código de barras..."
                 />
               </label>
               <label className="text-sm">
@@ -855,12 +855,12 @@ const CreditosPage = () => {
               <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white">
                 <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_140px_120px_100px_140px_120px] gap-3 border-b border-slate-200 bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-slate-600">
                   <div>Nombre</div>
-                  <div>Categoria</div>
+                  <div>Categoría</div>
                   <div>Color</div>
                   <div>Talla</div>
                   <div>Stock</div>
                   <div>Precio</div>
-                  <div>Accion</div>
+                  <div>Acción</div>
                 </div>
                 {filteredVariantResults.map((variant: any) => {
                   const barcode = variant.codigos?.find((item: any) => item.principal)?.codigo;
@@ -873,10 +873,10 @@ const CreditosPage = () => {
                       <div>
                         <div className="font-semibold text-slate-900">{variant.producto?.nombre}</div>
                         <div className="text-xs text-slate-500">
-                          SKU: {variant.sku || 'Sin SKU'} | Codigo: {barcode || 'Sin codigo'}
+                          SKU: {variant.sku || 'Sin SKU'} | Código: {barcode || 'Sin código'}
                         </div>
                       </div>
-                      <div className="text-sm text-slate-700">{variant.producto?.categoria?.nombre || 'Sin categoria'}</div>
+                      <div className="text-sm text-slate-700">{variant.producto?.categoria?.nombre || 'Sin categoría'}</div>
                       <div className="text-sm text-slate-700">
                         {String(variant.color || '').toUpperCase() === 'NO APLICA' ? 'No aplica' : variant.color}
                       </div>
@@ -903,14 +903,14 @@ const CreditosPage = () => {
             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
               <h4 className="mb-3 text-sm font-semibold text-slate-900">Productos agregados</h4>
               {items.length === 0 ? (
-                <p className="text-sm text-slate-500">Aun no has agregado productos al credito.</p>
+                <p className="text-sm text-slate-500">Aún no has agregado productos al credito.</p>
               ) : (
                 <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                   <div className="grid grid-cols-[minmax(0,1.5fr)_130px_140px_120px] gap-3 border-b border-slate-200 bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-slate-600">
                     <div>Producto</div>
                     <div>Cantidad</div>
                     <div>Subtotal</div>
-                    <div>Accion</div>
+                    <div>Acción</div>
                   </div>
                   {items.map((item) => (
                     <div
@@ -920,7 +920,7 @@ const CreditosPage = () => {
                       <div>
                         <div className="font-semibold text-slate-900">{item.nombre}</div>
                         <div className="text-xs text-slate-500">
-                          {item.detalle} | SKU: {item.sku || 'Sin SKU'} | Codigo: {item.codigoBarras || 'Sin codigo'}
+                          {item.detalle} | SKU: {item.sku || 'Sin SKU'} | Código: {item.codigoBarras || 'Sin código'}
                         </div>
                       </div>
                       <input
@@ -952,7 +952,7 @@ const CreditosPage = () => {
             <h3 className="mb-4 text-lg font-semibold text-slate-900">3. Pago y vencimiento</h3>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <label className="text-sm">
-                <span className="text-slate-600">Fecha limite</span>
+                <span className="text-slate-600">Fecha límite</span>
                 <input
                   type="date"
                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
@@ -961,7 +961,7 @@ const CreditosPage = () => {
                 />
               </label>
               <label className="text-sm">
-                <span className="text-slate-600">Metodo de pago</span>
+                <span className="text-slate-600">Método de pago</span>
                 <select
                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                   value={form.metodoPago}
@@ -985,7 +985,7 @@ const CreditosPage = () => {
                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                   value={form.referencia}
                   onChange={(event) => setForm((current) => ({ ...current, referencia: event.target.value }))}
-                  placeholder="Numero de comprobante o transaccion"
+                  placeholder="Número de comprobante o transacción"
                 />
               </label>
             </div>
@@ -1021,7 +1021,7 @@ const CreditosPage = () => {
               disabled={saving || items.length === 0}
               className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-60"
             >
-              {saving ? 'Guardando...' : 'Confirmar credito'}
+              {saving ? 'Guardando...' : 'Confirmar crédito'}
             </button>
             <button
               type="button"
@@ -1053,7 +1053,7 @@ const CreditosPage = () => {
             onChange={(value) => setPaymentForm((current) => ({ ...current, valor: value }))}
           />
           <label className="text-sm">
-            <span className="text-slate-600">Metodo de pago</span>
+            <span className="text-slate-600">Método de pago</span>
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
               value={paymentForm.metodoPago}
@@ -1072,11 +1072,11 @@ const CreditosPage = () => {
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
               value={paymentForm.referencia}
               onChange={(event) => setPaymentForm((current) => ({ ...current, referencia: event.target.value }))}
-              placeholder="Numero de comprobante o transaccion"
+              placeholder="Número de comprobante o transacción"
             />
           </label>
           <label className="text-sm">
-            <span className="text-slate-600">Observacion</span>
+            <span className="text-slate-600">Observación</span>
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
               value={paymentForm.observacion}
@@ -1104,18 +1104,18 @@ const CreditosPage = () => {
 
       <FormModal
         open={Boolean(cancelTarget)}
-        title="Cancelar credito"
-        description="La cancelacion cierra el credito sin devolver inventario."
+        title="Cancelar crédito"
+        description="La cancelación cierra el crédito sin devolver inventario."
         onClose={closeCancelModal}
         size="xl"
       >
         <ErrorBanner message={modalError} />
         <form onSubmit={handleCancelSubmit} className="space-y-4">
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            El producto ya fue entregado al crear el credito. Esta accion solo cambia el estado y conserva el historial de pagos.
+            El producto ya fue entregado al crear el credito. Esta acción solo cambia el estado y conserva el historial de pagos.
           </div>
           <label className="block text-sm">
-            <span className="text-slate-600">Motivo u observacion</span>
+            <span className="text-slate-600">Motivo u observación</span>
             <textarea
               className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2"
               value={cancelObservation}
@@ -1128,7 +1128,7 @@ const CreditosPage = () => {
               disabled={saving}
               className="rounded-md bg-rose-700 px-4 py-2 text-sm text-white disabled:opacity-60"
             >
-              {saving ? 'Cancelando...' : 'Cancelar credito'}
+              {saving ? 'Cancelando...' : 'Cancelar crédito'}
             </button>
             <button
               type="button"

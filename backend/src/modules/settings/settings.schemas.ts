@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const imageUrlSchema = z.string().trim().refine(
   (value) => value.startsWith('data:image/') || z.string().url().safeParse(value).success,
-  { message: 'El logo debe ser una URL valida o una imagen cargada' }
+  { message: 'El logo debe ser una URL válida o una imagen cargada' }
 );
 
 export const updateSiteSettingsSchema = z.object({

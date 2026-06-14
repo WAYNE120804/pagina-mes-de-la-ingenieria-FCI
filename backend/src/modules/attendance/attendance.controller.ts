@@ -86,7 +86,7 @@ export async function getAttendanceStats(
   try {
     const stats = await attendanceService.getAttendanceStats(String(req.params.eventId));
 
-    res.json(successResponse('Estadisticas de asistencia consultadas', stats));
+    res.json(successResponse('Estadísticas de asistencia consultadas', stats));
   } catch (error) {
     next(error);
   }
@@ -154,7 +154,7 @@ export async function getPublicEventForm(
       getPublicOrigin(req)
     );
 
-    res.json(successResponse('Formulario publico consultado', form));
+    res.json(successResponse('Formulario público consultado', form));
   } catch (error) {
     next(error);
   }
@@ -189,7 +189,7 @@ export async function publicRegisterAttendance(
       req.body
     );
 
-    res.status(201).json(successResponse('Inscripcion registrada', attendance));
+    res.status(201).json(successResponse('Inscripción registrada', attendance));
   } catch (error) {
     next(error);
   }

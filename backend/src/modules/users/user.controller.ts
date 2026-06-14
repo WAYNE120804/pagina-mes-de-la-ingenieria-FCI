@@ -84,7 +84,7 @@ export async function changeOwnPassword(
   try {
     const user = await userService.changeOwnPassword(String(req.user?.id), req.body, req.user?.id);
 
-    res.json(successResponse('Contrasena actualizada', user));
+    res.json(successResponse('Contraseña actualizada', user));
   } catch (error) {
     next(error);
   }
@@ -102,7 +102,7 @@ export async function resetUserPassword(
       req.user?.id
     );
 
-    res.json(successResponse('Contrasena restablecida', user));
+    res.json(successResponse('Contraseña restablecida', user));
   } catch (error) {
     next(error);
   }

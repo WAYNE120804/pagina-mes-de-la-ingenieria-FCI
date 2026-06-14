@@ -124,7 +124,7 @@ const UsersPage = () => {
       setNotice('Usuario creado correctamente.');
       await loadUsers();
     } catch {
-      setError('No fue posible crear el usuario. Revisa correo, codigo o contrasena.');
+      setError('No fue posible crear el usuario. Revisa correo, código o contraseña.');
     }
   }
 
@@ -134,7 +134,7 @@ const UsersPage = () => {
     setNotice('');
 
     if (passwordForm.password !== passwordForm.confirmPassword) {
-      setError('La nueva contrasena y la confirmacion no coinciden.');
+      setError('La nueva contraseña y la confirmacion no coinciden.');
       return;
     }
 
@@ -145,9 +145,9 @@ const UsersPage = () => {
       setShowNewPassword(false);
       setShowConfirmPassword(false);
       setShowPasswordModal(false);
-      setNotice('Tu contrasena fue actualizada correctamente.');
+      setNotice('Tu contraseña fue actualizada correctamente.');
     } catch {
-      setError('No fue posible cambiar la contrasena. Revisa la contrasena actual.');
+      setError('No fue posible cambiar la contraseña. Revisa la contraseña actual.');
     }
   }
 
@@ -196,7 +196,7 @@ const UsersPage = () => {
       } else if (editingUser.id === currentUser?.id) {
         await updateOwnProfileRequest(input);
       } else {
-        setError('Solo puedes editar la informacion de tu propio usuario.');
+        setError('Solo puedes editar la información de tu propio usuario.');
         return;
       }
 
@@ -206,12 +206,12 @@ const UsersPage = () => {
       setNotice(editingUser.id === currentUser?.id ? 'Tus datos fueron actualizados.' : 'Usuario actualizado correctamente.');
       await loadUsers();
     } catch {
-      setError('No fue posible actualizar el usuario. Revisa correo, codigo o contrasena.');
+      setError('No fue posible actualizar el usuario. Revisa correo, código o contraseña.');
     }
   }
 
   async function resetPassword(user: UserRow) {
-    if (!confirm(`Restablecer la contrasena de ${user.name} a la clave temporal por defecto?`)) {
+    if (!confirm(`Restablecer la contraseña de ${user.name} a la clave temporal por defecto?`)) {
       return;
     }
 
@@ -219,9 +219,9 @@ const UsersPage = () => {
       setError('');
       setNotice('');
       await resetUserPasswordRequest(user.id);
-      setNotice('Contrasena restablecida. Clave temporal: UmzFCI2026*$');
+      setNotice('Contraseña restablecida. Clave temporal: UmzFCI2026*$');
     } catch {
-      setError('No fue posible restablecer la contrasena.');
+      setError('No fue posible restablecer la contraseña.');
     }
   }
 
@@ -263,7 +263,7 @@ const UsersPage = () => {
           title={editingUser?.id === currentUser?.id && !isSuperAdmin ? 'Editar mis datos' : editingUser ? 'Editar usuario' : 'Registrar usuario'}
           description={
             editingUser?.id === currentUser?.id && !isSuperAdmin
-              ? 'Actualiza tu informacion basica de usuario.'
+              ? 'Actualiza tu información basica de usuario.'
               : editingUser
                 ? 'Actualiza los datos del usuario del sistema.'
                 : 'Crea el usuario con sus datos institucionales.'
@@ -286,7 +286,7 @@ const UsersPage = () => {
               />
             </label>
             <label className="block text-sm font-medium text-slate-700">
-              Codigo
+              Código
               <input
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 value={form.universityCode}
@@ -320,7 +320,7 @@ const UsersPage = () => {
             </label>
             {!editingUser ? (
               <label className="block text-sm font-medium text-slate-700">
-                Contrasena
+                Contraseña
                 <span className="relative mt-1 block">
                   <input
                     className="w-full rounded-md border border-slate-300 px-3 py-2 pr-10 text-sm"
@@ -331,7 +331,7 @@ const UsersPage = () => {
                     required
                   />
                   <PasswordToggleButton
-                    label={showUserPassword ? 'Ocultar contrasena' : 'Ver contrasena'}
+                    label={showUserPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
                     visible={showUserPassword}
                     onClick={() => setShowUserPassword((visible) => !visible)}
                   />
@@ -346,8 +346,8 @@ const UsersPage = () => {
 
         <FormModal
           open={showPasswordModal}
-          title="Cambiar mi contrasena"
-          description="Actualiza la clave del usuario con el que iniciaste sesion."
+          title="Cambiar mi contraseña"
+          description="Actualiza la clave del usuario con el que iniciaste sesión."
           onClose={() => {
             setShowPasswordModal(false);
             setPasswordForm(emptyPasswordForm);
@@ -358,7 +358,7 @@ const UsersPage = () => {
         >
           <form className="mt-4 space-y-4" onSubmit={submitPasswordChange}>
             <label className="block text-sm font-medium text-slate-700">
-              Contrasena actual
+              Contraseña actual
               <span className="relative mt-1 block">
                 <input
                   className="w-full rounded-md border border-slate-300 px-3 py-2 pr-10 text-sm"
@@ -370,14 +370,14 @@ const UsersPage = () => {
                   required
                 />
                 <PasswordToggleButton
-                  label={showCurrentPassword ? 'Ocultar contrasena actual' : 'Ver contrasena actual'}
+                  label={showCurrentPassword ? 'Ocultar contraseña actual' : 'Ver contraseña actual'}
                   visible={showCurrentPassword}
                   onClick={() => setShowCurrentPassword((visible) => !visible)}
                 />
               </span>
             </label>
             <label className="block text-sm font-medium text-slate-700">
-              Nueva contrasena
+              Nueva contraseña
               <span className="relative mt-1 block">
                 <input
                   className="w-full rounded-md border border-slate-300 px-3 py-2 pr-10 text-sm"
@@ -388,14 +388,14 @@ const UsersPage = () => {
                   required
                 />
                 <PasswordToggleButton
-                  label={showNewPassword ? 'Ocultar nueva contrasena' : 'Ver nueva contrasena'}
+                  label={showNewPassword ? 'Ocultar nueva contraseña' : 'Ver nueva contraseña'}
                   visible={showNewPassword}
                   onClick={() => setShowNewPassword((visible) => !visible)}
                 />
               </span>
             </label>
             <label className="block text-sm font-medium text-slate-700">
-              Repetir nueva contrasena
+              Repetir nueva contraseña
               <span className="relative mt-1 block">
                 <input
                   className="w-full rounded-md border border-slate-300 px-3 py-2 pr-10 text-sm"
@@ -415,7 +415,7 @@ const UsersPage = () => {
               </span>
             </label>
             <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
-              Guardar contrasena
+              Guardar contraseña
             </button>
           </form>
         </FormModal>
@@ -425,7 +425,7 @@ const UsersPage = () => {
             <div>
               <h3 className="text-base font-semibold text-slate-950">Usuarios registrados</h3>
               <p className="mt-1 text-sm text-slate-500">
-                Todos pueden consultar usuarios y cambiar su contrasena. Solo el super administrador gestiona usuarios.
+                Todos pueden consultar usuarios y cambiar su contraseña. Solo el super administrador gestiona usuarios.
               </p>
             </div>
             <div className="flex flex-wrap justify-end gap-2">
@@ -434,7 +434,7 @@ const UsersPage = () => {
                 type="button"
                 onClick={() => setShowPasswordModal(true)}
               >
-                Cambiar mi contrasena
+                Cambiar mi contraseña
               </button>
               {isSuperAdmin ? (
                 <button
@@ -464,7 +464,7 @@ const UsersPage = () => {
               <thead className="theme-table-head">
                 <tr>
                   <th className="w-[220px] px-5 py-3 text-left font-semibold">Nombre</th>
-                  <th className="w-[140px] px-5 py-3 text-left font-semibold">Codigo</th>
+                  <th className="w-[140px] px-5 py-3 text-left font-semibold">Código</th>
                   <th className="w-[150px] px-5 py-3 text-left font-semibold">Cargo</th>
                   <th className="w-[260px] px-5 py-3 text-left font-semibold">Correo</th>
                   <th className="w-[170px] px-5 py-3 text-left font-semibold">Roles</th>
@@ -485,7 +485,7 @@ const UsersPage = () => {
                       <td className="px-5 py-4 align-top font-medium text-slate-950">
                         <span className="block break-words leading-5">{user.name}</span>
                       </td>
-                      <td className="px-5 py-4 align-top text-slate-600">{user.universityCode || 'Sin codigo'}</td>
+                      <td className="px-5 py-4 align-top text-slate-600">{user.universityCode || 'Sin código'}</td>
                       <td className="px-5 py-4 align-top text-slate-600">{labelFor(userPositionLabels, user.position)}</td>
                       <td className="px-5 py-4 align-top text-slate-600">
                         <span className="block break-all leading-5">{user.email}</span>

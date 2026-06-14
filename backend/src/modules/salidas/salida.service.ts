@@ -14,7 +14,7 @@ function prismaClient() {
   const prisma = getPrisma();
 
   if (!prisma) {
-    throw new AppError('DATABASE_URL no esta configurado en el backend.', 500);
+    throw new AppError('DATABASE_URL no está configurado en el backend.', 500);
   }
 
   return prisma;
@@ -44,7 +44,7 @@ const salidaInclude = Prisma.validator<Prisma.SalidaProductoInclude>()({
         include: {
           producto: {
             include: {
-              categoria: true,
+              categoría: true,
             },
           },
           codigos: {
@@ -368,7 +368,7 @@ export async function cerrarSalida(id: string, payload: CierreSalidaPayload, usu
     }
 
     if (salida.cerradoAt || salida.estado !== EstadoSalidaProducto.PRESTADO) {
-      throw new AppError('Esta salida ya esta cerrada.', 409);
+      throw new AppError('Esta salida ya está cerrada.', 409);
     }
 
     const shouldReturnStock =

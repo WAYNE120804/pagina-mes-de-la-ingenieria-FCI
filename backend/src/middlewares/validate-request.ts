@@ -26,7 +26,7 @@ export function validateRequest(schemas: RequestSchemas) {
 
       next();
     } catch (error) {
-      next(new AppError('Datos de entrada invalidos', 400, 'VALIDATION_ERROR', error));
+      next(new AppError('Datos de entrada inválidos', 400, 'VALIDATION_ERROR', error));
     }
   };
 }

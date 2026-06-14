@@ -4,6 +4,12 @@
 
 :80 {
   encode gzip zstd
+  header {
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "no-referrer"
+    Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+  }
 
   handle /api/* {
     reverse_proxy backend:3002

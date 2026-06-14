@@ -111,7 +111,7 @@ async function refresh(input) {
         session.expiresAt < new Date() ||
         session.user.deletedAt ||
         session.user.status !== prisma_client_1.UserStatus.ACTIVE) {
-        throw new app_error_1.AppError('Refresh token invalido', 401, 'INVALID_REFRESH_TOKEN');
+        throw new app_error_1.AppError('Refresh token inválido', 401, 'INVALID_REFRESH_TOKEN');
     }
     await prisma.refreshSession.update({
         where: { id: session.id },

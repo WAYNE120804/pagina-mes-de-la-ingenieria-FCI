@@ -28,7 +28,7 @@ export async function listPublicTournaments(
   try {
     const tournaments = await tournamentService.listPublicTournaments();
 
-    res.json(successResponse('Torneos publicos consultados', tournaments));
+    res.json(successResponse('Torneos públicos consultados', tournaments));
   } catch (error) {
     next(error);
   }
@@ -189,7 +189,7 @@ export async function getPublicTournamentForm(
       origin
     );
 
-    res.json(successResponse('Formulario publico de torneo consultado', form));
+    res.json(successResponse('Formulario público de torneo consultado', form));
   } catch (error) {
     next(error);
   }
@@ -224,7 +224,7 @@ export async function publicRegisterTournament(
       req.body
     );
 
-    res.status(201).json(successResponse('Inscripcion publica de torneo registrada', registration));
+    res.status(201).json(successResponse('Inscripción publica de torneo registrada', registration));
   } catch (error) {
     next(error);
   }

@@ -49,7 +49,7 @@ const CreditoTicketPage = () => {
   useEffect(() => {
     const loadCredito = async () => {
       try {
-        if (!id) throw new Error('No se encontro el identificador del credito.');
+        if (!id) throw new Error('No se encontro el identificador del crédito.');
         const { data } = await client.get(endpoints.creditoById(id));
         setCredito(data);
       } catch (requestError) {
@@ -64,11 +64,11 @@ const CreditoTicketPage = () => {
 
   return (
     <div>
-      <Topbar title="Tirilla de credito" />
+      <Topbar title="Tirilla de crédito" />
       <div className="px-6 py-6">
         <div className="no-print mb-5 flex flex-wrap gap-3">
           <Link to="/creditos" className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700">
-            Volver a creditos
+            Volver a créditos
           </Link>
           <button type="button" className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white" onClick={() => window.print()}>
             Imprimir tirilla
@@ -92,7 +92,7 @@ const CreditoTicketPage = () => {
 
             <section className="border-b border-dashed border-slate-300 py-3">
               <div className="flex justify-between gap-3">
-                <span>Credito</span>
+                <span>Crédito</span>
                 <strong>{String(credito.id).slice(-6).toUpperCase()}</strong>
               </div>
               <div className="flex justify-between gap-3">
@@ -110,7 +110,7 @@ const CreditoTicketPage = () => {
               <div className="mt-2">
                 <p className="font-bold">Cliente</p>
                 <p>{credito.cliente?.nombreCompleto || 'N/A'}</p>
-                <p>Cedula: {credito.cliente?.cedula || 'N/A'}</p>
+                <p>Cédula: {credito.cliente?.cedula || 'N/A'}</p>
                 {credito.cliente?.telefonoCelular ? <p>Tel: {credito.cliente.telefonoCelular}</p> : null}
               </div>
             </section>
@@ -181,7 +181,7 @@ const CreditoTicketPage = () => {
 
             <footer className="pt-3 text-center">
               <p>Comprobante de credito.</p>
-              <p className="mt-2 text-[10px]">Sistema administrativo de almacen</p>
+              <p className="mt-2 text-[10px]">Sistema administrativo de almacén</p>
             </footer>
           </article>
         ) : null}

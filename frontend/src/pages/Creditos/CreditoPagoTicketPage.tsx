@@ -54,7 +54,7 @@ const CreditoPagoTicketPage = () => {
       <div className="px-6 py-6">
         <div className="no-print mb-5 flex flex-wrap gap-3">
           <Link to="/creditos" className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700">
-            Volver a creditos
+            Volver a créditos
           </Link>
           <button type="button" className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white" onClick={() => window.print()}>
             Imprimir recibo
@@ -82,7 +82,7 @@ const CreditoPagoTicketPage = () => {
                 <strong>{String(pago.id).slice(-6).toUpperCase()}</strong>
               </div>
               <div className="flex justify-between gap-3">
-                <span>Credito</span>
+                <span>Crédito</span>
                 <strong>{String(credito.id).slice(-6).toUpperCase()}</strong>
               </div>
               <div className="flex justify-between gap-3">
@@ -92,7 +92,7 @@ const CreditoPagoTicketPage = () => {
               <div className="mt-2">
                 <p className="font-bold">Cliente</p>
                 <p>{credito.cliente?.nombreCompleto || 'N/A'}</p>
-                <p>Cedula: {credito.cliente?.cedula || 'N/A'}</p>
+                <p>Cédula: {credito.cliente?.cedula || 'N/A'}</p>
               </div>
             </section>
 
@@ -102,7 +102,7 @@ const CreditoPagoTicketPage = () => {
                 <span>{formatCOP(pago.valor)}</span>
               </div>
               <div className="mt-2 flex justify-between">
-                <span>Total credito</span>
+                <span>Total crédito</span>
                 <span>{formatCOP(credito.total)}</span>
               </div>
               <div className="flex justify-between">
@@ -117,7 +117,7 @@ const CreditoPagoTicketPage = () => {
 
             <section className="border-b border-dashed border-slate-300 py-3">
               <div className="flex justify-between">
-                <span>Metodo</span>
+                <span>Método</span>
                 <span>{pago.metodo}</span>
               </div>
               {pago.referencia ? (
@@ -128,7 +128,7 @@ const CreditoPagoTicketPage = () => {
               ) : null}
               {pago.observacion ? (
                 <div className="mt-2">
-                  <p className="font-bold">Observacion</p>
+                  <p className="font-bold">Observación</p>
                   <p>{pago.observacion}</p>
                 </div>
               ) : null}
@@ -136,7 +136,7 @@ const CreditoPagoTicketPage = () => {
 
             <footer className="pt-3 text-center">
               <p>Recibo de pago de credito.</p>
-              <p className="mt-2 text-[10px]">Sistema administrativo de almacen</p>
+              <p className="mt-2 text-[10px]">Sistema administrativo de almacén</p>
             </footer>
           </article>
         ) : (

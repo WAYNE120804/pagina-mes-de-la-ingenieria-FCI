@@ -540,7 +540,7 @@ async function ensureUsersAreAvailableForHackathon(
 
   if (existingMembership) {
     throw new AppError(
-      `${existingMembership.user.name} ya esta inscrito en el equipo ${existingMembership.hackathonTeam.name}`,
+      `${existingMembership.user.name} ya está inscrito en el equipo ${existingMembership.hackathonTeam.name}`,
       400,
       'USER_ALREADY_IN_HACKATHON_TEAM'
     );

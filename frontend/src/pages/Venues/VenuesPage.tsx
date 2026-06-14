@@ -128,7 +128,7 @@ const VenuesPage = () => {
               <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={name} onChange={(event) => setName(event.target.value)} required />
             </label>
             <label className="block text-sm font-medium text-slate-700">
-              Ubicacion
+              Ubicación
               <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={location} onChange={(event) => setLocation(event.target.value)} />
             </label>
             <label className="block text-sm font-medium text-slate-700">
@@ -177,7 +177,7 @@ const VenuesPage = () => {
                 <tr>
                   <th className="px-5 py-3 text-left">Foto</th>
                   <th className="px-5 py-3 text-left">Nombre</th>
-                  <th className="px-5 py-3 text-left">Ubicacion</th>
+                  <th className="px-5 py-3 text-left">Ubicación</th>
                   <th className="px-5 py-3 text-left">Capacidad</th>
                   <th className="px-5 py-3 text-left">Acciones</th>
                 </tr>
@@ -193,8 +193,8 @@ const VenuesPage = () => {
                       </div>
                     </td>
                     <td className="px-5 py-3 font-medium text-slate-950">{venue.name}</td>
-                    <td className="px-5 py-3 text-slate-600">{venue.location || 'Sin ubicacion'}</td>
-                    <td className="px-5 py-3 text-slate-600">{venue.capacity || 'Sin limite'}</td>
+                    <td className="px-5 py-3 text-slate-600">{venue.location || 'Sin ubicación'}</td>
+                    <td className="px-5 py-3 text-slate-600">{venue.capacity || 'Sin límite'}</td>
                     <td className="px-5 py-3">
                       <div className="flex flex-wrap gap-2">
                         <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => editVenue(venue)}>Editar</button>

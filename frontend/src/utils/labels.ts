@@ -1,6 +1,6 @@
 export const eventTypeLabels: Record<string, string> = {
   GENERAL: 'General',
-  ACADEMIC: 'Academico',
+  ACADEMIC: 'Académico',
   TALK: 'Charla',
   WORKSHOP: 'Taller',
   TOURNAMENT: 'Torneo',
@@ -25,7 +25,7 @@ export const attendanceStatusLabels: Record<string, string> = {
 export const attendanceMethodLabels: Record<string, string> = {
   QR: 'QR',
   MANUAL: 'Manual',
-  TEMPORARY_CODE: 'Codigo temporal',
+  TEMPORARY_CODE: 'Código temporal',
 };
 
 export const attendeeCategoryLabels: Record<string, string> = {
@@ -126,7 +126,7 @@ export const hackathonStatusLabels: Record<string, string> = {
   DRAFT: 'Borrador',
   REGISTRATION_OPEN: 'Inscripciones abiertas',
   IN_PROGRESS: 'En curso',
-  EVALUATION: 'En evaluacion',
+  EVALUATION: 'En evaluación',
   FINISHED: 'Finalizado',
   CANCELLED: 'Cancelado',
 };

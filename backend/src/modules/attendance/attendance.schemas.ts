@@ -54,7 +54,7 @@ export const createAttendanceSchema = z
     tempCode: z.string().trim().optional().nullable(),
   })
   .refine((data) => data.userId || (data.fullName && (data.email || data.identifier)), {
-    message: 'Debes registrar un usuario o nombre con correo, codigo o cedula',
+    message: 'Debes registrar un usuario o nombre con correo, código o cédula',
     path: ['userId'],
   });
 

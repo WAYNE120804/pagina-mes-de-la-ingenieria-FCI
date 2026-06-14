@@ -4,12 +4,12 @@ import { listAuditLogsRequest, type AuditLogRow, type AuditMeta } from '../../ap
 import Topbar from '../../components/Layout/Topbar';
 
 const actionLabels: Record<string, string> = {
-  LOGIN: 'Inicio de sesion',
-  LOGOUT: 'Cierre de sesion',
+  LOGIN: 'Inicio de sesión',
+  LOGOUT: 'Cierre de sesión',
   CREATE: 'Creacion',
   UPDATE: 'Actualizacion',
   DELETE: 'Eliminacion',
-  EVALUATE: 'Evaluacion',
+  EVALUATE: 'Evaluación',
   MATCH_CREATE: 'Partido creado',
   MATCH_UPDATE: 'Partido actualizado',
   ADMIN_CHANGE: 'Cambio administrativo',
@@ -20,11 +20,11 @@ const entityLabels: Record<string, string> = {
   Event: 'Evento',
   Hackathon: 'Hackathon',
   Match: 'Partido',
-  PublicSetting: 'Configuracion publica',
+  PublicSetting: 'Configuración publica',
   Speaker: 'Ponente',
   Talk: 'Charla/Taller',
   Tournament: 'Torneo',
-  TournamentRegistration: 'Inscripcion torneo',
+  TournamentRegistration: 'Inscripción torneo',
   TournamentStanding: 'Tabla torneo',
   User: 'Usuario',
   Venue: 'Espacio',
@@ -89,7 +89,7 @@ function AuditDetails({ row }: { row: AuditLogRow }) {
           </pre>
         </div>
         <div>
-          <p className="mb-1 font-semibold text-slate-700">Despues</p>
+          <p className="mb-1 font-semibold text-slate-700">Después</p>
           <pre className="max-h-44 overflow-auto whitespace-pre-wrap rounded-md bg-white p-3 text-[11px] leading-5">
             {formatValue(row.newValues)}
           </pre>
@@ -123,7 +123,7 @@ const AuditPage = () => {
       setLogs(result.logs);
       setMeta(result.meta || null);
     } catch {
-      setError('No fue posible cargar los registros de auditoria.');
+      setError('No fue posible cargar los registros de auditoría.');
     } finally {
       setLoading(false);
     }
@@ -151,13 +151,13 @@ const AuditPage = () => {
             <p className="mt-3 text-3xl font-semibold text-slate-950">{meta?.total || logs.length}</p>
           </div>
           <div className="theme-summary-card rounded-lg p-5 shadow-sm">
-            <p className="theme-summary-label">Usuarios activos en bitacora</p>
+            <p className="theme-summary-label">Usuarios activos en bitácora</p>
             <p className="mt-3 text-3xl font-semibold text-slate-950">
               {new Set(logs.map((log) => log.actor?.id).filter(Boolean)).size}
             </p>
           </div>
           <div className="theme-summary-card rounded-lg p-5 shadow-sm">
-            <p className="theme-summary-label">Modulos auditados</p>
+            <p className="theme-summary-label">Módulos auditados</p>
             <p className="mt-3 text-3xl font-semibold text-slate-950">{meta?.byEntity.length || 0}</p>
           </div>
         </div>
@@ -165,7 +165,7 @@ const AuditPage = () => {
         <form className="grid gap-3 rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-[1fr_220px_220px_auto]" onSubmit={submitFilters}>
           <input
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            placeholder="Buscar por usuario, correo o modulo"
+            placeholder="Buscar por usuario, correo o módulo"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -186,7 +186,7 @@ const AuditPage = () => {
             value={entity}
             onChange={(event) => setEntity(event.target.value)}
           >
-            <option value="">Todos los modulos</option>
+            <option value="">Todos los módulos</option>
             {entities.map((item) => (
               <option key={item} value={item}>
                 {labelFor(entityLabels, item)}
@@ -202,9 +202,9 @@ const AuditPage = () => {
 
         <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-5 py-4">
-            <h3 className="text-base font-semibold text-slate-950">Bitacora operativa</h3>
+            <h3 className="text-base font-semibold text-slate-950">Bitácora operativa</h3>
             <p className="mt-1 text-sm text-slate-500">
-              Registra quien hizo la accion, cuando ocurrio, sobre que modulo y que datos cambiaron.
+              Registra quien hizo la acción, cuando ocurrió, sobre qué módulo y qué datos cambiaron.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -213,8 +213,8 @@ const AuditPage = () => {
                 <tr>
                   <th className="w-[190px] px-5 py-3 text-left">Fecha y hora</th>
                   <th className="w-[240px] px-5 py-3 text-left">Usuario</th>
-                  <th className="w-[170px] px-5 py-3 text-left">Accion</th>
-                  <th className="w-[170px] px-5 py-3 text-left">Modulo</th>
+                  <th className="w-[170px] px-5 py-3 text-left">Acción</th>
+                  <th className="w-[170px] px-5 py-3 text-left">Módulo</th>
                   <th className="w-[300px] px-5 py-3 text-left">Detalle</th>
                   <th className="w-[140px] px-5 py-3 text-left">IP</th>
                   <th className="w-[170px] px-5 py-3 text-left">Navegador</th>
@@ -245,7 +245,7 @@ const AuditPage = () => {
                         {row.entityId ? <span className="block break-all text-xs">{row.entityId}</span> : null}
                       </td>
                       <td className="space-y-2 px-5 py-4 text-slate-600">
-                        <p>{row.summary || 'Accion registrada sin detalle adicional.'}</p>
+                        <p>{row.summary || 'Acción registrada sin detalle adicional.'}</p>
                         <AuditDetails row={row} />
                       </td>
                       <td className="px-5 py-4 text-slate-600">{row.ipAddress || 'No registrada'}</td>

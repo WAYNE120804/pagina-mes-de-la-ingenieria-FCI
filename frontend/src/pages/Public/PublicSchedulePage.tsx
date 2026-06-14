@@ -63,15 +63,15 @@ function durationLabel(start: string, end: string) {
 const copyByType = {
   TALK: {
     title: 'Charlas',
-    subtitle: 'Conferencias y sesiones academicas publicadas desde el panel administrativo.',
+    subtitle: 'Conferencias y sesiones académicas publicadas desde el panel administrativo.',
     loading: 'Cargando charlas publicadas...',
-    empty: 'Aun no hay charlas publicadas desde el panel administrativo.',
+    empty: 'Aún no hay charlas publicadas desde el panel administrativo.',
   },
   WORKSHOP: {
     title: 'Talleres',
-    subtitle: 'Talleres con inscripcion previa publicados desde el panel administrativo.',
+    subtitle: 'Talleres con inscripción previa publicados desde el panel administrativo.',
     loading: 'Cargando talleres publicados...',
-    empty: 'Aun no hay talleres publicados desde el panel administrativo.',
+    empty: 'Aún no hay talleres publicados desde el panel administrativo.',
   },
 };
 
@@ -79,7 +79,7 @@ const defaultCopy = {
   title: 'Cronograma de Actividades',
   subtitle: 'Agenda publicada desde el panel administrativo para la comunidad FCI.',
   loading: 'Cargando cronograma publicado...',
-  empty: 'Aun no hay eventos publicados desde el panel administrativo.',
+  empty: 'Aún no hay eventos publicados desde el panel administrativo.',
 };
 
 const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
@@ -160,7 +160,7 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
           <aside className="space-y-6 lg:col-span-3">
             <section className="rounded-xl border border-[#3b4b3c] bg-[#1d2022]/80 p-6 backdrop-blur">
               <h2 className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#5adf82]">
-                Categorias publicadas
+                Categorías publicadas
               </h2>
               <div className="mt-5 space-y-3 text-sm text-[#b9cbb8]">
                 {Array.from(new Set(allEvents.map((event) => event.type))).length ? (
@@ -173,19 +173,19 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                     </div>
                   ))
                 ) : (
-                  <p>No hay categorias disponibles.</p>
+                  <p>No hay categorías disponibles.</p>
                 )}
               </div>
             </section>
             <section className="rounded-xl border border-[#5adf82]/30 bg-[#02a752]/10 p-6">
               <h2 className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#5adf82]">
-                Ubicacion central
+                Ubicación central
               </h2>
               <p className="mt-3 font-display text-xl font-bold leading-tight text-[#f0ffed]">
                 {selectedEvent?.venue?.name || 'Selecciona una actividad'}
               </p>
               <p className="mt-2 text-sm leading-6 text-[#b9cbb8]">
-                {selectedEvent?.venue?.location || 'Haz clic en una charla o taller para ver su ubicacion.'}
+                {selectedEvent?.venue?.location || 'Haz clic en una charla o taller para ver su ubicación.'}
               </p>
               <div className="relative mt-5 h-32 overflow-hidden rounded-lg border border-[#3b4b3c]">
                 <img
@@ -274,17 +274,17 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                                   <img
                                     className="h-32 w-full object-cover opacity-80"
                                     src={event.venue?.photoUrl || campusImage}
-                                    alt={event.venue?.name || 'Ubicacion'}
+                                    alt={event.venue?.name || 'Ubicación'}
                                   />
                                   <span className="block p-4">
                                     <span className="block font-mono text-[10px] font-bold uppercase tracking-widest text-[#5adf82]">
-                                      Ubicacion
+                                      Ubicación
                                     </span>
                                     <span className="mt-1 block font-semibold text-[#f0ffed]">
                                       {event.venue?.name || 'Espacio por confirmar'}
                                     </span>
                                     <span className="mt-1 block text-xs leading-5 text-[#b9cbb8]">
-                                      {event.venue?.location || 'Ubicacion pendiente desde administracion.'}
+                                      {event.venue?.location || 'Ubicación pendiente desde administracion.'}
                                     </span>
                                   </span>
                                 </span>

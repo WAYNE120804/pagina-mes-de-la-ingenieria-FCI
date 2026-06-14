@@ -14,7 +14,7 @@ export async function listAuditLogs(
     const pagination = getPaginationParams(req);
     const result = await auditService.listAuditLogs(req.query, pagination);
 
-    res.json(successResponse('Registros de auditoria consultados', result.logs, result.meta));
+    res.json(successResponse('Registros de auditoría consultados', result.logs, result.meta));
   } catch (error) {
     next(error);
   }

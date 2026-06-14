@@ -8,8 +8,8 @@ const SETTINGS_ID = 'public';
 
 const defaultSettings = {
   id: SETTINGS_ID,
-  brandName: 'Mes de la Ingenieria',
-  heroTitle: 'Innovacion que transforma el futuro.',
+  brandName: 'Mes de la Ingeniería',
+  heroTitle: 'Innovación que transforma el futuro.',
   logoUrl: null,
   smtpEnabled: false,
   smtpHost: 'smtp.gmail.com',
@@ -17,7 +17,7 @@ const defaultSettings = {
   smtpSecure: false,
   smtpUser: null,
   smtpPassword: null,
-  smtpFromName: 'Mes de la Ingenieria',
+  smtpFromName: 'Mes de la Ingeniería',
   smtpFromEmail: null,
   smtpReplyTo: null,
   smtpBatchSize: 40,
@@ -66,7 +66,7 @@ export function sanitizeSiteSettings(settings: any, includeSmtp = false) {
     smtpSecure: Boolean(settings.smtpSecure),
     smtpUser: settings.smtpUser || '',
     smtpPasswordConfigured: Boolean(settings.smtpPassword),
-    smtpFromName: settings.smtpFromName || settings.brandName || 'Mes de la Ingenieria',
+    smtpFromName: settings.smtpFromName || settings.brandName || 'Mes de la Ingeniería',
     smtpFromEmail: settings.smtpFromEmail || '',
     smtpReplyTo: settings.smtpReplyTo || '',
     smtpBatchSize: settings.smtpBatchSize || 40,

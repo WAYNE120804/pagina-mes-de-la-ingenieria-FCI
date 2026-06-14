@@ -37,7 +37,7 @@ const EvaluationPage = () => {
 
     listHackathonTeamsRequest(selectedHackathonId)
       .then(setTeams)
-      .catch(() => setError('No fue posible cargar equipos para evaluacion.'));
+      .catch(() => setError('No fue posible cargar equipos para evaluación.'));
   }, [selectedHackathonId]);
 
   const pendingEvaluations = teams.filter((team) => !team.finalScore).length;
@@ -45,14 +45,14 @@ const EvaluationPage = () => {
 
   return (
     <div>
-      <Topbar title="Evaluacion" />
+      <Topbar title="Evaluación" />
       <div className="space-y-6 px-6 py-6">
         <section className="theme-section-card rounded-lg p-5 shadow-sm">
           <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
             <div>
               <h3 className="text-lg font-semibold text-slate-950">Panel de jurados</h3>
               <p className="mt-1 text-sm text-slate-500">
-                Ranking, entregas y estado de evaluacion por hackathon.
+                Ranking, entregas y estado de evaluación por hackathon.
               </p>
             </div>
             <select

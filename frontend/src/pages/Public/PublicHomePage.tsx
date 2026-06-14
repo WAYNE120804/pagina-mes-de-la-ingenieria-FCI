@@ -70,7 +70,7 @@ const PublicHomePage = () => {
         setTournaments(tournamentData);
         setSettings(siteSettings);
       })
-      .catch(() => setError('No fue posible cargar la informacion publica.'))
+      .catch(() => setError('No fue posible cargar la información publica.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -84,13 +84,13 @@ const PublicHomePage = () => {
           <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl items-center gap-10 px-4 py-16 md:grid-cols-[1.05fr_0.95fr] md:px-12">
             <div className="relative z-10">
               <span className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-[#5adf82]">
-                Facultad de Ciencias e Ingenieria
+                Facultad de Ciencias e Ingeniería
               </span>
               <h1 className="mt-5 max-w-3xl font-display text-5xl font-extrabold leading-[1.05] tracking-tight text-[#f0ffed] md:text-7xl">
                 {settings.heroTitle}
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-8 text-[#b9cbb8]">
-                Explora la agenda publica, torneos, talleres y registros del Mes de la Ingenieria
+                Explora la agenda publica, torneos, talleres y registros del Mes de la Ingeniería
                 UManizales.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
@@ -139,7 +139,7 @@ const PublicHomePage = () => {
               <p className="rounded-xl border border-[#ffb4ab]/30 bg-[#93000a]/20 p-6 text-[#ffb4ab]">{error}</p>
             ) : events.length === 0 ? (
               <p className="rounded-xl border border-[#3b4b3c] bg-[#1d2022] p-6 text-[#b9cbb8]">
-                Aun no hay eventos publicados desde el panel administrativo.
+                Aún no hay eventos publicados desde el panel administrativo.
               </p>
             ) : (
               <div className="grid gap-5 lg:grid-cols-3">
@@ -222,7 +222,7 @@ const PublicHomePage = () => {
                 </h3>
                 <p className="mt-3 max-w-md text-[#b9cbb8]">
                   {featuredTournament?.description ||
-                    'Los torneos creados y publicados desde el panel apareceran aqui.'}
+                    'Los torneos creados y publicados desde el panel aparecerán aquí.'}
                 </p>
               </div>
             </article>

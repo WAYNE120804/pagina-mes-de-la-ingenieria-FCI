@@ -44,12 +44,12 @@ export const resetUserPasswordSchema = z.object({
 
 export const changeOwnPasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'La contrasena actual es obligatoria'),
-    password: z.string().min(8, 'La nueva contrasena debe tener minimo 8 caracteres'),
-    confirmPassword: z.string().min(8, 'Debes repetir la nueva contrasena'),
+    currentPassword: z.string().min(1, 'La contraseña actual es obligatoria'),
+    password: z.string().min(8, 'La nueva contraseña debe tener mínimo 8 caracteres'),
+    confirmPassword: z.string().min(8, 'Debes repetir la nueva contraseña'),
   })
   .refine((input) => input.password === input.confirmPassword, {
-    message: 'Las contrasenas no coinciden',
+    message: 'Las contraseñas no coinciden',
     path: ['confirmPassword'],
   });
 

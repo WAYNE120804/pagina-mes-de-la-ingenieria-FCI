@@ -302,7 +302,7 @@ export async function changeOwnPassword(
   const isValidPassword = await verifyPassword(input.currentPassword, user.passwordHash);
 
   if (!isValidPassword) {
-    throw new AppError('La contrasena actual no es correcta', 400, 'INVALID_CURRENT_PASSWORD');
+    throw new AppError('La contraseña actual no es correcta', 400, 'INVALID_CURRENT_PASSWORD');
   }
 
   const passwordHash = await hashPassword(input.password);

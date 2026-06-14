@@ -54,8 +54,8 @@ export async function getEmailSettings() {
     update: {},
     create: {
       id: 'public',
-      brandName: 'Mes de la Ingenieria',
-      heroTitle: 'Innovacion que transforma el futuro.',
+      brandName: 'Mes de la Ingeniería',
+      heroTitle: 'Innovación que transforma el futuro.',
       smtpEnabled: false,
       smtpHost: 'smtp.gmail.com',
       smtpPort: 587,
@@ -107,7 +107,7 @@ export async function sendEmailSafe(message: EmailMessage) {
     }
 
     const transporter = createTransport(settings);
-    const fromName = settings.smtpFromName || settings.brandName || 'Mes de la Ingenieria';
+    const fromName = settings.smtpFromName || settings.brandName || 'Mes de la Ingeniería';
     const fromEmail = settings.smtpFromEmail;
 
     for (const recipient of recipients) {
@@ -128,7 +128,7 @@ export async function sendEmailSafe(message: EmailMessage) {
 
     return { sent: recipients.length, skipped: false, error: null };
   } catch (error) {
-    logger.error('Fallo envio de correo opcional.', error);
+    logger.error('Fallo envío de correo opcional.', error);
     return { sent: 0, skipped: false, error };
   }
 }

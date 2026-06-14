@@ -276,7 +276,7 @@ const SeparadosPage = () => {
     const nextQuantity = Math.trunc(Number(selectedQuantity || 1));
 
     if (!variant || nextQuantity <= 0) {
-      setModalError('Debes escoger un producto y una cantidad valida.');
+      setModalError('Debes escoger un producto y una cantidad válida.');
       return;
     }
 
@@ -348,7 +348,7 @@ const SeparadosPage = () => {
       return;
     }
 
-    setModalError('Escribe un codigo/SKU completo o usa el boton Agregar del producto correcto.');
+    setModalError('Escribe un código/SKU completo o usa el boton Agregar del producto correcto.');
   };
 
   const handleUpdateItemQuantity = (varianteId: string, rawValue: number) => {
@@ -652,7 +652,7 @@ const SeparadosPage = () => {
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Cliente, cedula, producto, SKU o codigo..."
+                placeholder="Cliente, cédula, producto, SKU o código..."
               />
             </label>
             <label className="block text-sm">
@@ -693,7 +693,7 @@ const SeparadosPage = () => {
       <FormModal
         open={isCreateOpen}
         title="Crear separado"
-        description="Selecciona cliente, productos, fecha limite y abono inicial."
+        description="Selecciona cliente, productos, fecha límite y abono inicial."
         onClose={closeCreateModal}
         size="2xl"
       >
@@ -710,7 +710,7 @@ const SeparadosPage = () => {
                   setClientSearch(event.target.value);
                   setModalError(null);
                 }}
-                placeholder="Nombre, cedula o telefono..."
+                placeholder="Nombre, cédula o teléfono..."
               />
             </label>
 
@@ -718,7 +718,7 @@ const SeparadosPage = () => {
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
                 <div className="font-semibold text-emerald-900">{selectedClient.nombreCompleto}</div>
                 <div className="text-sm text-emerald-800">
-                  Cedula: {selectedClient.cedula} | Telefono: {selectedClient.telefonoCelular}
+                  Cédula: {selectedClient.cedula} | Teléfono: {selectedClient.telefonoCelular}
                 </div>
               </div>
             ) : null}
@@ -770,7 +770,7 @@ const SeparadosPage = () => {
                   />
                 </label>
                 <label className="text-sm">
-                  <span className="text-slate-600">Cedula</span>
+                  <span className="text-slate-600">Cédula</span>
                   <input
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                     value={clientForm.cedula}
@@ -780,7 +780,7 @@ const SeparadosPage = () => {
                   />
                 </label>
                 <label className="text-sm">
-                  <span className="text-slate-600">Telefono celular</span>
+                  <span className="text-slate-600">Teléfono celular</span>
                   <input
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                     value={clientForm.telefonoCelular}
@@ -790,7 +790,7 @@ const SeparadosPage = () => {
                   />
                 </label>
                 <label className="text-sm">
-                  <span className="text-slate-600">Correo electronico</span>
+                  <span className="text-slate-600">Correo electrónico</span>
                   <input
                     type="email"
                     className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
@@ -843,7 +843,7 @@ const SeparadosPage = () => {
                       handleVariantSearchSubmit();
                     }
                   }}
-                  placeholder="Nombre, SKU o codigo de barras..."
+                  placeholder="Nombre, SKU o código de barras..."
                 />
               </label>
               <label className="text-sm">
@@ -862,12 +862,12 @@ const SeparadosPage = () => {
               <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white">
                 <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_140px_120px_100px_140px_120px] gap-3 border-b border-slate-200 bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-slate-600">
                   <div>Nombre</div>
-                  <div>Categoria</div>
+                  <div>Categoría</div>
                   <div>Color</div>
                   <div>Talla</div>
                   <div>Stock</div>
                   <div>Precio</div>
-                  <div>Accion</div>
+                  <div>Acción</div>
                 </div>
                 {filteredVariantResults.map((variant: any) => {
                   const barcode = variant.codigos?.find((item: any) => item.principal)?.codigo;
@@ -880,10 +880,10 @@ const SeparadosPage = () => {
                       <div>
                         <div className="font-semibold text-slate-900">{variant.producto?.nombre}</div>
                         <div className="text-xs text-slate-500">
-                          SKU: {variant.sku || 'Sin SKU'} | Codigo: {barcode || 'Sin codigo'}
+                          SKU: {variant.sku || 'Sin SKU'} | Código: {barcode || 'Sin código'}
                         </div>
                       </div>
-                      <div className="text-sm text-slate-700">{variant.producto?.categoria?.nombre || 'Sin categoria'}</div>
+                      <div className="text-sm text-slate-700">{variant.producto?.categoria?.nombre || 'Sin categoría'}</div>
                       <div className="text-sm text-slate-700">
                         {String(variant.color || '').toUpperCase() === 'NO APLICA' ? 'No aplica' : variant.color}
                       </div>
@@ -910,14 +910,14 @@ const SeparadosPage = () => {
             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
               <h4 className="mb-3 text-sm font-semibold text-slate-900">Productos agregados</h4>
               {items.length === 0 ? (
-                <p className="text-sm text-slate-500">Aun no has agregado productos al separado.</p>
+                <p className="text-sm text-slate-500">Aún no has agregado productos al separado.</p>
               ) : (
                 <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                   <div className="grid grid-cols-[minmax(0,1.5fr)_130px_140px_120px] gap-3 border-b border-slate-200 bg-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.06em] text-slate-600">
                     <div>Producto</div>
                     <div>Cantidad</div>
                     <div>Subtotal</div>
-                    <div>Accion</div>
+                    <div>Acción</div>
                   </div>
                   {items.map((item) => (
                     <div
@@ -927,7 +927,7 @@ const SeparadosPage = () => {
                       <div>
                         <div className="font-semibold text-slate-900">{item.nombre}</div>
                         <div className="text-xs text-slate-500">
-                          {item.detalle} | SKU: {item.sku || 'Sin SKU'} | Codigo: {item.codigoBarras || 'Sin codigo'}
+                          {item.detalle} | SKU: {item.sku || 'Sin SKU'} | Código: {item.codigoBarras || 'Sin código'}
                         </div>
                       </div>
                       <input
@@ -959,7 +959,7 @@ const SeparadosPage = () => {
             <h3 className="mb-4 text-lg font-semibold text-slate-900">3. Abono y vencimiento</h3>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <label className="text-sm">
-                <span className="text-slate-600">Fecha limite</span>
+                <span className="text-slate-600">Fecha límite</span>
                 <input
                   type="date"
                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
@@ -968,7 +968,7 @@ const SeparadosPage = () => {
                 />
               </label>
               <label className="text-sm">
-                <span className="text-slate-600">Metodo de pago</span>
+                <span className="text-slate-600">Método de pago</span>
                 <select
                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                   value={form.metodoPago}
@@ -992,7 +992,7 @@ const SeparadosPage = () => {
                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
                   value={form.referencia}
                   onChange={(event) => setForm((current) => ({ ...current, referencia: event.target.value }))}
-                  placeholder="Numero de comprobante o transaccion"
+                  placeholder="Número de comprobante o transacción"
                 />
               </label>
             </div>
@@ -1060,7 +1060,7 @@ const SeparadosPage = () => {
             onChange={(value) => setAbonoForm((current) => ({ ...current, valor: value }))}
           />
           <label className="text-sm">
-            <span className="text-slate-600">Metodo de pago</span>
+            <span className="text-slate-600">Método de pago</span>
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
               value={abonoForm.metodoPago}
@@ -1079,11 +1079,11 @@ const SeparadosPage = () => {
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
               value={abonoForm.referencia}
               onChange={(event) => setAbonoForm((current) => ({ ...current, referencia: event.target.value }))}
-              placeholder="Numero de comprobante o transaccion"
+              placeholder="Número de comprobante o transacción"
             />
           </label>
           <label className="text-sm">
-            <span className="text-slate-600">Observacion</span>
+            <span className="text-slate-600">Observación</span>
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
               value={abonoForm.observacion}
@@ -1119,10 +1119,10 @@ const SeparadosPage = () => {
         <ErrorBanner message={modalError} />
         <form onSubmit={handleCancelSubmit} className="space-y-4">
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Los abonos ya registrados quedan como historial de caja; esta accion solo libera inventario y cierra el separado.
+            Los abonos ya registrados quedan como historial de caja; esta acción solo libera inventario y cierra el separado.
           </div>
           <label className="block text-sm">
-            <span className="text-slate-600">Motivo u observacion</span>
+            <span className="text-slate-600">Motivo u observación</span>
             <textarea
               className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2"
               value={cancelObservation}

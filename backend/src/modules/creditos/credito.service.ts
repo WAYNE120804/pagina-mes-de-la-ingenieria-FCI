@@ -18,7 +18,7 @@ function prismaClient() {
   const prisma = getPrisma();
 
   if (!prisma) {
-    throw new AppError('DATABASE_URL no esta configurado en el backend.', 500);
+    throw new AppError('DATABASE_URL no está configurado en el backend.', 500);
   }
 
   return prisma;
@@ -277,7 +277,7 @@ export async function getCreditoById(id: string) {
   });
 
   if (!credito) {
-    throw new AppError('El credito no existe.', 404);
+    throw new AppError('El crédito no existe.', 404);
   }
 
   return credito;
@@ -355,7 +355,7 @@ export async function createCredito(payload: CreditoPayload, usuarioId?: string)
   const total = subtotal;
 
   if (payload.pagoInicial > total) {
-    throw new AppError('El pago inicial no puede superar el total del credito.', 409);
+    throw new AppError('El pago inicial no puede superar el total del crédito.', 409);
   }
 
   return prisma.$transaction(async (tx) => {
@@ -405,7 +405,7 @@ export async function createCredito(payload: CreditoPayload, usuarioId?: string)
         cajaId: caja.id,
         usuarioId,
         valor: payload.pagoInicial,
-        descripcion: `Pago inicial credito ${credito.id.slice(-6).toUpperCase()}`,
+        descripcion: `Pago inicial crédito ${credito.id.slice(-6).toUpperCase()}`,
       });
     }
 
@@ -436,7 +436,7 @@ export async function createCredito(payload: CreditoPayload, usuarioId?: string)
           stockPosterior,
           costoUnitario: item.costoUnitario,
           precioUnitario: item.precioUnitario,
-          detalle: `Credito ${credito.id.slice(-6).toUpperCase()} - ${item.variante.producto.nombre} (${formatVariantDescriptor(item.variante)})`,
+          detalle: `Crédito ${credito.id.slice(-6).toUpperCase()} - ${item.variante.producto.nombre} (${formatVariantDescriptor(item.variante)})`,
           referenciaTipo: 'CREDITO',
           referenciaId: credito.id,
         },
@@ -467,11 +467,11 @@ export async function pagarCredito(id: string, payload: PagoCreditoPayload, usua
     });
 
     if (!credito) {
-      throw new AppError('El credito no existe.', 404);
+      throw new AppError('El crédito no existe.', 404);
     }
 
     if (credito.estado !== EstadoCredito.ACTIVO && credito.estado !== EstadoCredito.VENCIDO) {
-      throw new AppError('Este credito ya no acepta pagos.', 409);
+      throw new AppError('Este crédito ya no acepta pagos.', 409);
     }
 
     const saldoPendiente = Number(credito.saldoPendiente || 0);
@@ -502,7 +502,7 @@ export async function pagarCredito(id: string, payload: PagoCreditoPayload, usua
       cajaId: caja.id,
       usuarioId,
       valor: payload.valor,
-      descripcion: `Pago credito ${credito.id.slice(-6).toUpperCase()}`,
+      descripcion: `Pago crédito ${credito.id.slice(-6).toUpperCase()}`,
     });
 
     await tx.credito.update({
@@ -536,11 +536,11 @@ export async function cancelarCredito(
     });
 
     if (!credito) {
-      throw new AppError('El credito no existe.', 404);
+      throw new AppError('El crédito no existe.', 404);
     }
 
     if (credito.estado !== EstadoCredito.ACTIVO && credito.estado !== EstadoCredito.VENCIDO) {
-      throw new AppError('Solo se pueden cancelar creditos activos o vencidos.', 409);
+      throw new AppError('Solo se pueden cancelar créditos activos o vencidos.', 409);
     }
 
     await tx.credito.update({

@@ -23,6 +23,7 @@ import {
   publicTournamentParamsSchema,
   publicTournamentRegistrationSchema,
 } from '../tournaments/tournament.schemas';
+import { publicWriteRateLimiter } from '../../middlewares/security';
 import { validateRequest } from '../../middlewares/validate-request';
 import { getSiteSettings } from '../settings/settings.controller';
 
@@ -42,11 +43,13 @@ publicRouter.get(
 );
 publicRouter.post(
   '/events/:eventId/register',
+  publicWriteRateLimiter,
   validateRequest({ params: publicEventParamsSchema, body: publicAttendanceSchema }),
   publicRegisterAttendance
 );
 publicRouter.post(
   '/events/:eventId/check-in',
+  publicWriteRateLimiter,
   validateRequest({ params: publicEventParamsSchema, body: publicCheckInSchema }),
   publicCheckInAttendance
 );
@@ -63,6 +66,7 @@ publicRouter.get(
 );
 publicRouter.post(
   '/tournaments/:tournamentId/register',
+  publicWriteRateLimiter,
   validateRequest({ params: publicTournamentParamsSchema, body: publicTournamentRegistrationSchema }),
   publicRegisterTournament
 );

@@ -27,7 +27,7 @@ const LoginPage = () => {
       await login(email, password);
       navigate(from, { replace: true });
     } catch {
-      setError('Correo o contrasena invalidos.');
+      setError('Correo o contraseña inválidos.');
     } finally {
       setSubmitting(false);
     }
@@ -38,7 +38,7 @@ const LoginPage = () => {
       <section className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-            Semana de Ingenieria
+            Semana de Ingeniería
           </p>
           <h1 className="mt-2 text-2xl font-semibold text-slate-950">
             Panel administrativo
@@ -59,7 +59,7 @@ const LoginPage = () => {
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-slate-700">Contrasena</span>
+            <span className="text-sm font-medium text-slate-700">Contraseña</span>
             <input
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900"
               type="password"

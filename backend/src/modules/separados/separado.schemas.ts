@@ -98,7 +98,7 @@ function parseMetodoPago(value: unknown) {
     return value as MetodoPago;
   }
 
-  throw new AppError('Debes seleccionar un metodo de pago valido.');
+  throw new AppError('Debes seleccionar un método de pago válido.');
 }
 
 function parseOptionalDate(value: unknown) {
@@ -109,7 +109,7 @@ function parseOptionalDate(value: unknown) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    throw new AppError('La fecha limite no es valida.');
+    throw new AppError('La fecha límite no es válida.');
   }
 
   return date;
@@ -129,7 +129,7 @@ export function parseSeparadoPayload(input: SeparadoInput): SeparadoPayload {
 
   const items = input.items.map((item, index) => {
     if (!item || typeof item !== 'object') {
-      throw new AppError(`El item ${index + 1} del separado no es valido.`);
+      throw new AppError(`El item ${index + 1} del separado no es válido.`);
     }
 
     return parseSeparadoItem(item as SeparadoItemInput);

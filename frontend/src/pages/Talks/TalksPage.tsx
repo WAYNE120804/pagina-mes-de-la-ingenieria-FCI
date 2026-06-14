@@ -166,7 +166,7 @@ const TalksPage = () => {
       resetTalkForm();
       await loadData();
     } catch {
-      setError('No fue posible guardar. Usa un evento tipo Charla, Taller o Academico.');
+      setError('No fue posible guardar. Usa un evento tipo Charla, Taller o Académico.');
     }
   }
 

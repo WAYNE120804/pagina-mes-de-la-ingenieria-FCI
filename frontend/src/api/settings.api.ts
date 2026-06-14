@@ -29,8 +29,8 @@ type ApiResponse<T> = {
 
 export const defaultSiteSettings: SiteSettings = {
   id: 'public',
-  brandName: 'Mes de la Ingenieria',
-  heroTitle: 'Innovacion que transforma el futuro.',
+  brandName: 'Mes de la Ingeniería',
+  heroTitle: 'Innovación que transforma el futuro.',
   logoUrl: null,
   smtpEnabled: false,
   smtpHost: 'smtp.gmail.com',
@@ -38,7 +38,7 @@ export const defaultSiteSettings: SiteSettings = {
   smtpSecure: false,
   smtpUser: '',
   smtpPasswordConfigured: false,
-  smtpFromName: 'Mes de la Ingenieria',
+  smtpFromName: 'Mes de la Ingeniería',
   smtpFromEmail: '',
   smtpReplyTo: '',
   smtpBatchSize: 40,

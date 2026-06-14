@@ -18,7 +18,7 @@ function prismaClient() {
   const prisma = getPrisma();
 
   if (!prisma) {
-    throw new AppError('DATABASE_URL no esta configurado en el backend.', 500);
+    throw new AppError('DATABASE_URL no está configurado en el backend.', 500);
   }
 
   return prisma;

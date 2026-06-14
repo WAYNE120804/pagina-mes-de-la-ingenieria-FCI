@@ -200,7 +200,7 @@ const SpeakersPage = () => {
                 className="mt-1 min-h-32 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                 value={form.bio}
                 onChange={(event) => setForm({ ...form, bio: event.target.value })}
-                placeholder="Perfil breve que se mostrara en el panel publico."
+                placeholder="Perfil breve que se mostrara en el panel público."
               />
             </label>
             <div className="rounded-md border border-slate-200 bg-slate-50 p-3">

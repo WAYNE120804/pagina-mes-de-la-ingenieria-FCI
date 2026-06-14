@@ -41,12 +41,12 @@ function zodDetailsToMessage(details: unknown) {
     .slice(0, 3)
     .map((issue) => {
       const field = issue.path?.length ? `${issue.path.join('.')}: ` : '';
-      return `${field}${issue.message || 'valor invalido'}`;
+      return `${field}${issue.message || 'valor inválido'}`;
     })
     .join(' | ');
 }
 
-export function getApiErrorMessage(error: unknown, fallback = 'No fue posible completar la accion.') {
+export function getApiErrorMessage(error: unknown, fallback = 'No fue posible completar la acción.') {
   if (axios.isAxiosError<ApiErrorPayload>(error)) {
     const payload = error.response?.data;
     const detailsMessage = zodDetailsToMessage(payload?.details);
@@ -58,7 +58,7 @@ export function getApiErrorMessage(error: unknown, fallback = 'No fue posible co
     }
 
     if (error.response?.status) {
-      return `${fallback} Codigo HTTP ${error.response.status}.`;
+      return `${fallback} Código HTTP ${error.response.status}.`;
     }
   }
 

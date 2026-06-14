@@ -55,7 +55,7 @@ export type CierreSalidaPayload = {
 const tipoLabels: Record<string, string> = {
   PRESTAMO: 'Prestamo',
   CONSIGNACION: 'Consignacion',
-  ENVIO_OTRO_ALMACEN: 'Envio a otro almacen',
+  ENVIO_OTRO_ALMACEN: 'Envío a otro almacén',
   TRUEQUE: 'Trueque',
   DEVOLUCION: 'Devolucion',
   OTRO: 'Otro',
@@ -96,7 +96,7 @@ function parseOptionalMoney(value: unknown) {
   const parsed = Number(value);
 
   if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new AppError('El valor recibido debe ser un numero valido.');
+    throw new AppError('El valor recibido debe ser un número válido.');
   }
 
   return parsed;
@@ -110,7 +110,7 @@ function parseOptionalDate(value: unknown) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    throw new AppError('La fecha de compromiso no es valida.');
+    throw new AppError('La fecha de compromiso no es válida.');
   }
 
   return date;
@@ -120,7 +120,7 @@ function parseTipoSalida(value: unknown) {
   const raw = parseRequiredString(value, 'tipo').toUpperCase();
 
   if (!tipoLabels[raw]) {
-    throw new AppError('Debes seleccionar un tipo de salida valido.');
+    throw new AppError('Debes seleccionar un tipo de salida válido.');
   }
 
   if (raw === 'ENVIO_OTRO_ALMACEN' || raw === 'DEVOLUCION') {
@@ -141,7 +141,7 @@ function parseEstadoCierre(value: unknown) {
     return value as EstadoSalidaProducto;
   }
 
-  throw new AppError('Debes seleccionar un estado de cierre valido.');
+  throw new AppError('Debes seleccionar un estado de cierre válido.');
 }
 
 function parseSalidaItem(input: SalidaItemInput): SalidaItemPayload {
@@ -160,7 +160,7 @@ export function parseSalidaPayload(input: SalidaInput): SalidaPayload {
   const tipo = parseTipoSalida(input.tipo);
   const items = input.items.map((item, index) => {
     if (!item || typeof item !== 'object') {
-      throw new AppError(`El item ${index + 1} de la salida no es valido.`);
+      throw new AppError(`El item ${index + 1} de la salida no es válido.`);
     }
 
     return parseSalidaItem(item as SalidaItemInput);

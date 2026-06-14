@@ -373,7 +373,7 @@ async function downloadPublicTournamentCard(
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `tarjeta-inscripcion-${fileSafeName(tournament.name) || 'torneo'}.png`;
+  link.download = `tarjeta-inscripción-${fileSafeName(tournament.name) || 'torneo'}.png`;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -624,7 +624,7 @@ const TournamentsPage = () => {
       setPublicRegistrationLink(formData.url);
       setPublicRegistrationQrSvg(svg);
     } catch {
-      setRegistrationError('No fue posible generar el formulario publico del torneo.');
+      setRegistrationError('No fue posible generar el formulario público del torneo.');
     }
   }
 
@@ -1035,13 +1035,13 @@ const TournamentsPage = () => {
       await sendTournamentRegistrationListRequest(selectedTournament.id, {
         recipients,
         subject: listSubject || `Lista de inscritos - ${selectedTournament.name}`,
-        body: listBody || 'Adjunto la lista de inscritos para soporte de permiso academico.',
+        body: listBody || 'Adjunto la lista de inscritos para soporte de permiso académico.',
       });
       setShowListModal(false);
       setListRecipients('');
       setRegistrationError('');
     } catch {
-      setRegistrationError('No fue posible enviar la lista. Revisa correos destino o configuracion SMTP.');
+      setRegistrationError('No fue posible enviar la lista. Revisa correos destino o configuración SMTP.');
     }
   }
 
@@ -1066,7 +1066,7 @@ const TournamentsPage = () => {
             </label>
             <label className="block text-sm font-medium text-slate-700">
               Mensaje
-              <textarea className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={listBody} onChange={(event) => setListBody(event.target.value)} placeholder="Adjunto la lista para permiso academico." />
+              <textarea className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={listBody} onChange={(event) => setListBody(event.target.value)} placeholder="Adjunto la lista para permiso académico." />
             </label>
             <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white">Enviar lista</button>
           </form>
@@ -1151,7 +1151,7 @@ const TournamentsPage = () => {
                   value={form.endsAt}
                   onChange={(event) => setForm({ ...form, endsAt: event.target.value })}
                 />
-                <span className="mt-1 block text-xs text-slate-500">Opcional. Sirve para torneos de varios dias.</span>
+                <span className="mt-1 block text-xs text-slate-500">Opcional. Sirve para torneos de varios días.</span>
               </label>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -1159,7 +1159,7 @@ const TournamentsPage = () => {
                   <>
                   <label className="block text-sm font-medium text-slate-700">
                     Max. equipos
-                    <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Sin limite" type="number" min="1" value={form.maxTeams} onChange={(event) => setForm({ ...form, maxTeams: event.target.value })} />
+                    <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Sin límite" type="number" min="1" value={form.maxTeams} onChange={(event) => setForm({ ...form, maxTeams: event.target.value })} />
                     <span className="mt-1 block text-xs text-slate-500">Opcional. Dejalo vacio para permitir cualquier cantidad de equipos.</span>
                   </label>
                   <label className="block text-sm font-medium text-slate-700">
@@ -1171,7 +1171,7 @@ const TournamentsPage = () => {
                   ) : (
                   <label className="block text-sm font-medium text-slate-700">
                     Max. participantes
-                    <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Sin limite" type="number" min="1" value={form.maxParticipants} onChange={(event) => setForm({ ...form, maxParticipants: event.target.value })} />
+                    <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Sin límite" type="number" min="1" value={form.maxParticipants} onChange={(event) => setForm({ ...form, maxParticipants: event.target.value })} />
                     <span className="mt-1 block text-xs text-slate-500">Opcional. Dejalo vacio para permitir cualquier cantidad de participantes.</span>
                   </label>
                   )}
@@ -1237,7 +1237,7 @@ const TournamentsPage = () => {
                   </div>
                   <div className="mt-3 grid gap-3 md:grid-cols-3">
                     <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Nombre" value={member.fullName} onChange={(event) => updateTeamMember(index, 'fullName', event.target.value)} required />
-                    <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Codigo o cedula" value={member.identifier} onChange={(event) => updateTeamMember(index, 'identifier', event.target.value)} required />
+                    <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Código o cédula" value={member.identifier} onChange={(event) => updateTeamMember(index, 'identifier', event.target.value)} required />
                     <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Correo" type="email" value={member.email} onChange={(event) => updateTeamMember(index, 'email', event.target.value)} required />
                   </div>
                   {teamEditForm.members.length > 1 ? (
@@ -1268,7 +1268,7 @@ const TournamentsPage = () => {
               <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={participantEditForm.displayName} onChange={(event) => setParticipantEditForm({ ...participantEditForm, displayName: event.target.value })} required />
             </label>
             <label className="block text-sm font-medium text-slate-700">
-              Codigo o cedula
+              Código o cédula
               <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={participantEditForm.identifier} onChange={(event) => setParticipantEditForm({ ...participantEditForm, identifier: event.target.value })} required />
             </label>
             <label className="block text-sm font-medium text-slate-700">
@@ -1285,8 +1285,8 @@ const TournamentsPage = () => {
 
         <FormModal
           open={Boolean(publicFormTournament)}
-          title="Formulario de inscripcion"
-          description={publicFormTournament ? publicFormTournament.name : 'Link publico del torneo.'}
+          title="Formulario de inscripción"
+          description={publicFormTournament ? publicFormTournament.name : 'Link público del torneo.'}
           onClose={() => setPublicFormTournament(null)}
         >
           <div className="space-y-4">
@@ -1300,7 +1300,7 @@ const TournamentsPage = () => {
                 </div>
                 <div className="rounded-xl border border-[#5adf82]/25 bg-[#101613] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8be694]">
-                    Link publico
+                    Link público
                   </p>
                   <p className="mt-2 break-all text-sm font-medium text-[#d8f3d5]">{publicRegistrationLink}</p>
                   {publicFormTournament ? (

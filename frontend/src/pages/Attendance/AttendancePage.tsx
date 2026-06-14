@@ -43,7 +43,7 @@ const careerLabels: Record<string, string> = {
   ING_ANALITICA_DATOS: 'Ing. Analitica de Datos',
   ING_INDUSTRIAL: 'Ing. Industrial',
   ING_LOGISTICA: 'Ing. Logistica',
-  ING_SEGURIDAD_INFORMACION: 'Ing. Seguridad de Informacion',
+  ING_SEGURIDAD_INFORMACION: 'Ing. Seguridad de Información',
   POSGRADOS: 'Posgrados',
   NO_APLICA: 'No aplica',
 };
@@ -166,7 +166,7 @@ async function downloadQrImage(svg: string, title: string, format: 'png' | 'jpeg
 
   context.font = '500 24px Arial';
   context.fillStyle = '#b9cbb8';
-  context.fillText('QR publico para registrar asistencia', canvas.width / 2, titleBottom + 56);
+  context.fillText('QR público para registrar asistencia', canvas.width / 2, titleBottom + 56);
 
   const qrSize = 620;
   const qrX = (canvas.width - qrSize) / 2;
@@ -180,7 +180,7 @@ async function downloadQrImage(svg: string, title: string, format: 'png' | 'jpeg
 
   context.fillStyle = '#849584';
   context.font = '600 20px Arial';
-  context.fillText('Facultad de Ciencias e Ingenieria - UManizales', canvas.width / 2, 1014);
+  context.fillText('Facultad de Ciencias e Ingeniería - UManizales', canvas.width / 2, 1014);
 
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob(resolve, `image/${format}`, format === 'jpeg' ? 0.95 : undefined);
@@ -234,11 +234,11 @@ function exportAttendanceExcel(
           <tr>
             <th>Nombre</th>
             <th>Correo</th>
-            <th>Codigo/Cedula</th>
+            <th>Código/Cédula</th>
             <th>Cargo</th>
             <th>Semestre</th>
             <th>Carrera</th>
-            <th>Metodo</th>
+            <th>Método</th>
             <th>Estado</th>
             <th>Ingreso confirmado</th>
           </tr>
@@ -328,7 +328,7 @@ const AttendancePage = () => {
     }
 
     loadAttendance(eventId).catch(() => setError('No fue posible cargar asistencia.'));
-    loadPublicAttendanceForm(eventId).catch(() => setError('No fue posible cargar el QR publico.'));
+    loadPublicAttendanceForm(eventId).catch(() => setError('No fue posible cargar el QR público.'));
   }, [eventId]);
 
   async function registerManual(event: FormEvent<HTMLFormElement>) {
@@ -358,7 +358,7 @@ const AttendancePage = () => {
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank', 'noopener,noreferrer');
     } catch {
-      setError('El certificado solo esta disponible para asistencias confirmadas.');
+      setError('El certificado solo está disponible para asistencias confirmadas.');
     }
   }
 
@@ -407,13 +407,13 @@ const AttendancePage = () => {
       await sendEventAttendanceListRequest(eventId, {
         recipients,
         subject: listSubject || `Lista de asistencia - ${selectedEvent?.title || 'Evento'}`,
-        body: listBody || 'Adjunto la lista de asistencia para soporte de permiso academico.',
+        body: listBody || 'Adjunto la lista de asistencia para soporte de permiso académico.',
       });
       setShowListModal(false);
       setListRecipients('');
       setNotice('Lista enviada por correo. Si SMTP falla, la app sigue funcionando y queda registrado.');
     } catch {
-      setError('No fue posible enviar la lista. Revisa correos destino o configuracion SMTP.');
+      setError('No fue posible enviar la lista. Revisa correos destino o configuración SMTP.');
     }
   }
 
@@ -454,7 +454,7 @@ const AttendancePage = () => {
             </label>
             <label className="block text-sm font-medium text-slate-700">
               Mensaje
-              <textarea className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={listBody} onChange={(event) => setListBody(event.target.value)} placeholder="Adjunto la lista para permiso academico." />
+              <textarea className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={listBody} onChange={(event) => setListBody(event.target.value)} placeholder="Adjunto la lista para permiso académico." />
             </label>
             <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white">Enviar lista</button>
           </form>
@@ -470,7 +470,7 @@ const AttendancePage = () => {
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Disponibles</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">{stats.available ?? 'Sin limite'}</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">{stats.available ?? 'Sin límite'}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Check-in</p>
@@ -491,7 +491,7 @@ const AttendancePage = () => {
                   </select>
                 </label>
                 <input className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Nombre asistente" value={fullName} onChange={(event) => setFullName(event.target.value)} required />
-                <input className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Codigo o cedula" value={identifier} onChange={(event) => setIdentifier(event.target.value)} required />
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Código o cédula" value={identifier} onChange={(event) => setIdentifier(event.target.value)} required />
                 <select className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={category} onChange={(event) => setCategory(event.target.value)} required>
                   {categories.map((item) => <option key={item} value={item}>{attendeeCategoryLabels[item]}</option>)}
                 </select>
@@ -515,7 +515,7 @@ const AttendancePage = () => {
                   <div className="mx-auto flex max-w-full flex-col items-center gap-3">
                     <div>
                       <p className="text-sm font-semibold text-[#f0ffed]">{selectedEvent?.title || 'Evento seleccionado'}</p>
-                      <p className="mt-1 text-xs text-[#b9cbb8]">QR publico para registrar asistencia</p>
+                      <p className="mt-1 text-xs text-[#b9cbb8]">QR público para registrar asistencia</p>
                     </div>
                     <div className="qr-scan-surface rounded-xl border border-[#5adf82]/40 p-3">
                       <div className="h-56 w-56 max-w-full shrink-0 [&_svg]:block [&_svg]:h-full [&_svg]:w-full" dangerouslySetInnerHTML={{ __html: publicQrSvg }} />
@@ -563,11 +563,11 @@ const AttendancePage = () => {
                   <tr>
                     <th className="w-[16%] px-4 py-3 text-left">Nombre</th>
                     <th className="w-[18%] px-4 py-3 text-left">Correo</th>
-                    <th className="w-[12%] px-4 py-3 text-left">Codigo/Cedula</th>
+                    <th className="w-[12%] px-4 py-3 text-left">Código/Cédula</th>
                     <th className="w-[9%] px-4 py-3 text-left">Cargo</th>
                     <th className="w-[8%] px-4 py-3 text-left">Semestre</th>
                     <th className="w-[17%] px-4 py-3 text-left">Carrera</th>
-                    <th className="w-[8%] px-4 py-3 text-left">Metodo</th>
+                    <th className="w-[8%] px-4 py-3 text-left">Método</th>
                     <th className="w-[10%] px-4 py-3 text-left">Estado</th>
                     <th className="w-[12%] px-4 py-3 text-left">Acciones</th>
                   </tr>

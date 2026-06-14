@@ -76,7 +76,7 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
           <div>
             <p className="font-display text-xl font-bold text-[#5adf82]">{settings.brandName}</p>
             <p className="mt-2 max-w-md text-sm leading-6 text-[#b9cbb8]">
-              Facultad de Ciencias e Ingenieria de la Universidad de Manizales.
+              Facultad de Ciencias e Ingeniería de la Universidad de Manizales.
             </p>
             <a
               className="mt-2 inline-block text-xs font-medium text-[#8fa18e] transition-colors hover:text-[#5adf82]"

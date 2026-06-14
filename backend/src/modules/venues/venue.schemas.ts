@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const imageUrlSchema = z.string().trim().refine(
   (value) => value.startsWith('data:image/') || z.string().url().safeParse(value).success,
-  { message: 'La foto debe ser una URL valida o una imagen cargada' }
+  { message: 'La foto debe ser una URL válida o una imagen cargada' }
 );
 
 export const venueIdParamsSchema = z.object({

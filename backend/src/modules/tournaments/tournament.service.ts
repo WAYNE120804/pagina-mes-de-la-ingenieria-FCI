@@ -519,7 +519,7 @@ async function getTournamentForRegistration(tournamentKey: string) {
 }
 
 function buildPublicTournamentUrl(origin: string, tournament: { id: string; name: string }) {
-  return `${origin.replace(/\/$/, '')}/public/torneos/${slugify(tournament.name) || tournament.id}/inscripcion`;
+  return `${origin.replace(/\/$/, '')}/public/torneos/${slugify(tournament.name) || tournament.id}/inscripción`;
 }
 
 function uniqueIds(ids: string[]) {
@@ -603,7 +603,7 @@ async function findOrCreatePublicUser(
   if (user) {
     if (user.email !== input.email || (user.universityCode && user.universityCode !== input.identifier)) {
       throw new AppError(
-        'El correo o codigo ya esta asociado a otro participante',
+        'El correo o código ya está asociado a otro participante',
         409,
         'PUBLIC_USER_CONFLICT'
       );
@@ -725,7 +725,7 @@ async function normalizeTeamMembers(
 
   if (emails.length !== members.length || identifiers.length !== members.length) {
     throw new AppError(
-      'Hay correos o codigos repetidos dentro del equipo',
+      'Hay correos o códigos repetidos dentro del equipo',
       400,
       'DUPLICATED_TEAM_MEMBERS'
     );
@@ -803,7 +803,7 @@ async function ensureTeamMembersAreNotInAnotherTeam(
       duplicateMembership.email ||
       'Este integrante';
     throw new AppError(
-      `${memberName} ya esta inscrito en el equipo ${duplicateMembership.team.name}`,
+      `${memberName} ya está inscrito en el equipo ${duplicateMembership.team.name}`,
       400,
       'USER_ALREADY_IN_TEAM'
     );
@@ -857,7 +857,7 @@ async function ensureNoDuplicateIndividual(
   });
 
   if (duplicate) {
-    throw new AppError('El participante ya esta inscrito en este torneo', 400, 'PARTICIPANT_DUPLICATED');
+    throw new AppError('El participante ya está inscrito en este torneo', 400, 'PARTICIPANT_DUPLICATED');
   }
 }
 
@@ -893,7 +893,7 @@ async function ensureVideoGameRestriction(
 
   if (existing) {
     throw new AppError(
-      `El participante ya esta inscrito en ${existing.tournament.name}. Solo puede competir en un torneo de videojuegos.`,
+      `El participante ya está inscrito en ${existing.tournament.name}. Solo puede competir en un torneo de videojuegos.`,
       400,
       'VIDEO_GAME_RESTRICTION'
     );
@@ -1086,7 +1086,7 @@ export async function registerIndividualParticipant(
   const tournament = await getTournamentForRegistration(tournamentId);
 
   if (tournament.mode !== CompetitionMode.INDIVIDUAL) {
-    throw new AppError('Este torneo es por equipos y no permite inscripcion individual', 400, 'INVALID_REGISTRATION_MODE');
+    throw new AppError('Este torneo es por equipos y no permite inscripción individual', 400, 'INVALID_REGISTRATION_MODE');
   }
 
   await ensureIndividualCapacity(prisma, tournamentId, tournament.maxParticipants);
@@ -1174,7 +1174,7 @@ export async function publicRegisterTournament(
 
   if (emails.length !== input.members.length || identifiers.length !== input.members.length) {
     throw new AppError(
-      'Hay correos o codigos repetidos dentro de la inscripcion',
+      'Hay correos o códigos repetidos dentro de la inscripción',
       400,
       'PUBLIC_REGISTRATION_DUPLICATED_MEMBERS'
     );
@@ -1200,7 +1200,7 @@ export async function publicRegisterTournament(
     const captainIndex = input.captainIndex;
 
     if (!input.members[captainIndex]) {
-      throw new AppError('Debes seleccionar un capitan valido', 400, 'CAPTAIN_NOT_IN_TEAM');
+      throw new AppError('Debes seleccionar un capitan válido', 400, 'CAPTAIN_NOT_IN_TEAM');
     }
 
     await ensureTeamCapacity(prisma, resolvedTournamentId, tournament.maxTeams);
@@ -1246,7 +1246,7 @@ export async function publicRegisterTournament(
 
   if (input.members.length !== 1) {
     throw new AppError(
-      'Un torneo individual solo permite un participante por inscripcion',
+      'Un torneo individual solo permite un participante por inscripción',
       400,
       'INDIVIDUAL_REGISTRATION_ONE_MEMBER'
     );
@@ -1298,7 +1298,7 @@ export async function updateIndividualParticipant(
   const tournament = await getTournamentForRegistration(tournamentId);
 
   if (tournament.mode !== CompetitionMode.INDIVIDUAL) {
-    throw new AppError('Este torneo es por equipos y no permite inscripcion individual', 400, 'INVALID_REGISTRATION_MODE');
+    throw new AppError('Este torneo es por equipos y no permite inscripción individual', 400, 'INVALID_REGISTRATION_MODE');
   }
 
   const existingParticipant = await prisma.tournamentParticipant.findFirst({
@@ -2212,7 +2212,7 @@ function ensureMatchHasBothCompetitors(
 
   if (!hasBothCompetitors) {
     throw new AppError(
-      'El partido aun no tiene los dos competidores definidos',
+      'El partido aún no tiene los dos competidores definidos',
       400,
       'MATCH_COMPETITORS_PENDING'
     );
@@ -2377,7 +2377,7 @@ export async function closeMatch(
   }
 
   if (existingMatch.status === MatchStatus.FINISHED) {
-    throw new AppError('El partido ya esta cerrado', 400, 'MATCH_ALREADY_FINISHED');
+    throw new AppError('El partido ya está cerrado', 400, 'MATCH_ALREADY_FINISHED');
   }
 
   ensureMatchHasBothCompetitors(tournament, existingMatch);
@@ -2497,7 +2497,7 @@ export async function buildTournamentExcelReport(tournamentId: string) {
   ]);
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Semana de Ingenieria';
+  workbook.creator = 'Semana de Ingeniería';
   workbook.created = new Date();
 
   const summarySheet = workbook.addWorksheet('Resumen');
@@ -2542,7 +2542,7 @@ export async function buildTournamentExcelReport(tournamentId: string) {
     membersSheet.columns = [
       { header: 'Equipo', key: 'team', width: 32 },
       { header: 'Nombre', key: 'name', width: 32 },
-      { header: 'Codigo o cedula', key: 'identifier', width: 22 },
+      { header: 'Código o cédula', key: 'identifier', width: 22 },
       { header: 'Correo', key: 'email', width: 34 },
       { header: 'Capitan', key: 'captain', width: 12 },
     ];
@@ -2562,7 +2562,7 @@ export async function buildTournamentExcelReport(tournamentId: string) {
     const participantsSheet = workbook.addWorksheet('Participantes');
     participantsSheet.columns = [
       { header: 'Nombre', key: 'name', width: 32 },
-      { header: 'Codigo o cedula', key: 'identifier', width: 22 },
+      { header: 'Código o cédula', key: 'identifier', width: 22 },
       { header: 'Correo', key: 'email', width: 34 },
       { header: 'Estado', key: 'status', width: 16 },
       { header: 'Semilla', key: 'seed', width: 12 },

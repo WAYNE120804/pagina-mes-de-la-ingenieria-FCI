@@ -83,16 +83,16 @@ function sendEventRegistrationEmail(
 
   void sendEmailSafe({
     to: { email, name: attendanceName(attendance) },
-    subject: `Confirmacion de inscripcion - ${event.title}`,
+    subject: `Confirmacion de inscripción - ${event.title}`,
     text: [
       `Hola ${attendanceName(attendance)},`,
       '',
-      `Tu inscripcion al evento "${event.title}" fue registrada correctamente.`,
+      `Tu inscripción al evento "${event.title}" fue registrada correctamente.`,
       `Fecha y hora: ${formatEventDate(event)}`,
       '',
       'Conserva este correo como soporte de tu registro.',
     ].join('\n'),
-    html: `<p>Hola ${attendanceName(attendance)},</p><p>Tu inscripcion al evento <strong>${event.title}</strong> fue registrada correctamente.</p><p><strong>Fecha y hora:</strong> ${formatEventDate(event)}</p><p>Conserva este correo como soporte de tu registro.</p>`,
+    html: `<p>Hola ${attendanceName(attendance)},</p><p>Tu inscripción al evento <strong>${event.title}</strong> fue registrada correctamente.</p><p><strong>Fecha y hora:</strong> ${formatEventDate(event)}</p><p>Conserva este correo como soporte de tu registro.</p>`,
   });
 }
 
@@ -220,7 +220,7 @@ async function assertNoDuplicate(eventId: string, input: CreateAttendanceInput) 
     });
 
     if (existingByIdentifier) {
-      throw new AppError('El codigo o cedula ya tiene registro en este evento', 409, 'ATTENDANCE_DUPLICATED');
+      throw new AppError('El código o cédula ya tiene registro en este evento', 409, 'ATTENDANCE_DUPLICATED');
     }
   }
 }
@@ -386,7 +386,7 @@ export async function scanAttendance(
   });
 
   if (!attendance) {
-    throw new AppError('Codigo de asistencia invalido', 404, 'ATTENDANCE_CODE_NOT_FOUND');
+    throw new AppError('Código de asistencia inválido', 404, 'ATTENDANCE_CODE_NOT_FOUND');
   }
 
   if (attendance.status === AttendanceStatus.CANCELLED) {
@@ -473,13 +473,13 @@ function assertPublicEventType(event: Awaited<ReturnType<typeof getActiveEvent>>
   const publicTypes: EventType[] = [EventType.TALK, EventType.ACADEMIC, EventType.WORKSHOP];
 
   if (!publicTypes.includes(event.type)) {
-    throw new AppError('Este formulario solo esta disponible para charlas y talleres', 400, 'INVALID_PUBLIC_EVENT');
+    throw new AppError('Este formulario solo está disponible para charlas y talleres', 400, 'INVALID_PUBLIC_EVENT');
   }
 }
 
 function assertWorkshopEvent(event: Awaited<ReturnType<typeof getActiveEvent>>) {
   if (event.type !== EventType.WORKSHOP) {
-    throw new AppError('La inscripcion previa solo aplica para talleres', 400, 'INVALID_WORKSHOP_REGISTRATION');
+    throw new AppError('La inscripción previa solo aplica para talleres', 400, 'INVALID_WORKSHOP_REGISTRATION');
   }
 }
 
@@ -490,7 +490,7 @@ function assertAttendanceWindow(event: Awaited<ReturnType<typeof getActiveEvent>
 
   if (now < opensAt || now > closesAt) {
     throw new AppError(
-      'El formulario de asistencia no esta disponible fuera del rango permitido',
+      'El formulario de asistencia no está disponible fuera del rango permitido',
       409,
       'ATTENDANCE_WINDOW_CLOSED'
     );
@@ -498,7 +498,7 @@ function assertAttendanceWindow(event: Awaited<ReturnType<typeof getActiveEvent>
 }
 
 function buildPublicFormUrl(origin: string, eventTitle: string, fallbackSlug: string, mode: 'registration' | 'attendance') {
-  const pathMode = mode === 'registration' ? 'inscripcion' : 'asistencia';
+  const pathMode = mode === 'registration' ? 'inscripción' : 'asistencia';
   const eventSlug = slugify(eventTitle) || fallbackSlug;
 
   return `${origin.replace(/\/$/, '')}/public/eventos/${eventSlug}/${pathMode}`;
@@ -745,15 +745,15 @@ export async function getAttendanceCertificateHtml(id: string) {
       <button class="button" type="button" onclick="window.print()">Descargar PDF</button>
     </div>
     <main class="page">
-      <div class="eyebrow">Semana de Ingenieria</div>
+      <div class="eyebrow">Semana de Ingeniería</div>
       <h1>Certificado de asistencia</h1>
       <p class="text">La plataforma certifica que:</p>
       <div class="name">${attendeeName}</div>
       <p class="text">${attendeeEmail}</p>
       <p class="text">asistio al evento <strong>${attendance.event.title}</strong>, realizado el ${eventDate}${attendance.event.venue ? ` en ${attendance.event.venue.name}` : ''}.</p>
       <div class="footer">
-        <span>Codigo: ${attendance.id}</span>
-        <span>Generado automaticamente</span>
+        <span>Código: ${attendance.id}</span>
+        <span>Generado automáticamente</span>
       </div>
     </main>
   </body>

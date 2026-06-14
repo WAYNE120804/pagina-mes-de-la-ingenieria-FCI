@@ -109,7 +109,7 @@ const ReportsPage = () => {
                   <th className="w-[300px] px-5 py-3 text-left">Torneo</th>
                   <th className="w-[180px] px-5 py-3 text-left">Deporte</th>
                   <th className="w-[150px] px-5 py-3 text-left">Estado</th>
-                  <th className="w-[130px] px-5 py-3 text-left">Accion</th>
+                  <th className="w-[130px] px-5 py-3 text-left">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

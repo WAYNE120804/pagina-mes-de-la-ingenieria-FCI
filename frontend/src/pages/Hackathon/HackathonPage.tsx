@@ -477,7 +477,7 @@ const HackathonPage = () => {
       await loadDetail(selectedHackathon);
       await loadHackathons();
     } catch {
-      setDetailError('No fue posible guardar el entregable. Revisa tipo, titulo y enlace.');
+      setDetailError('No fue posible guardar el entregable. Revisa tipo, título y enlace.');
     }
   }
 
@@ -807,7 +807,7 @@ const HackathonPage = () => {
                       </select>
                     </label>
                     <label className="block text-sm font-medium text-slate-700">
-                      Titulo
+                      Título
                       <input
                         className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                         value={challengeForm.title}
@@ -1141,7 +1141,7 @@ const HackathonPage = () => {
                         </select>
                         <input
                           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                          placeholder="Titulo"
+                          placeholder="Título"
                           value={deliverableForm.title}
                           onChange={(event) =>
                             setDeliverableForm({ ...deliverableForm, title: event.target.value })
@@ -1185,7 +1185,7 @@ const HackathonPage = () => {
                           <thead className="theme-table-head">
                             <tr>
                               <th className="px-4 py-3 text-left">Tipo</th>
-                              <th className="px-4 py-3 text-left">Titulo</th>
+                              <th className="px-4 py-3 text-left">Título</th>
                               <th className="px-4 py-3 text-left">Enlace</th>
                               <th className="px-4 py-3 text-left">Fecha</th>
                               <th className="px-4 py-3 text-left">Acciones</th>
