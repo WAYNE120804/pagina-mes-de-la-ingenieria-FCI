@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 
@@ -28,6 +28,8 @@ type PublicLayoutProps = {
 
 const PublicLayout = ({ children }: PublicLayoutProps) => {
   const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     getPublicSettingsRequest()
@@ -35,23 +37,42 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
       .catch(() => setSettings(defaultSiteSettings));
   }, []);
 
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileMenuOpen]);
+
   return (
     <div className="min-h-screen bg-[#101415] text-[#e0e3e5]">
       <header className="sticky top-0 z-50 border-b border-[#3b4b3c] bg-[#101415]/90 backdrop-blur">
-        <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 md:px-12">
-          <NavLink to="/public" className="flex items-center gap-3">
+        <nav className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-3 px-4 py-3 md:h-20 md:px-12 md:py-0">
+          <NavLink to="/public" className="flex min-w-0 items-center gap-3">
             {settings.logoUrl ? (
               <img
-                className="h-10 w-10 rounded-lg object-cover"
+                className="h-10 w-10 shrink-0 rounded-lg object-cover"
                 src={settings.logoUrl}
                 alt={settings.brandName}
               />
             ) : (
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#5adf82] text-[#003917]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#5adf82] text-[#003917]">
                 <span className="material-symbols-outlined">engineering</span>
               </span>
             )}
-            <span className="font-display text-xl font-extrabold tracking-tight text-[#5adf82]">
+            <span className="truncate font-display text-lg font-extrabold tracking-tight text-[#5adf82] sm:text-xl">
               {settings.brandName}
             </span>
           </NavLink>
@@ -62,13 +83,48 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
               </NavLink>
             ))}
           </div>
-          <NavLink
-            to="/public/cronograma"
-            className="rounded-full bg-[#63ff93] px-5 py-2 text-sm font-bold text-[#00210b] shadow-[0_0_22px_rgba(0,228,113,0.22)] transition-transform active:scale-95"
-          >
-            Registro
-          </NavLink>
+          <div className="flex shrink-0 items-center gap-2">
+            <NavLink
+              to="/public/cronograma"
+              className="hidden rounded-full bg-[#63ff93] px-5 py-2 text-sm font-bold text-[#00210b] shadow-[0_0_22px_rgba(0,228,113,0.22)] transition-transform active:scale-95 sm:inline-flex"
+            >
+              Registro
+            </NavLink>
+            <button
+              type="button"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#3b4b3c] bg-[#151b1c] text-[#e0e3e5] transition-colors hover:border-[#5adf82] hover:text-[#5adf82] md:hidden"
+              aria-label={isMobileMenuOpen ? 'Cerrar menu de navegacion' : 'Abrir menu de navegacion'}
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="public-mobile-menu"
+              onClick={() => setIsMobileMenuOpen((isOpen) => !isOpen)}
+            >
+              <span className="material-symbols-outlined text-[26px]">
+                {isMobileMenuOpen ? 'close' : 'menu'}
+              </span>
+            </button>
+          </div>
         </nav>
+        <div
+          id="public-mobile-menu"
+          className={[
+            'border-t border-[#263526] bg-[#101415] px-4 pb-4 shadow-[0_18px_40px_rgba(0,0,0,0.28)] md:hidden',
+            isMobileMenuOpen ? 'block' : 'hidden',
+          ].join(' ')}
+        >
+          <div className="mx-auto grid max-w-7xl gap-2 pt-3">
+            {navItems.map((item) => (
+              <NavLink key={item.label} to={item.to} className={navClass} end>
+                {item.label}
+              </NavLink>
+            ))}
+            <NavLink
+              to="/public/cronograma"
+              className="mt-2 inline-flex items-center justify-center rounded-full bg-[#63ff93] px-5 py-3 text-sm font-bold text-[#00210b] shadow-[0_0_22px_rgba(0,228,113,0.22)] transition-transform active:scale-95 sm:hidden"
+            >
+              Registro
+            </NavLink>
+          </div>
+        </div>
       </header>
       {children}
       <footer className="border-t border-[#3b4b3c] bg-[#0b0f10]">
