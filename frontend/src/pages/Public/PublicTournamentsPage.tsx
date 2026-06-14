@@ -29,18 +29,26 @@ function competitorName(match: TournamentMatch, side: 'home' | 'away') {
 const phaseOrder = ['FASE_GRUPOS', 'OCTAVOS', 'CUARTOS', 'SEMIFINAL', 'FINAL'];
 const judgedSports = ['MARATON_PROGRAMACION', 'CAPTURA_BANDERA'];
 
-function formatMatchDate(value?: string | null) {
-  if (!value) {
-    return 'Fecha por confirmar';
+function formatMatchDate(startsAt?: string | null, endsAt?: string | null) {
+  if (!startsAt) {
+    return 'Fecha y hora por definir';
   }
 
-  return new Intl.DateTimeFormat('es-CO', {
+  const startText = new Intl.DateTimeFormat('es-CO', {
     weekday: 'short',
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(value));
+  }).format(new Date(startsAt));
+  const endText = endsAt
+    ? new Intl.DateTimeFormat('es-CO', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date(endsAt))
+    : 'fin por definir';
+
+  return `${startText} - ${endText}`;
 }
 
 function groupMatchesByGroup(matches: TournamentMatch[]) {
@@ -333,7 +341,7 @@ const PublicTournamentsPage = () => {
                                         </span>
                                         <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-[#1d2022] px-3 py-1">
                                           <span className="material-symbols-outlined text-sm text-[#5adf82]">schedule</span>
-                                          {formatMatchDate(match.scheduledAt)}
+                                          {formatMatchDate(match.scheduledAt, match.scheduledEndsAt)}
                                         </span>
                                         <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-[#1d2022] px-3 py-1">
                                           <span className="material-symbols-outlined text-sm text-[#5adf82]">location_on</span>

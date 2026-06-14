@@ -191,6 +191,7 @@ export const createMatchSchema = z.object({
   awayParticipantId: z.string().uuid().optional().nullable(),
   phase: z.nativeEnum(TournamentPhase).default(TournamentPhase.FASE_GRUPOS),
   scheduledAt: z.coerce.date().optional().nullable(),
+  scheduledEndsAt: z.coerce.date().optional().nullable(),
 }).refine((data) => {
   const hasTeams = Boolean(data.homeTeamId && data.awayTeamId);
   const hasParticipants = Boolean(data.homeParticipantId && data.awayParticipantId);
@@ -198,6 +199,9 @@ export const createMatchSchema = z.object({
 }, {
   message: 'Debes seleccionar equipos o participantes, no ambos',
   path: ['homeTeamId'],
+}).refine((data) => !data.scheduledAt || !data.scheduledEndsAt || data.scheduledEndsAt > data.scheduledAt, {
+  message: 'La hora de fin debe ser posterior a la hora de inicio',
+  path: ['scheduledEndsAt'],
 });
 
 export const updateMatchSchema = z.object({
@@ -209,7 +213,11 @@ export const updateMatchSchema = z.object({
   awayParticipantId: z.string().uuid().optional().nullable(),
   phase: z.nativeEnum(TournamentPhase).optional(),
   scheduledAt: z.coerce.date().optional().nullable(),
+  scheduledEndsAt: z.coerce.date().optional().nullable(),
   status: z.nativeEnum(MatchStatus).optional(),
+}).refine((data) => !data.scheduledAt || !data.scheduledEndsAt || data.scheduledEndsAt > data.scheduledAt, {
+  message: 'La hora de fin debe ser posterior a la hora de inicio',
+  path: ['scheduledEndsAt'],
 });
 
 export const scoreMatchSchema = z.object({

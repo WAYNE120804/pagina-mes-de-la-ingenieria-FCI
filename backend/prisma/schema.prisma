@@ -600,6 +600,7 @@ model Match {
   phase               TournamentPhase
   status              MatchStatus     @default(SCHEDULED)
   scheduledAt         DateTime?       @map("scheduled_at")
+  scheduledEndsAt     DateTime?       @map("scheduled_ends_at")
   startedAt           DateTime?       @map("started_at")
   finishedAt          DateTime?       @map("finished_at")
   homeScore           Int             @default(0) @map("home_score")

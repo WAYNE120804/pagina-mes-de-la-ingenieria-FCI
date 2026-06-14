@@ -76,12 +76,14 @@ type MatchForm = {
   awayId: string;
   phase: string;
   scheduledAt: string;
+  scheduledEndsAt: string;
 };
 
 type ScoreInputs = Record<string, { homeScore: string; awayScore: string }>;
 type StandingInputs = Record<string, { points: string; rank: string; qualified: boolean }>;
 type MatchScheduleInputs = Record<string, {
   scheduledAt: string;
+  scheduledEndsAt: string;
   venueId: string;
   phase: string;
   homeId: string;
@@ -132,6 +134,7 @@ const emptyMatchForm: MatchForm = {
   awayId: '',
   phase: 'FASE_GRUPOS',
   scheduledAt: '',
+  scheduledEndsAt: '',
 };
 
 const emptyMemberForm: TeamMemberEditForm = {
@@ -170,13 +173,29 @@ function toLocalInputValue(value?: string | null) {
 
 function formatDateTime(value?: string | null) {
   if (!value) {
-    return 'Sin horario';
+    return 'Fecha y hora por definir';
   }
 
   return new Intl.DateTimeFormat('es-CO', {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));
+}
+
+function formatMatchDateRange(startsAt?: string | null, endsAt?: string | null) {
+  if (!startsAt) {
+    return 'Fecha y hora por definir';
+  }
+
+  const startText = formatDateTime(startsAt);
+  const endText = endsAt
+    ? new Intl.DateTimeFormat('es-CO', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date(endsAt))
+    : 'fin por definir';
+
+  return `${startText} - ${endText}`;
 }
 
 function formatDate(value?: string | null) {
@@ -579,6 +598,7 @@ const TournamentsPage = () => {
       fixtureData.matches.reduce<MatchScheduleInputs>((acc, match) => {
         acc[match.id] = {
           scheduledAt: toLocalInputValue(match.scheduledAt),
+          scheduledEndsAt: toLocalInputValue(match.scheduledEndsAt),
           venueId: match.venueId || tournament.venue?.id || '',
           phase: match.phase,
           homeId: tournament.mode === 'TEAM' ? match.homeTeam?.id || '' : match.homeParticipant?.id || '',
@@ -777,6 +797,7 @@ const TournamentsPage = () => {
     return matches.reduce<MatchScheduleInputs>((acc, match) => {
       acc[match.id] = {
         scheduledAt: toLocalInputValue(match.scheduledAt),
+        scheduledEndsAt: toLocalInputValue(match.scheduledEndsAt),
         venueId: match.venueId || selectedTournament?.venue?.id || '',
         phase: match.phase,
         homeId: selectedTournament?.mode === 'TEAM' ? match.homeTeam?.id || '' : match.homeParticipant?.id || '',
@@ -800,6 +821,7 @@ const TournamentsPage = () => {
         venueId: matchForm.venueId || selectedTournament.venue?.id || null,
         phase: matchForm.phase,
         scheduledAt: matchForm.scheduledAt || null,
+        scheduledEndsAt: matchForm.scheduledEndsAt || null,
         homeTeamId: selectedTournament.mode === 'TEAM' ? matchForm.homeId : null,
         awayTeamId: selectedTournament.mode === 'TEAM' ? matchForm.awayId : null,
         homeParticipantId: selectedTournament.mode === 'INDIVIDUAL' ? matchForm.homeId : null,
@@ -878,6 +900,7 @@ const TournamentsPage = () => {
   function scheduleFor(matchId: string) {
     return matchScheduleInputs[matchId] || {
       scheduledAt: '',
+      scheduledEndsAt: '',
       venueId: selectedTournament?.venue?.id || '',
       phase: 'FASE_GRUPOS',
       homeId: '',
@@ -888,7 +911,7 @@ const TournamentsPage = () => {
 
   function setMatchScheduleInput(
     matchId: string,
-    key: 'scheduledAt' | 'venueId' | 'phase' | 'homeId' | 'awayId' | 'groupId',
+    key: 'scheduledAt' | 'scheduledEndsAt' | 'venueId' | 'phase' | 'homeId' | 'awayId' | 'groupId',
     value: string
   ) {
     setMatchScheduleInputs({
@@ -909,6 +932,7 @@ const TournamentsPage = () => {
     await updateMatchScheduleRequest(selectedTournament.id, matchId, {
       groupId: schedule.groupId || null,
       scheduledAt: schedule.scheduledAt || null,
+      scheduledEndsAt: schedule.scheduledEndsAt || null,
       venueId: schedule.venueId || null,
       phase: schedule.phase,
       homeTeamId:
@@ -1108,6 +1132,28 @@ const TournamentsPage = () => {
                 ))}
               </select>
             </label>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Inicio del torneo
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  type="datetime-local"
+                  value={form.startsAt}
+                  onChange={(event) => setForm({ ...form, startsAt: event.target.value })}
+                />
+                <span className="mt-1 block text-xs text-slate-500">Opcional. Si queda vacio se mostrara como fecha por definir.</span>
+              </label>
+              <label className="block text-sm font-medium text-slate-700">
+                Finalizacion del torneo
+                <input
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  type="datetime-local"
+                  value={form.endsAt}
+                  onChange={(event) => setForm({ ...form, endsAt: event.target.value })}
+                />
+                <span className="mt-1 block text-xs text-slate-500">Opcional. Sirve para torneos de varios dias.</span>
+              </label>
+            </div>
             <div className="grid grid-cols-2 gap-3">
                   {mode === 'TEAM' ? (
                   <>
@@ -1667,8 +1713,8 @@ const TournamentsPage = () => {
                   </div>
                 ) : null}
 
-                <form className="grid gap-3 rounded-md border border-slate-200 p-3 lg:grid-cols-[1fr_1fr_150px_160px_180px_190px_auto]" onSubmit={submitManualMatch}>
-                  <div className="lg:col-span-7">
+                <form className="grid gap-3 rounded-md border border-slate-200 p-3 xl:grid-cols-[1fr_1fr_150px_160px_180px_190px_190px_auto]" onSubmit={submitManualMatch}>
+                  <div className="xl:col-span-8">
                     <h4 className="font-semibold text-slate-950">Manual</h4>
                     <p className="mt-1 text-sm text-slate-600">
                       Crea o ajusta partidos escogiendo rivales, fase, grupo, fecha, hora y lugar.
@@ -1693,7 +1739,14 @@ const TournamentsPage = () => {
                     <option value="">Sitio del torneo</option>
                     {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
                   </select>
-                  <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="datetime-local" value={matchForm.scheduledAt} onChange={(event) => setMatchForm({ ...matchForm, scheduledAt: event.target.value })} />
+                  <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                    Inicio
+                    <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="datetime-local" value={matchForm.scheduledAt} onChange={(event) => setMatchForm({ ...matchForm, scheduledAt: event.target.value })} />
+                  </label>
+                  <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                    Fin
+                    <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="datetime-local" value={matchForm.scheduledEndsAt} onChange={(event) => setMatchForm({ ...matchForm, scheduledEndsAt: event.target.value })} />
+                  </label>
                   <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold">Crear partido</button>
                 </form>
 
@@ -1723,7 +1776,7 @@ const TournamentsPage = () => {
                               <span className="rounded-md bg-slate-950 px-2 py-1 text-xs font-semibold text-white">vs</span>
                               <p className="text-right font-semibold text-slate-950">{participantName(match.awayTeam || match.awayParticipant)}</p>
                             </div>
-                            <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1fr)_minmax(150px,1fr)_150px_150px_170px_190px_110px]">
+                            <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-[minmax(160px,1fr)_minmax(160px,1fr)_150px_150px_180px_180px_190px_110px]">
                               <select
                                 className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm"
                                 value={scheduleFor(match.id).homeId}
@@ -1763,12 +1816,24 @@ const TournamentsPage = () => {
                                   <option key={group.id} value={group.id}>{group.name}</option>
                                 ))}
                               </select>
-                              <input
-                                className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm"
-                                type="datetime-local"
-                                value={scheduleFor(match.id).scheduledAt}
-                                onChange={(event) => setMatchScheduleInput(match.id, 'scheduledAt', event.target.value)}
-                              />
+                              <label className="grid min-w-0 gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                Inicio
+                                <input
+                                  className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm normal-case tracking-normal"
+                                  type="datetime-local"
+                                  value={scheduleFor(match.id).scheduledAt}
+                                  onChange={(event) => setMatchScheduleInput(match.id, 'scheduledAt', event.target.value)}
+                                />
+                              </label>
+                              <label className="grid min-w-0 gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                Fin
+                                <input
+                                  className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm normal-case tracking-normal"
+                                  type="datetime-local"
+                                  value={scheduleFor(match.id).scheduledEndsAt}
+                                  onChange={(event) => setMatchScheduleInput(match.id, 'scheduledEndsAt', event.target.value)}
+                                />
+                              </label>
                               <select
                                 className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm"
                                 value={scheduleFor(match.id).venueId}
@@ -1784,7 +1849,7 @@ const TournamentsPage = () => {
                               </button>
                             </div>
                             <p className="mt-2 text-xs text-slate-500">
-                              {formatDateTime(match.scheduledAt)} - {match.venue?.name || selectedTournament.venue?.name || 'Sin sitio asignado'}
+                              {formatMatchDateRange(match.scheduledAt, match.scheduledEndsAt)} - {match.venue?.name || selectedTournament.venue?.name || 'Sin sitio asignado'}
                             </p>
                             <div className="mt-3 grid gap-2 sm:grid-cols-[80px_80px_minmax(140px,1fr)_minmax(140px,1fr)]">
                               <input className="min-w-0 rounded-md border border-slate-300 px-2 py-1 text-sm" type="number" min="0" value={scoreFor(match.id).homeScore} onChange={(event) => setMatchScoreInput(match.id, 'homeScore', event.target.value)} disabled={match.status === 'FINISHED' || !matchHasBothCompetitors(match)} />

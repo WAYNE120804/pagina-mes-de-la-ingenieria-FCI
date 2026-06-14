@@ -1728,17 +1728,24 @@ export async function generateTournamentFixture(
   const scheduledStartAt = input.scheduledStartAt ? new Date(input.scheduledStartAt) : null;
   const matchIntervalMinutes = input.matchIntervalMinutes || 60;
   const matchesPerDay = input.matchesPerDay || 1;
-  const matchesWithSchedule = matches.map((match, index) => ({
-    ...match,
-    venueId: input.venueId || tournament.venueId || undefined,
-    scheduledAt: scheduledStartAt
+  const matchesWithSchedule = matches.map((match, index) => {
+    const scheduledAt = scheduledStartAt
       ? new Date(
           scheduledStartAt.getTime() +
             Math.floor(index / matchesPerDay) * 24 * 60 * 60_000 +
             (index % matchesPerDay) * matchIntervalMinutes * 60_000
         )
-      : undefined,
-  }));
+      : undefined;
+
+    return {
+      ...match,
+      venueId: input.venueId || tournament.venueId || undefined,
+      scheduledAt,
+      scheduledEndsAt: scheduledAt
+        ? new Date(scheduledAt.getTime() + matchIntervalMinutes * 60_000)
+        : undefined,
+    };
+  });
 
   await prisma.match.createMany({
     data: matchesWithSchedule,
@@ -1826,6 +1833,7 @@ export async function createManualMatch(
       venueId: input.venueId || null,
       phase: input.phase,
       scheduledAt: input.scheduledAt || null,
+      scheduledEndsAt: input.scheduledEndsAt || null,
       homeTeamId: tournament.mode === CompetitionMode.TEAM ? input.homeTeamId : null,
       awayTeamId: tournament.mode === CompetitionMode.TEAM ? input.awayTeamId : null,
       homeParticipantId:
@@ -1842,7 +1850,12 @@ export async function createManualMatch(
     action: AuditAction.MATCH_CREATE,
     entity: 'Match',
     entityId: match.id,
-    newValues: { tournamentId, phase: match.phase, scheduledAt: match.scheduledAt },
+    newValues: {
+      tournamentId,
+      phase: match.phase,
+      scheduledAt: match.scheduledAt,
+      scheduledEndsAt: match.scheduledEndsAt,
+    },
   });
 
   return match;
@@ -1876,6 +1889,10 @@ export async function updateMatchSchedule(
       venueId: input.venueId === undefined ? existingMatch.venueId : input.venueId,
       phase: input.phase || existingMatch.phase,
       scheduledAt: input.scheduledAt === undefined ? existingMatch.scheduledAt : input.scheduledAt,
+      scheduledEndsAt:
+        input.scheduledEndsAt === undefined
+          ? existingMatch.scheduledEndsAt
+          : input.scheduledEndsAt,
       homeTeamId:
         input.homeTeamId === undefined ? existingMatch.homeTeamId : input.homeTeamId,
       awayTeamId:
@@ -1891,6 +1908,19 @@ export async function updateMatchSchedule(
     });
   }
 
+  const nextScheduledAt =
+    input.scheduledAt === undefined ? existingMatch.scheduledAt : input.scheduledAt;
+  const nextScheduledEndsAt =
+    input.scheduledEndsAt === undefined ? existingMatch.scheduledEndsAt : input.scheduledEndsAt;
+
+  if (nextScheduledAt && nextScheduledEndsAt && nextScheduledEndsAt <= nextScheduledAt) {
+    throw new AppError(
+      'La hora de fin debe ser posterior a la hora de inicio',
+      400,
+      'INVALID_MATCH_END_TIME'
+    );
+  }
+
   const match = await prisma.match.update({
     where: { id: matchId },
     data: {
@@ -1898,6 +1928,7 @@ export async function updateMatchSchedule(
       venueId: input.venueId === undefined ? undefined : input.venueId,
       phase: input.phase,
       scheduledAt: input.scheduledAt === undefined ? undefined : input.scheduledAt,
+      scheduledEndsAt: input.scheduledEndsAt === undefined ? undefined : input.scheduledEndsAt,
       status: competitorFieldsWereEdited ? MatchStatus.SCHEDULED : input.status,
       homeTeamId:
         tournament.mode === CompetitionMode.TEAM && input.homeTeamId !== undefined
@@ -1931,8 +1962,16 @@ export async function updateMatchSchedule(
     action: AuditAction.MATCH_UPDATE,
     entity: 'Match',
     entityId: match.id,
-    oldValues: { scheduledAt: existingMatch.scheduledAt, status: existingMatch.status },
-    newValues: { scheduledAt: match.scheduledAt, status: match.status },
+    oldValues: {
+      scheduledAt: existingMatch.scheduledAt,
+      scheduledEndsAt: existingMatch.scheduledEndsAt,
+      status: existingMatch.status,
+    },
+    newValues: {
+      scheduledAt: match.scheduledAt,
+      scheduledEndsAt: match.scheduledEndsAt,
+      status: match.status,
+    },
   });
 
   if (competitorFieldsWereEdited) {
@@ -2582,7 +2621,8 @@ export async function buildTournamentExcelReport(tournamentId: string) {
     { header: 'Marcador', key: 'score', width: 12 },
     { header: 'Estado', key: 'status', width: 16 },
     { header: 'Ganador', key: 'winner', width: 32 },
-    { header: 'Horario', key: 'scheduledAt', width: 22 },
+    { header: 'Inicio', key: 'scheduledAt', width: 22 },
+    { header: 'Fin', key: 'scheduledEndsAt', width: 22 },
   ];
 
   fixture.matches.forEach((match) => {
@@ -2595,6 +2635,7 @@ export async function buildTournamentExcelReport(tournamentId: string) {
       status: match.status,
       winner: match.winnerTeam?.name || match.winnerParticipant?.displayName || '',
       scheduledAt: match.scheduledAt ? match.scheduledAt.toISOString() : '',
+      scheduledEndsAt: match.scheduledEndsAt ? match.scheduledEndsAt.toISOString() : '',
     });
   });
 

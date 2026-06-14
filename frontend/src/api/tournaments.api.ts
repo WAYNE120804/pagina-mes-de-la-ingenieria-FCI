@@ -133,6 +133,7 @@ export type TournamentMatch = {
   phase: string;
   status: string;
   scheduledAt?: string | null;
+  scheduledEndsAt?: string | null;
   homeScore: number;
   awayScore: number;
   group?: {
@@ -252,6 +253,7 @@ export type CreateMatchInput = {
   awayParticipantId?: string | null;
   phase: string;
   scheduledAt?: string | null;
+  scheduledEndsAt?: string | null;
 };
 
 type ApiResponse<T> = {
@@ -359,6 +361,7 @@ export async function updateMatchScheduleRequest(
     awayParticipantId?: string | null;
     phase?: string;
     scheduledAt?: string | null;
+    scheduledEndsAt?: string | null;
     status?: string;
   }
 ) {
