@@ -519,7 +519,7 @@ async function getTournamentForRegistration(tournamentKey: string) {
 }
 
 function buildPublicTournamentUrl(origin: string, tournament: { id: string; name: string }) {
-  return `${origin.replace(/\/$/, '')}/public/torneos/${slugify(tournament.name) || tournament.id}/inscripción`;
+  return `${origin.replace(/\/$/, '')}/public/torneos/${slugify(tournament.name) || tournament.id}/inscripcion`;
 }
 
 function uniqueIds(ids: string[]) {

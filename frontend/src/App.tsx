@@ -32,8 +32,10 @@ const App = () => {
         <Route path="/public/talleres" element={<PublicSchedulePage eventType="WORKSHOP" />} />
         <Route path="/public/torneos" element={<PublicTournamentsPage />} />
         <Route path="/public/eventos/:eventId/inscripcion" element={<PublicEventFormPage mode="registration" />} />
+        <Route path="/public/eventos/:eventId/inscripción" element={<PublicEventFormPage mode="registration" />} />
         <Route path="/public/eventos/:eventId/asistencia" element={<PublicEventFormPage mode="attendance" />} />
         <Route path="/public/torneos/:tournamentId/inscripcion" element={<PublicTournamentFormPage />} />
+        <Route path="/public/torneos/:tournamentId/inscripción" element={<PublicTournamentFormPage />} />
         <Route element={<ProtectedRoute />}>
           <Route
             path="/admin"

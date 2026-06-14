@@ -498,7 +498,7 @@ function assertAttendanceWindow(event: Awaited<ReturnType<typeof getActiveEvent>
 }
 
 function buildPublicFormUrl(origin: string, eventTitle: string, fallbackSlug: string, mode: 'registration' | 'attendance') {
-  const pathMode = mode === 'registration' ? 'inscripción' : 'asistencia';
+  const pathMode = mode === 'registration' ? 'inscripcion' : 'asistencia';
   const eventSlug = slugify(eventTitle) || fallbackSlug;
 
   return `${origin.replace(/\/$/, '')}/public/eventos/${eventSlug}/${pathMode}`;
