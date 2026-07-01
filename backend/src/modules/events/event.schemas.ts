@@ -1,4 +1,5 @@
 import { EventStatus, EventType } from '../../lib/prisma-client';
+import { bogotaDateTimeSchema } from '../../utils/datetime';
 import { z } from 'zod';
 
 export const eventIdParamsSchema = z.object({
@@ -21,8 +22,8 @@ const eventBodySchema = z.object({
   description: z.string().trim().optional().nullable(),
   type: z.nativeEnum(EventType),
   status: z.nativeEnum(EventStatus).default(EventStatus.DRAFT),
-  startsAt: z.coerce.date(),
-  endsAt: z.coerce.date(),
+  startsAt: bogotaDateTimeSchema,
+  endsAt: bogotaDateTimeSchema,
   capacity: z.number().int().positive().optional().nullable(),
 });
 

@@ -25,6 +25,11 @@ import { listVenuesRequest, type Venue } from '../../api/venues.api';
 import Topbar from '../../components/Layout/Topbar';
 import FormModal from '../../components/common/FormModal';
 import {
+  formatDateTime as formatColombiaDateTime,
+  fromDateTimeLocalValue,
+  toDateTimeLocalValue,
+} from '../../utils/dates';
+import {
   attendanceMethodLabels,
   attendanceStatusLabels,
   eventStatusLabels,
@@ -73,20 +78,14 @@ const emptyForm: EventForm = {
   speakerPhotoUrl: '',
 };
 
-function toLocalInputValue(value: string) {
-  const date = new Date(value);
-  const offsetMs = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-}
-
 function oneHourAfterLocalInput(value: string) {
   if (!value) {
     return '';
   }
 
-  const date = new Date(value);
+  const date = new Date(fromDateTimeLocalValue(value));
   date.setHours(date.getHours() + 1);
-  return toLocalInputValue(date.toISOString());
+  return toDateTimeLocalValue(date.toISOString());
 }
 
 function formatDate(value?: string) {
@@ -95,6 +94,7 @@ function formatDate(value?: string) {
   }
 
   return new Date(value).toLocaleDateString('es-CO', {
+    timeZone: 'America/Bogota',
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -108,6 +108,7 @@ function formatTime(value?: string) {
   }
 
   return new Date(value).toLocaleTimeString('es-CO', {
+    timeZone: 'America/Bogota',
     hour: 'numeric',
     minute: '2-digit',
   });
@@ -221,8 +222,12 @@ async function downloadPublicEventCard(
   const titleBottom = wrapCanvasText(context, event.title, canvas.width / 2, 208, 850, 58);
 
   const modeLabel = mode === 'registration' ? 'INSCRIPCION' : 'ASISTENCIA';
-  const day = new Date(event.startsAt).toLocaleDateString('es-CO', { weekday: 'long' });
+  const day = new Date(event.startsAt).toLocaleDateString('es-CO', {
+    timeZone: 'America/Bogota',
+    weekday: 'long',
+  });
   const date = new Date(event.startsAt).toLocaleDateString('es-CO', {
+    timeZone: 'America/Bogota',
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -355,8 +360,8 @@ const EventsPage = () => {
       status: event.status,
       description: event.description || '',
       venueId: event.venue?.id || '',
-      startsAt: toLocalInputValue(event.startsAt),
-      endsAt: toLocalInputValue(event.endsAt),
+      startsAt: toDateTimeLocalValue(event.startsAt),
+      endsAt: toDateTimeLocalValue(event.endsAt),
       capacity: event.capacity ? String(event.capacity) : '',
       topic: event.talk?.topic || '',
       speakerId: event.talk?.speaker?.id || '',
@@ -402,8 +407,8 @@ const EventsPage = () => {
       type: form.type,
       status: form.status,
       venueId: form.venueId || null,
-      startsAt: form.startsAt,
-      endsAt: form.endsAt,
+      startsAt: fromDateTimeLocalValue(form.startsAt),
+      endsAt: fromDateTimeLocalValue(form.endsAt),
       capacity: form.capacity ? Number(form.capacity) : null,
     };
 
@@ -688,7 +693,7 @@ const EventsPage = () => {
                       <td className="px-5 py-3 font-medium text-slate-950">{event.title}</td>
                       <td className="px-5 py-3 text-slate-600">{labelFor(eventTypeLabels, event.type)}</td>
                       <td className="px-5 py-3 text-slate-600">{event.venue?.name || 'Sin espacio'}</td>
-                      <td className="px-5 py-3 text-slate-600">{new Date(event.startsAt).toLocaleString()}</td>
+                      <td className="px-5 py-3 text-slate-600">{formatColombiaDateTime(event.startsAt)}</td>
                       <td className="px-5 py-3">
                         <div className="flex flex-wrap gap-2">
                           <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => void openDetail(event.id)}>Detalle</button>

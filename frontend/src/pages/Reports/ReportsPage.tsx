@@ -8,6 +8,7 @@ import {
 } from '../../api/tournaments.api';
 import { listHackathonsRequest, type HackathonEvent } from '../../api/hackathon.api';
 import Topbar from '../../components/Layout/Topbar';
+import { formatDateTime } from '../../utils/dates';
 import { eventTypeLabels, labelFor, tournamentSportLabels } from '../../utils/labels';
 
 function fileSafeName(value: string) {
@@ -65,8 +66,8 @@ const ReportsPage = () => {
         event.title,
         labelFor(eventTypeLabels, event.type),
         event.status,
-        new Date(event.startsAt).toLocaleString('es-CO'),
-        new Date(event.endsAt).toLocaleString('es-CO'),
+        formatDateTime(event.startsAt),
+        formatDateTime(event.endsAt),
         event.venue?.name || '',
       ]),
     ]);

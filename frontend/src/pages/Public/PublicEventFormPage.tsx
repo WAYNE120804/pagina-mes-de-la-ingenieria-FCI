@@ -39,6 +39,7 @@ const careerOptions = [
 function formatDateTime(value: string) {
   return new Date(value)
     .toLocaleString('es-CO', {
+      timeZone: 'America/Bogota',
       weekday: 'long',
       day: '2-digit',
       month: 'long',

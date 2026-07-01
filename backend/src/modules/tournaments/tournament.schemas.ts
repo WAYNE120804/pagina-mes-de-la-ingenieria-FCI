@@ -8,6 +8,7 @@ import {
   TournamentStatus,
   VideoGameTitle,
 } from '../../lib/prisma-client';
+import { bogotaDateTimeSchema } from '../../utils/datetime';
 import { z } from 'zod';
 
 const semesterSchema = z.enum([
@@ -87,8 +88,8 @@ const tournamentBodySchema = z.object({
   pointsDraw: z.number().int().min(0).optional(),
   pointsLoss: z.number().int().min(0).optional(),
   allowsDraws: z.boolean().optional(),
-  startsAt: z.coerce.date().optional().nullable(),
-  endsAt: z.coerce.date().optional().nullable(),
+  startsAt: bogotaDateTimeSchema.optional().nullable(),
+  endsAt: bogotaDateTimeSchema.optional().nullable(),
 });
 
 export const createTournamentSchema = tournamentBodySchema.refine(
@@ -176,7 +177,7 @@ export const generateGroupsSchema = z.object({
 
 export const generateFixtureSchema = z.object({
   overwrite: z.boolean().default(false),
-  scheduledStartAt: z.coerce.date().optional().nullable(),
+  scheduledStartAt: bogotaDateTimeSchema.optional().nullable(),
   matchIntervalMinutes: z.number().int().min(15).max(240).default(60),
   matchesPerDay: z.number().int().min(1).max(12).default(1),
   venueId: z.string().uuid().optional().nullable(),
@@ -190,8 +191,8 @@ export const createMatchSchema = z.object({
   homeParticipantId: z.string().uuid().optional().nullable(),
   awayParticipantId: z.string().uuid().optional().nullable(),
   phase: z.nativeEnum(TournamentPhase).default(TournamentPhase.FASE_GRUPOS),
-  scheduledAt: z.coerce.date().optional().nullable(),
-  scheduledEndsAt: z.coerce.date().optional().nullable(),
+  scheduledAt: bogotaDateTimeSchema.optional().nullable(),
+  scheduledEndsAt: bogotaDateTimeSchema.optional().nullable(),
 }).refine((data) => {
   const hasTeams = Boolean(data.homeTeamId && data.awayTeamId);
   const hasParticipants = Boolean(data.homeParticipantId && data.awayParticipantId);
@@ -212,8 +213,8 @@ export const updateMatchSchema = z.object({
   homeParticipantId: z.string().uuid().optional().nullable(),
   awayParticipantId: z.string().uuid().optional().nullable(),
   phase: z.nativeEnum(TournamentPhase).optional(),
-  scheduledAt: z.coerce.date().optional().nullable(),
-  scheduledEndsAt: z.coerce.date().optional().nullable(),
+  scheduledAt: bogotaDateTimeSchema.optional().nullable(),
+  scheduledEndsAt: bogotaDateTimeSchema.optional().nullable(),
   status: z.nativeEnum(MatchStatus).optional(),
 }).refine((data) => !data.scheduledAt || !data.scheduledEndsAt || data.scheduledEndsAt > data.scheduledAt, {
   message: 'La hora de fin debe ser posterior a la hora de inicio',

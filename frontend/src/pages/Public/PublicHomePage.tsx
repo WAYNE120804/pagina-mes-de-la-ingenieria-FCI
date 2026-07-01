@@ -29,6 +29,7 @@ function tournamentSlug(tournament: { id: string; name: string }) {
 function formatEventDate(value: string) {
   return new Date(value)
     .toLocaleDateString('es-CO', {
+      timeZone: 'America/Bogota',
       weekday: 'long',
       day: '2-digit',
       month: 'long',
@@ -39,6 +40,7 @@ function formatEventDate(value: string) {
 
 function formatEventTime(value: string) {
   return new Date(value).toLocaleTimeString('es-CO', {
+    timeZone: 'America/Bogota',
     hour: '2-digit',
     minute: '2-digit',
   });

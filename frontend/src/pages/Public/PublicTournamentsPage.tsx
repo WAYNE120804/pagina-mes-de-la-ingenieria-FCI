@@ -35,6 +35,7 @@ function formatMatchDate(startsAt?: string | null, endsAt?: string | null) {
   }
 
   const startText = new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
     weekday: 'short',
     day: '2-digit',
     month: 'short',
@@ -43,6 +44,7 @@ function formatMatchDate(startsAt?: string | null, endsAt?: string | null) {
   }).format(new Date(startsAt));
   const endText = endsAt
     ? new Intl.DateTimeFormat('es-CO', {
+        timeZone: 'America/Bogota',
         hour: '2-digit',
         minute: '2-digit',
       }).format(new Date(endsAt))

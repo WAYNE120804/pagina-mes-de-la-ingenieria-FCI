@@ -29,6 +29,7 @@ import {
 } from '../../api/hackathon.api';
 import { listUsersRequest, type UserRow } from '../../api/users.api';
 import Topbar from '../../components/Layout/Topbar';
+import { fromDateTimeLocalValue, toDateTimeLocalValue } from '../../utils/dates';
 import { deliverableTypeLabels, hackathonStatusLabels, labelFor } from '../../utils/labels';
 
 const statuses = Object.keys(hackathonStatusLabels);
@@ -117,22 +118,13 @@ const emptyDeliverableForm: DeliverableForm = {
   submittedAt: '',
 };
 
-function toLocalInputValue(value?: string | null) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-  const offsetMs = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-}
-
 function formatDateTime(value?: string | null) {
   if (!value) {
     return 'Sin horario';
   }
 
   return new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));
@@ -209,8 +201,8 @@ const HackathonPage = () => {
       name: hackathon.name,
       status: hackathon.status,
       description: hackathon.description || '',
-      startsAt: toLocalInputValue(hackathon.startsAt),
-      endsAt: toLocalInputValue(hackathon.endsAt),
+      startsAt: toDateTimeLocalValue(hackathon.startsAt),
+      endsAt: toDateTimeLocalValue(hackathon.endsAt),
     });
   }
 
@@ -222,8 +214,8 @@ const HackathonPage = () => {
       name: hackathonForm.name,
       status: hackathonForm.status,
       description: hackathonForm.description || null,
-      startsAt: hackathonForm.startsAt || null,
-      endsAt: hackathonForm.endsAt || null,
+      startsAt: hackathonForm.startsAt ? fromDateTimeLocalValue(hackathonForm.startsAt) : null,
+      endsAt: hackathonForm.endsAt ? fromDateTimeLocalValue(hackathonForm.endsAt) : null,
     };
 
     try {
@@ -443,7 +435,7 @@ const HackathonPage = () => {
       type: deliverable.type,
       title: deliverable.title,
       url: deliverable.url,
-      submittedAt: toLocalInputValue(deliverable.submittedAt),
+      submittedAt: toDateTimeLocalValue(deliverable.submittedAt),
     });
   }
 
@@ -457,7 +449,9 @@ const HackathonPage = () => {
       type: deliverableForm.type,
       title: deliverableForm.title,
       url: deliverableForm.url,
-      submittedAt: deliverableForm.submittedAt || null,
+      submittedAt: deliverableForm.submittedAt
+        ? fromDateTimeLocalValue(deliverableForm.submittedAt)
+        : null,
     };
 
     try {

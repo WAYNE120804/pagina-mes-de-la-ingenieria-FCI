@@ -1,4 +1,5 @@
 import { DeliverableType, HackathonStatus } from '../../lib/prisma-client';
+import { bogotaDateTimeSchema } from '../../utils/datetime';
 import { z } from 'zod';
 
 export const hackathonEventIdParamsSchema = z.object({
@@ -47,8 +48,8 @@ const hackathonEventBodySchema = z.object({
   name: z.string().trim().min(3),
   status: z.nativeEnum(HackathonStatus).default(HackathonStatus.DRAFT),
   description: z.string().trim().optional().nullable(),
-  startsAt: z.coerce.date().optional().nullable(),
-  endsAt: z.coerce.date().optional().nullable(),
+  startsAt: bogotaDateTimeSchema.optional().nullable(),
+  endsAt: bogotaDateTimeSchema.optional().nullable(),
 });
 
 export const createHackathonEventSchema = hackathonEventBodySchema.refine(
@@ -114,7 +115,7 @@ const deliverableBodySchema = z.object({
   type: z.nativeEnum(DeliverableType),
   title: z.string().trim().min(2),
   url: z.string().trim().url(),
-  submittedAt: z.coerce.date().optional().nullable(),
+  submittedAt: bogotaDateTimeSchema.optional().nullable(),
 });
 
 export const createDeliverableSchema = deliverableBodySchema;

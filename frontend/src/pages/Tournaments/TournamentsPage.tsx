@@ -33,6 +33,7 @@ import { getApiErrorMessage } from '../../api/client';
 import Topbar from '../../components/Layout/Topbar';
 import FormModal from '../../components/common/FormModal';
 import { listVenuesRequest, type Venue } from '../../api/venues.api';
+import { fromDateTimeLocalValue, toDateTimeLocalValue } from '../../utils/dates';
 import {
   competitionModeLabels,
   labelFor,
@@ -161,22 +162,13 @@ function defaultFormatForSport(sport: string) {
   return 'KNOCKOUT';
 }
 
-function toLocalInputValue(value?: string | null) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-  const offsetMs = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-}
-
 function formatDateTime(value?: string | null) {
   if (!value) {
     return 'Fecha y hora por definir';
   }
 
   return new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));
@@ -190,6 +182,7 @@ function formatMatchDateRange(startsAt?: string | null, endsAt?: string | null) 
   const startText = formatDateTime(startsAt);
   const endText = endsAt
     ? new Intl.DateTimeFormat('es-CO', {
+        timeZone: 'America/Bogota',
         hour: '2-digit',
         minute: '2-digit',
       }).format(new Date(endsAt))
@@ -204,6 +197,7 @@ function formatDate(value?: string | null) {
   }
 
   return new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -215,7 +209,10 @@ function formatDay(value?: string | null) {
     return 'Dia por confirmar';
   }
 
-  const day = new Intl.DateTimeFormat('es-CO', { weekday: 'long' }).format(new Date(value));
+  const day = new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
+    weekday: 'long',
+  }).format(new Date(value));
   return day.charAt(0).toUpperCase() + day.slice(1);
 }
 
@@ -225,6 +222,7 @@ function formatTime(value?: string | null) {
   }
 
   return new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value));
@@ -507,8 +505,8 @@ const TournamentsPage = () => {
       maxTeams: tournament.maxTeams ? String(tournament.maxTeams) : '',
       maxMembersPerTeam: tournament.maxMembersPerTeam ? String(tournament.maxMembersPerTeam) : '',
       maxParticipants: tournament.maxParticipants ? String(tournament.maxParticipants) : '',
-      startsAt: toLocalInputValue(tournament.startsAt),
-      endsAt: toLocalInputValue(tournament.endsAt),
+      startsAt: toDateTimeLocalValue(tournament.startsAt),
+      endsAt: toDateTimeLocalValue(tournament.endsAt),
     });
     setShowTournamentModal(true);
   }
@@ -531,8 +529,8 @@ const TournamentsPage = () => {
       maxMembersPerTeam:
         mode === 'TEAM' && form.maxMembersPerTeam ? Number(form.maxMembersPerTeam) : null,
       maxParticipants: mode === 'INDIVIDUAL' && form.maxParticipants ? Number(form.maxParticipants) : null,
-      startsAt: form.startsAt || null,
-      endsAt: form.endsAt || null,
+      startsAt: form.startsAt ? fromDateTimeLocalValue(form.startsAt) : null,
+      endsAt: form.endsAt ? fromDateTimeLocalValue(form.endsAt) : null,
     };
 
     try {
@@ -597,8 +595,8 @@ const TournamentsPage = () => {
     setMatchScheduleInputs(
       fixtureData.matches.reduce<MatchScheduleInputs>((acc, match) => {
         acc[match.id] = {
-          scheduledAt: toLocalInputValue(match.scheduledAt),
-          scheduledEndsAt: toLocalInputValue(match.scheduledEndsAt),
+          scheduledAt: toDateTimeLocalValue(match.scheduledAt),
+          scheduledEndsAt: toDateTimeLocalValue(match.scheduledEndsAt),
           venueId: match.venueId || tournament.venue?.id || '',
           phase: match.phase,
           homeId: tournament.mode === 'TEAM' ? match.homeTeam?.id || '' : match.homeParticipant?.id || '',
@@ -796,8 +794,8 @@ const TournamentsPage = () => {
   function buildScheduleInputs(matches: TournamentFixture['matches']) {
     return matches.reduce<MatchScheduleInputs>((acc, match) => {
       acc[match.id] = {
-        scheduledAt: toLocalInputValue(match.scheduledAt),
-        scheduledEndsAt: toLocalInputValue(match.scheduledEndsAt),
+        scheduledAt: toDateTimeLocalValue(match.scheduledAt),
+        scheduledEndsAt: toDateTimeLocalValue(match.scheduledEndsAt),
         venueId: match.venueId || selectedTournament?.venue?.id || '',
         phase: match.phase,
         homeId: selectedTournament?.mode === 'TEAM' ? match.homeTeam?.id || '' : match.homeParticipant?.id || '',
@@ -820,8 +818,10 @@ const TournamentsPage = () => {
         groupId: matchForm.groupId || null,
         venueId: matchForm.venueId || selectedTournament.venue?.id || null,
         phase: matchForm.phase,
-        scheduledAt: matchForm.scheduledAt || null,
-        scheduledEndsAt: matchForm.scheduledEndsAt || null,
+        scheduledAt: matchForm.scheduledAt ? fromDateTimeLocalValue(matchForm.scheduledAt) : null,
+        scheduledEndsAt: matchForm.scheduledEndsAt
+          ? fromDateTimeLocalValue(matchForm.scheduledEndsAt)
+          : null,
         homeTeamId: selectedTournament.mode === 'TEAM' ? matchForm.homeId : null,
         awayTeamId: selectedTournament.mode === 'TEAM' ? matchForm.awayId : null,
         homeParticipantId: selectedTournament.mode === 'INDIVIDUAL' ? matchForm.homeId : null,
@@ -931,8 +931,10 @@ const TournamentsPage = () => {
     const schedule = scheduleFor(matchId);
     await updateMatchScheduleRequest(selectedTournament.id, matchId, {
       groupId: schedule.groupId || null,
-      scheduledAt: schedule.scheduledAt || null,
-      scheduledEndsAt: schedule.scheduledEndsAt || null,
+      scheduledAt: schedule.scheduledAt ? fromDateTimeLocalValue(schedule.scheduledAt) : null,
+      scheduledEndsAt: schedule.scheduledEndsAt
+        ? fromDateTimeLocalValue(schedule.scheduledEndsAt)
+        : null,
       venueId: schedule.venueId || null,
       phase: schedule.phase,
       homeTeamId:

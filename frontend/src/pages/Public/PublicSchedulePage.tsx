@@ -15,6 +15,7 @@ type PublicSchedulePageProps = {
 
 function dayLabel(value: string) {
   const formatted = new Date(value).toLocaleDateString('es-CO', {
+    timeZone: 'America/Bogota',
     weekday: 'long',
     day: '2-digit',
     month: 'long',
@@ -26,6 +27,7 @@ function dayLabel(value: string) {
 
 function timeLabel(value: string) {
   return new Date(value).toLocaleTimeString('es-CO', {
+    timeZone: 'America/Bogota',
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -33,12 +35,14 @@ function timeLabel(value: string) {
 
 function weekdayOnlyLabel(value: string) {
   return new Date(value).toLocaleDateString('es-CO', {
+    timeZone: 'America/Bogota',
     weekday: 'long',
   });
 }
 
 function dateOnlyLabel(value: string) {
   return new Date(value).toLocaleDateString('es-CO', {
+    timeZone: 'America/Bogota',
     day: '2-digit',
     month: 'long',
     year: 'numeric',

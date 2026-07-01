@@ -715,6 +715,7 @@ export async function getAttendanceCertificateHtml(id: string) {
   const attendeeName = attendance.user?.name || attendance.fullName || 'Asistente';
   const attendeeEmail = attendance.user?.email || attendance.email || '';
   const eventDate = attendance.event.startsAt.toLocaleDateString('es-CO', {
+    timeZone: 'America/Bogota',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
