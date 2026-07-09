@@ -10,7 +10,7 @@ import PublicLayout from './PublicLayout';
 import { campusImage } from './publicContent';
 
 type PublicSchedulePageProps = {
-  eventType?: 'TALK' | 'WORKSHOP';
+  eventType?: 'TALK' | 'WORKSHOP' | 'COMPETITION';
 };
 
 function dayLabel(value: string) {
@@ -76,6 +76,12 @@ const copyByType = {
     subtitle: 'Talleres con inscripción previa publicados desde el panel administrativo.',
     loading: 'Cargando talleres publicados...',
     empty: 'Aún no hay talleres publicados desde el panel administrativo.',
+  },
+  COMPETITION: {
+    title: 'Competencias',
+    subtitle: 'Retos, maratones y actividades competitivas publicadas desde el panel administrativo.',
+    loading: 'Cargando competencias publicadas...',
+    empty: 'Aún no hay competencias publicadas desde el panel administrativo.',
   },
 };
 
@@ -189,7 +195,7 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                 {selectedEvent?.venue?.name || 'Selecciona una actividad'}
               </p>
               <p className="mt-2 text-sm leading-6 text-[#b9cbb8]">
-                {selectedEvent?.venue?.location || 'Haz clic en una charla o taller para ver su ubicación.'}
+                {selectedEvent?.venue?.location || 'Haz clic en una actividad para ver su ubicación.'}
               </p>
               <div className="relative mt-5 h-32 overflow-hidden rounded-lg border border-[#3b4b3c]">
                 <img

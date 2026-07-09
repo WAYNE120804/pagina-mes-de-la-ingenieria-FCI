@@ -165,7 +165,6 @@ export const publicTournamentMemberSchema = z.object({
 
 export const publicTournamentRegistrationSchema = z.object({
   teamName: z.string().trim().min(2).optional(),
-  logoUrl: z.string().trim().max(2_000_000).optional().nullable(),
   captainIndex: z.number().int().min(0).optional(),
   members: z.array(publicTournamentMemberSchema).min(1).max(20),
 });

@@ -12,6 +12,7 @@ const navItems = [
   { label: 'Cronograma', to: '/public/cronograma' },
   { label: 'Charlas', to: '/public/charlas' },
   { label: 'Talleres', to: '/public/talleres' },
+  { label: 'Competencias', to: '/public/competencias' },
   { label: 'Torneos', to: '/public/torneos' },
   { label: 'FCI Admin', to: '/login' },
 ];

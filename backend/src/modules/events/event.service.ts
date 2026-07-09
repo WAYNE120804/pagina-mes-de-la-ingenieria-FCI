@@ -75,6 +75,19 @@ function buildPublicFormUrl(origin: string, eventTitle: string, fallbackSlug: st
   return `${origin.replace(/\/$/, '')}/public/eventos/${eventSlug}/${pathMode}`;
 }
 
+function assertEventTypeCanBeSaved(type?: EventType) {
+  // COMPETITION aparece en el formulario de Eventos como ayuda de UX, pero no
+  // debe persistirse en Event: las competencias necesitan inscripciones, equipos,
+  // partidos y rankings, por eso se crean como Tournament desde el frontend.
+  if (type === EventType.COMPETITION) {
+    throw new AppError(
+      'Las competencias no se guardan como eventos. Crea un torneo para gestionar inscripciones, equipos y resultados.',
+      400,
+      'COMPETITION_IS_TOURNAMENT'
+    );
+  }
+}
+
 async function assertVenueAvailability(input: {
   venueId?: string | null;
   startsAt?: Date;
@@ -151,6 +164,8 @@ export async function listPublicEvents(origin: string) {
 
   return events.map((event) => ({
     ...event,
+    // Solo WORKSHOP tiene preinscripcion publica. La asistencia QR se maneja
+    // aparte para los tipos permitidos por attendance.service.ts.
     registrationUrl:
       event.type === EventType.WORKSHOP
         ? buildPublicFormUrl(origin, event.title, event.slug || event.id, 'registration')
@@ -158,7 +173,8 @@ export async function listPublicEvents(origin: string) {
     attendanceUrl:
       event.type === EventType.TALK ||
       event.type === EventType.ACADEMIC ||
-      event.type === EventType.WORKSHOP
+      event.type === EventType.WORKSHOP ||
+      event.type === EventType.COMPETITION
         ? buildPublicFormUrl(origin, event.title, event.slug || event.id, 'attendance')
         : null,
     attendanceOpensAt: new Date(event.startsAt.getTime() - 30 * 60 * 1000),
@@ -182,6 +198,7 @@ export async function getEventById(id: string) {
 
 export async function createEvent(input: CreateEventInput, actorId?: string) {
   const prisma = requirePrisma();
+  assertEventTypeCanBeSaved(input.type);
 
   await assertVenueAvailability({
     venueId: input.venueId,
@@ -220,6 +237,7 @@ export async function createEvent(input: CreateEventInput, actorId?: string) {
 export async function updateEvent(id: string, input: UpdateEventInput, actorId?: string) {
   const prisma = requirePrisma();
   const existingEvent = await getEventById(id);
+  assertEventTypeCanBeSaved(input.type);
   const startsAt = input.startsAt || existingEvent.startsAt;
   const endsAt = input.endsAt || existingEvent.endsAt;
   const venueId = input.venueId === undefined ? existingEvent.venueId : input.venueId;

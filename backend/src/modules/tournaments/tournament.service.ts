@@ -204,6 +204,9 @@ function getDefaultRulePreset(sport: Sport) {
   return presets[sport];
 }
 
+// Centraliza defaults y restricciones que dependen de la disciplina.
+// Mantener esto en un solo punto evita que frontend, API y migraciones terminen
+// aceptando combinaciones invalidas como maraton individual o videojuego por equipos.
 function normalizeInput(input: CreateTournamentInput | UpdateTournamentInput) {
   const sport = input.sport;
   const mode = sport ? input.mode || getDefaultMode(sport) : input.mode;
@@ -683,6 +686,10 @@ async function normalizeTeamMembers(
 ): Promise<NormalizedTeamMember[]> {
   let members: NormalizedTeamMember[] = [];
 
+  // El mismo normalizador sirve para tres entradas distintas:
+  // 1) formulario publico/manual con datos libres,
+  // 2) usuarios existentes seleccionados por id,
+  // 3) edicion de equipo conservando miembros ya guardados.
   if (input.members?.length) {
     members = input.members.map((member) => ({
       userId: member.userId || null,
@@ -1180,6 +1187,9 @@ export async function publicRegisterTournament(
     );
   }
 
+  // El registro publico crea equipos sin logo por decision de producto.
+  // Si algun cliente externo envia logoUrl, el schema publico no lo acepta y aqui
+  // se persiste null para mantener todos los equipos publicos sin escudo.
   if (tournament.mode === CompetitionMode.TEAM) {
     if (!input.teamName) {
       throw new AppError('Debes escribir el nombre del equipo', 400, 'TEAM_NAME_REQUIRED');
@@ -1217,7 +1227,7 @@ export async function publicRegisterTournament(
       data: {
         tournamentId: resolvedTournamentId,
         name: input.teamName,
-        logoUrl: input.logoUrl || null,
+        logoUrl: null,
         status: 'APPROVED',
         members: {
           create: members.map((member) => ({

@@ -3,6 +3,7 @@ export const eventTypeLabels: Record<string, string> = {
   ACADEMIC: 'Académico',
   TALK: 'Charla',
   WORKSHOP: 'Taller',
+  COMPETITION: 'Competencia',
   TOURNAMENT: 'Torneo',
   HACKATHON: 'Hackathon',
   CEREMONY: 'Ceremonia',

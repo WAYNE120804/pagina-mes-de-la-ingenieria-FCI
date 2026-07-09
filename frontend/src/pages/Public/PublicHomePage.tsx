@@ -52,6 +52,8 @@ function eventDetailPath(event: PublicEventItem) {
       ? '/public/charlas'
       : event.type === 'WORKSHOP'
         ? '/public/talleres'
+        : event.type === 'COMPETITION'
+          ? '/public/competencias'
         : '/public/cronograma';
 
   return `${basePath}?evento=${event.id}`;
@@ -195,6 +197,14 @@ const PublicHomePage = () => {
                           onClick={(clickEvent) => clickEvent.stopPropagation()}
                         >
                           Ver taller
+                        </Link>
+                      ) : event.type === 'COMPETITION' ? (
+                        <Link
+                          className="mt-4 inline-flex rounded-lg border border-[#5adf82]/40 px-4 py-2 text-sm font-bold text-[#5adf82]"
+                          to={eventDetailPath(event)}
+                          onClick={(clickEvent) => clickEvent.stopPropagation()}
+                        >
+                          Ver competencia
                         </Link>
                       ) : event.registrationUrl || event.attendanceUrl ? (
                         <Link

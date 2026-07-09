@@ -59,7 +59,6 @@ const PublicTournamentFormPage = () => {
   const { tournamentId = '' } = useParams();
   const [form, setForm] = useState<PublicTournamentForm | null>(null);
   const [teamName, setTeamName] = useState('');
-  const [logoUrl, setLogoUrl] = useState('');
   const [captainIndex, setCaptainIndex] = useState<number | null>(null);
   const [memberCount, setMemberCount] = useState(2);
   const [members, setMembers] = useState<MemberForm[]>([{ ...emptyMember }, { ...emptyMember }]);
@@ -142,33 +141,6 @@ const PublicTournamentFormPage = () => {
     );
   }
 
-  function readImageAsDataUrl(file: File) {
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ''));
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
-  }
-
-  async function updateLogo(file?: File) {
-    if (!file) {
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      setError('El escudo debe ser una imagen.');
-      return;
-    }
-
-    if (file.size > 1_500_000) {
-      setError('El escudo no puede superar 1.5 MB.');
-      return;
-    }
-
-    setLogoUrl(await readImageAsDataUrl(file));
-  }
-
   async function submitRegistration(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -187,13 +159,11 @@ const PublicTournamentFormPage = () => {
 
       await publicRegisterTournamentRequest(form.tournament.id, {
         teamName: isTeam ? teamName : undefined,
-        logoUrl: isTeam ? logoUrl || null : undefined,
         captainIndex: isTeam ? captainIndex ?? undefined : undefined,
         members,
       });
       setMessage(isTeam ? 'Equipo inscrito correctamente.' : 'Participante inscrito correctamente.');
       setTeamName('');
-      setLogoUrl('');
       setCaptainIndex(null);
       const resetCount = isTeam ? minTeamMembers : 1;
       setMemberCount(resetCount);
@@ -243,7 +213,7 @@ const PublicTournamentFormPage = () => {
             ) : null}
 
             {isTeam ? (
-              <div className="grid gap-5 rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-5 md:grid-cols-[1fr_180px_240px]">
+              <div className="grid gap-5 rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-5 md:grid-cols-[1fr_180px]">
                 <label className="block text-sm font-semibold text-[#e0e3e5]">
                   Nombre del equipo
                   <input
@@ -268,31 +238,13 @@ const PublicTournamentFormPage = () => {
                     Mínimo {minTeamMembers}, maximo {maxTeamMembers}.
                   </span>
                 </label>
-                <div className="flex gap-3">
-                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl border border-[#3b4b3c] bg-[#101415]">
-                    {logoUrl ? (
-                      <img className="h-full w-full object-cover" src={logoUrl} alt="Escudo del equipo" />
-                    ) : (
-                      <span className="px-1 text-center text-xs text-[#849584]">Escudo</span>
-                    )}
-                  </div>
-                  <label className="block flex-1 text-sm font-semibold text-[#e0e3e5]">
-                    Logo
-                    <input
-                      className="mt-2 w-full text-xs text-[#b9cbb8] file:mr-3 file:rounded-lg file:border-0 file:bg-[#5adf82] file:px-3 file:py-2 file:font-bold file:text-[#003917]"
-                      type="file"
-                      accept="image/*"
-                      onChange={(event) => void updateLogo(event.target.files?.[0])}
-                    />
-                  </label>
-                </div>
               </div>
             ) : null}
 
             <div className="space-y-4">
               {isTeam ? (
                 <div className="rounded-2xl border border-[#5adf82]/25 bg-[#5adf82]/10 px-4 py-3 text-sm text-[#cfe6ca]">
-                  Registra todos los integrantes y marca exactamente quien sera el capitan. Con los equipos inscritos, la organizacion creara manualmente los partidos.
+                  Registra todos los integrantes y marca exactamente quien sera el capitan.
                 </div>
               ) : null}
               {members.map((member, index) => (

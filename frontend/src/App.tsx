@@ -30,6 +30,7 @@ const App = () => {
         <Route path="/public/cronograma" element={<PublicSchedulePage />} />
         <Route path="/public/charlas" element={<PublicSchedulePage eventType="TALK" />} />
         <Route path="/public/talleres" element={<PublicSchedulePage eventType="WORKSHOP" />} />
+        <Route path="/public/competencias" element={<PublicSchedulePage eventType="COMPETITION" />} />
         <Route path="/public/torneos" element={<PublicTournamentsPage />} />
         <Route path="/public/eventos/:eventId/inscripcion" element={<PublicEventFormPage mode="registration" />} />
         <Route path="/public/eventos/:eventId/inscripción" element={<PublicEventFormPage mode="registration" />} />

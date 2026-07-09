@@ -538,7 +538,6 @@ export async function publicRegisterTournamentRequest(
   tournamentId: string,
   input: {
     teamName?: string;
-    logoUrl?: string | null;
     captainIndex?: number;
     members: Array<{
       fullName: string;

@@ -470,10 +470,17 @@ export async function getAttendanceQrSvg(id: string) {
 }
 
 function assertPublicEventType(event: Awaited<ReturnType<typeof getActiveEvent>>) {
-  const publicTypes: EventType[] = [EventType.TALK, EventType.ACADEMIC, EventType.WORKSHOP];
+  // Esta lista controla que tipos pueden usar QR/link publico de asistencia.
+  // No agregar tipos aqui sin revisar capacidad, certificados y textos publicos.
+  const publicTypes: EventType[] = [
+    EventType.TALK,
+    EventType.ACADEMIC,
+    EventType.WORKSHOP,
+    EventType.COMPETITION,
+  ];
 
   if (!publicTypes.includes(event.type)) {
-    throw new AppError('Este formulario solo está disponible para charlas y talleres', 400, 'INVALID_PUBLIC_EVENT');
+    throw new AppError('Este formulario solo está disponible para charlas, talleres y competencias', 400, 'INVALID_PUBLIC_EVENT');
   }
 }
 
@@ -485,6 +492,7 @@ function assertWorkshopEvent(event: Awaited<ReturnType<typeof getActiveEvent>>) 
 
 function assertAttendanceWindow(event: Awaited<ReturnType<typeof getActiveEvent>>) {
   const now = new Date().getTime();
+  // La ventana evita registros tempranos o tardios cuando el QR queda circulando.
   const opensAt = event.startsAt.getTime() - 30 * 60 * 1000;
   const closesAt = event.endsAt.getTime() + 30 * 60 * 1000;
 

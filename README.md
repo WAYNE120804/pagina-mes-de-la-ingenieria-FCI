@@ -33,6 +33,13 @@ cd frontend && npm run build
 cd backend && npm run build
 ```
 
+## Documentacion tecnica
+
+- [Guia del desarrollador](docs/guia-desarrollador.md): arquitectura, modulos,
+  flujos criticos, reglas de negocio, despliegue y checklists para cambios.
+- [Fases de implementacion](docs/fases-implementacion.md): historial funcional
+  por fases.
+
 ## Despliegue
 
 Consulta [deploy/README.md](deploy/README.md) para publicar la aplicacion en Ubuntu Server.
