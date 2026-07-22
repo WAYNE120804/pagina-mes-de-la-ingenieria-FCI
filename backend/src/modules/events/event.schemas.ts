@@ -1,4 +1,4 @@
-import { EventStatus, EventType } from '../../lib/prisma-client';
+import { EventModality, EventStatus, EventType } from '../../lib/prisma-client';
 import { bogotaDateTimeSchema } from '../../utils/datetime';
 import { z } from 'zod';
 
@@ -22,6 +22,8 @@ const eventBodySchema = z.object({
   description: z.string().trim().optional().nullable(),
   type: z.nativeEnum(EventType),
   status: z.nativeEnum(EventStatus).default(EventStatus.DRAFT),
+  modality: z.nativeEnum(EventModality).default(EventModality.PRESENTIAL),
+  streamUrl: z.string().trim().url('El link de transmisión debe ser una URL válida').optional().nullable(),
   startsAt: bogotaDateTimeSchema,
   endsAt: bogotaDateTimeSchema,
   capacity: z.number().int().positive().optional().nullable(),

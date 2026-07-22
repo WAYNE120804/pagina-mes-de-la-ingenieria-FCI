@@ -217,6 +217,11 @@ ceremonia, hackathon u otro evento publicado en el cronograma.
 
 Reglas especiales:
 
+- `modality` define si el evento es `PRESENTIAL`, `HYBRID` o `VIRTUAL`.
+- `streamUrl` guarda el link publico de transmision cuando el evento es hibrido
+  o virtual. Puede ser YouTube, Teams, Meet u otra URL valida.
+- Para `HYBRID` y `VIRTUAL`, `streamUrl` es obligatorio en backend y frontend.
+- En el panel publico el link se muestra como enlace externo solo si existe.
 - `WORKSHOP` puede tener inscripcion previa publica.
 - `TALK`, `ACADEMIC`, `WORKSHOP` y algunos flujos publicos tienen asistencia por QR.
 - `COMPETITION` existe como opcion visual en el formulario administrativo, pero
@@ -481,6 +486,17 @@ Variables criticas:
 5. Revisar `attendance.service.ts` si requiere QR/asistencia.
 6. Revisar `talk.service.ts` si tendra ponente.
 
+### Nueva modalidad o campo publico de evento
+
+1. Agregar campo en `schema.prisma` y migracion.
+2. Actualizar `event.schemas.ts` para validar entrada.
+3. Actualizar `event.service.ts` para crear/actualizar el campo.
+4. Actualizar `events.api.ts` con el contrato de frontend.
+5. Actualizar `EventsPage.tsx` para captura administrativa.
+6. Actualizar `PublicHomePage`, `PublicSchedulePage` y formularios publicos si
+   el dato debe verse por asistentes.
+7. Agregar label en `frontend/src/utils/labels.ts` si es enum.
+
 ### Nueva disciplina de torneo
 
 1. Agregar enum `Sport` y migracion.
@@ -576,8 +592,10 @@ Eventos:
 
 - `backend/src/modules/events/event.service.ts`
 - `backend/src/modules/events/event.schemas.ts`
+- `backend/prisma/schema.prisma`
 - `frontend/src/pages/Events/EventsPage.tsx`
 - `frontend/src/api/events.api.ts`
+- `frontend/src/utils/labels.ts`
 
 Asistencia:
 

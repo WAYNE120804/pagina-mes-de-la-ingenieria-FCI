@@ -1,4 +1,4 @@
-import { AuditAction, EventStatus, EventType, Prisma } from '../../lib/prisma-client';
+import { AuditAction, EventModality, EventStatus, EventType, Prisma } from '../../lib/prisma-client';
 import { AppError } from '../../lib/app-error';
 import { getPrisma } from '../../lib/prisma';
 import { createAuditLog } from '../../utils/audit';
@@ -84,6 +84,16 @@ function assertEventTypeCanBeSaved(type?: EventType) {
       'Las competencias no se guardan como eventos. Crea un torneo para gestionar inscripciones, equipos y resultados.',
       400,
       'COMPETITION_IS_TOURNAMENT'
+    );
+  }
+}
+
+function assertTransmissionLink(input: { modality?: EventModality | null; streamUrl?: string | null }) {
+  if (input.modality && input.modality !== EventModality.PRESENTIAL && !input.streamUrl) {
+    throw new AppError(
+      'Los eventos híbridos o virtuales deben tener link de transmisión',
+      400,
+      'STREAM_URL_REQUIRED'
     );
   }
 }
@@ -199,6 +209,7 @@ export async function getEventById(id: string) {
 export async function createEvent(input: CreateEventInput, actorId?: string) {
   const prisma = requirePrisma();
   assertEventTypeCanBeSaved(input.type);
+  assertTransmissionLink(input);
 
   await assertVenueAvailability({
     venueId: input.venueId,
@@ -215,6 +226,8 @@ export async function createEvent(input: CreateEventInput, actorId?: string) {
       description: input.description || null,
       type: input.type,
       status: input.status,
+      modality: input.modality,
+      streamUrl: input.streamUrl || null,
       startsAt: input.startsAt,
       endsAt: input.endsAt,
       capacity: input.capacity || null,
@@ -238,6 +251,10 @@ export async function updateEvent(id: string, input: UpdateEventInput, actorId?:
   const prisma = requirePrisma();
   const existingEvent = await getEventById(id);
   assertEventTypeCanBeSaved(input.type);
+  assertTransmissionLink({
+    modality: input.modality === undefined ? existingEvent.modality : input.modality,
+    streamUrl: input.streamUrl === undefined ? existingEvent.streamUrl : input.streamUrl,
+  });
   const startsAt = input.startsAt || existingEvent.startsAt;
   const endsAt = input.endsAt || existingEvent.endsAt;
   const venueId = input.venueId === undefined ? existingEvent.venueId : input.venueId;
@@ -262,6 +279,8 @@ export async function updateEvent(id: string, input: UpdateEventInput, actorId?:
       description: input.description === undefined ? undefined : input.description,
       type: input.type,
       status: input.status,
+      modality: input.modality,
+      streamUrl: input.streamUrl === undefined ? undefined : input.streamUrl,
       startsAt: input.startsAt,
       endsAt: input.endsAt,
       capacity: input.capacity === undefined ? undefined : input.capacity,

@@ -11,7 +11,7 @@ import {
   getPublicSettingsRequest,
   type SiteSettings,
 } from '../../api/settings.api';
-import { eventTypeLabels, labelFor, tournamentSportLabels } from '../../utils/labels';
+import { eventModalityLabels, eventTypeLabels, labelFor, tournamentSportLabels } from '../../utils/labels';
 import PublicLayout from './PublicLayout';
 import { publicHeroImage, roboticsImage } from './publicContent';
 
@@ -178,10 +178,27 @@ const PublicHomePage = () => {
                       </p>
                     ) : null}
                     <div className="mt-6 border-t border-[#3b4b3c] pt-5">
-                      <div className="flex items-center gap-2 font-mono text-xs text-[#e0e3e5]">
-                        <span className="material-symbols-outlined text-[#5adf82]">schedule</span>
-                        {formatEventTime(event.startsAt)} - {event.venue?.name || 'Espacio por confirmar'}
+                      <div className="grid gap-2 font-mono text-xs text-[#e0e3e5]">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[#5adf82]">schedule</span>
+                          {formatEventTime(event.startsAt)} - {event.venue?.name || 'Espacio por confirmar'}
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[#5adf82]">connected_tv</span>
+                          {labelFor(eventModalityLabels, event.modality)}
+                        </span>
                       </div>
+                      {event.streamUrl ? (
+                        <a
+                          className="mt-4 inline-flex rounded-lg bg-[#5adf82] px-4 py-2 text-sm font-bold text-[#003917]"
+                          href={event.streamUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(clickEvent) => clickEvent.stopPropagation()}
+                        >
+                          Ver transmisión
+                        </a>
+                      ) : null}
                       {event.type === 'TALK' ? (
                         <Link
                           className="mt-4 inline-flex rounded-lg border border-[#5adf82]/40 px-4 py-2 text-sm font-bold text-[#5adf82]"

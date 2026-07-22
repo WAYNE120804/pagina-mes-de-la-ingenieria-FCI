@@ -7,7 +7,7 @@ import {
   publicRegisterEventRequest,
   type PublicEventForm,
 } from '../../api/events.api';
-import { attendeeCategoryLabels, eventTypeLabels, labelFor } from '../../utils/labels';
+import { attendeeCategoryLabels, eventModalityLabels, eventTypeLabels, labelFor } from '../../utils/labels';
 import PublicLayout from './PublicLayout';
 
 const categories = Object.keys(attendeeCategoryLabels);
@@ -140,6 +140,21 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
                     <span className="material-symbols-outlined text-base text-[#5adf82]">category</span>
                     {labelFor(eventTypeLabels, form.event.type)}
                   </p>
+                  <p className="inline-flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base text-[#5adf82]">connected_tv</span>
+                    {labelFor(eventModalityLabels, form.event.modality)}
+                  </p>
+                  {form.event.streamUrl ? (
+                    <a
+                      className="inline-flex items-center gap-2 font-semibold text-[#5adf82] hover:underline"
+                      href={form.event.streamUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <span className="material-symbols-outlined text-base">open_in_new</span>
+                      Ver transmisión
+                    </a>
+                  ) : null}
                   <p className="inline-flex items-start gap-2">
                     <span className="material-symbols-outlined text-base text-[#5adf82]">schedule</span>
                     <span>

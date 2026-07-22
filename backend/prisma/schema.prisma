@@ -50,6 +50,12 @@ enum EventStatus {
   FINISHED
 }
 
+enum EventModality {
+  PRESENTIAL
+  HYBRID
+  VIRTUAL
+}
+
 enum AttendanceMethod {
   QR
   MANUAL
@@ -341,6 +347,8 @@ model Event {
   description String?
   type        EventType
   status      EventStatus @default(DRAFT)
+  modality    EventModality @default(PRESENTIAL)
+  streamUrl   String?     @map("stream_url")
   startsAt    DateTime    @map("starts_at")
   endsAt      DateTime    @map("ends_at")
   capacity    Int?

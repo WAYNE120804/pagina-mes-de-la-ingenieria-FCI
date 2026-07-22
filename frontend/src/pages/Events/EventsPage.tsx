@@ -33,6 +33,7 @@ import {
 } from '../../utils/dates';
 import {
   attendanceMethodLabels,
+  eventModalityLabels,
   attendanceStatusLabels,
   eventStatusLabels,
   eventTypeLabels,
@@ -45,6 +46,7 @@ import {
 
 const eventTypes = Object.keys(eventTypeLabels);
 const eventStatuses = Object.keys(eventStatusLabels);
+const eventModalities = Object.keys(eventModalityLabels);
 const competitionSports = ['MARATON_PROGRAMACION', 'CAPTURA_BANDERA'];
 const competitionFormats = Object.keys(tournamentFormatLabels);
 
@@ -53,6 +55,8 @@ type EventForm = {
   title: string;
   type: string;
   status: string;
+  modality: string;
+  streamUrl: string;
   description: string;
   venueId: string;
   startsAt: string;
@@ -75,6 +79,8 @@ const emptyForm: EventForm = {
   title: '',
   type: 'TALK',
   status: 'PUBLISHED',
+  modality: 'PRESENTIAL',
+  streamUrl: '',
   description: '',
   venueId: '',
   startsAt: '',
@@ -385,6 +391,8 @@ const EventsPage = () => {
       title: event.title,
       type: event.type,
       status: event.status,
+      modality: event.modality || 'PRESENTIAL',
+      streamUrl: event.streamUrl || '',
       description: event.description || '',
       venueId: event.venue?.id || '',
       startsAt: toDateTimeLocalValue(event.startsAt),
@@ -475,6 +483,8 @@ const EventsPage = () => {
       description: form.description || null,
       type: form.type,
       status: form.status,
+      modality: form.modality,
+      streamUrl: form.modality === 'PRESENTIAL' ? null : form.streamUrl || null,
       venueId: form.venueId || null,
       startsAt: fromDateTimeLocalValue(form.startsAt),
       endsAt: fromDateTimeLocalValue(form.endsAt),
@@ -658,6 +668,40 @@ const EventsPage = () => {
                 </select>
               </label>
             </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Modalidad
+                <select
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  value={form.modality}
+                  onChange={(event) => setForm({ ...form, modality: event.target.value })}
+                >
+                  {eventModalities.map((item) => (
+                    <option key={item} value={item}>{eventModalityLabels[item]}</option>
+                  ))}
+                </select>
+              </label>
+              {form.modality !== 'PRESENTIAL' ? (
+                <label className="block text-sm font-medium text-slate-700">
+                  Link de transmisión
+                  <input
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    type="url"
+                    value={form.streamUrl}
+                    onChange={(event) => setForm({ ...form, streamUrl: event.target.value })}
+                    placeholder="https://youtube.com/... o https://teams.microsoft.com/..."
+                    required
+                  />
+                  <span className="mt-1 block text-xs text-slate-500">
+                    Se mostrará como enlace público para YouTube, Teams, Meet u otra plataforma.
+                  </span>
+                </label>
+              ) : (
+                <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                  Para eventos presenciales no se muestra link de transmisión.
+                </div>
+              )}
+            </div>
             {form.type === 'COMPETITION' ? (
               <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                 <p className="font-semibold">
@@ -724,7 +768,7 @@ const EventsPage = () => {
               </div>
             ) : null}
             <label className="block text-sm font-medium text-slate-700">
-              Espacio
+              {form.modality === 'VIRTUAL' ? 'Espacio de referencia' : 'Espacio'}
               <select className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.venueId} onChange={(event) => setForm({ ...form, venueId: event.target.value })}>
                 <option value="">Sin espacio</option>
                 {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
@@ -842,6 +886,7 @@ const EventsPage = () => {
                   <tr>
                     <th className="px-5 py-3 text-left">Evento</th>
                     <th className="px-5 py-3 text-left">Tipo</th>
+                    <th className="px-5 py-3 text-left">Modalidad</th>
                     <th className="px-5 py-3 text-left">Espacio</th>
                     <th className="px-5 py-3 text-left">Inicio</th>
                     <th className="px-5 py-3 text-left">Acciones</th>
@@ -852,6 +897,16 @@ const EventsPage = () => {
                     <tr key={event.id}>
                       <td className="px-5 py-3 font-medium text-slate-950">{event.title}</td>
                       <td className="px-5 py-3 text-slate-600">{labelFor(eventTypeLabels, event.type)}</td>
+                      <td className="px-5 py-3 text-slate-600">
+                        <div className="flex flex-col gap-1">
+                          <span>{labelFor(eventModalityLabels, event.modality)}</span>
+                          {event.streamUrl ? (
+                            <a className="text-xs font-semibold text-emerald-700 hover:underline" href={event.streamUrl} target="_blank" rel="noreferrer">
+                              Abrir transmisión
+                            </a>
+                          ) : null}
+                        </div>
+                      </td>
                       <td className="px-5 py-3 text-slate-600">{event.venue?.name || 'Sin espacio'}</td>
                       <td className="px-5 py-3 text-slate-600">{formatColombiaDateTime(event.startsAt)}</td>
                       <td className="px-5 py-3">
@@ -945,7 +1000,9 @@ const EventsPage = () => {
                   <p className="mt-2 text-sm font-medium text-slate-700">
                     {formatDate(selectedEvent.startsAt)} de {formatTime(selectedEvent.startsAt)} a {formatTime(selectedEvent.endsAt)}
                   </p>
-                  <p className="mt-1 text-sm text-slate-500">{labelFor(eventTypeLabels, selectedEvent.type)} - {labelFor(eventStatusLabels, selectedEvent.status)} - {selectedEvent.venue?.name || 'Sin espacio'}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {labelFor(eventTypeLabels, selectedEvent.type)} - {labelFor(eventStatusLabels, selectedEvent.status)} - {labelFor(eventModalityLabels, selectedEvent.modality)} - {selectedEvent.venue?.name || 'Sin espacio'}
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => void showPublicLink(selectedEvent, 'attendance')}>Asistencia</button>
@@ -1020,6 +1077,22 @@ const EventsPage = () => {
                     <div>
                       <dt className="text-slate-500">Tipo</dt>
                       <dd className="mt-1 font-semibold text-slate-950">{labelFor(eventTypeLabels, selectedEvent.type)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Modalidad</dt>
+                      <dd className="mt-1 font-semibold text-slate-950">{labelFor(eventModalityLabels, selectedEvent.modality)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Transmisión</dt>
+                      <dd className="mt-1 font-semibold text-slate-950">
+                        {selectedEvent.streamUrl ? (
+                          <a className="text-emerald-700 hover:underline" href={selectedEvent.streamUrl} target="_blank" rel="noreferrer">
+                            Abrir link
+                          </a>
+                        ) : (
+                          'Sin link'
+                        )}
+                      </dd>
                     </div>
                   </dl>
                 </div>

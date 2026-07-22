@@ -530,6 +530,8 @@ export async function getPublicEventForm(
       title: event.title,
       type: event.type,
       status: event.status,
+      modality: event.modality,
+      streamUrl: event.streamUrl,
       startsAt: event.startsAt,
       endsAt: event.endsAt,
       capacity: event.capacity,

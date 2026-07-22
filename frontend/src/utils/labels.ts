@@ -17,6 +17,12 @@ export const eventStatusLabels: Record<string, string> = {
   FINISHED: 'Finalizado',
 };
 
+export const eventModalityLabels: Record<string, string> = {
+  PRESENTIAL: 'Presencial',
+  HYBRID: 'Híbrido',
+  VIRTUAL: 'Virtual',
+};
+
 export const attendanceStatusLabels: Record<string, string> = {
   REGISTERED: 'Registrado',
   CHECKED_IN: 'Ingreso confirmado',

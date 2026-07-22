@@ -9,6 +9,8 @@ export type EventItem = {
   description?: string | null;
   type: string;
   status: string;
+  modality: string;
+  streamUrl?: string | null;
   startsAt: string;
   endsAt: string;
   capacity?: number | null;
@@ -67,6 +69,8 @@ export type PublicEventForm = {
     title: string;
     type: string;
     status: string;
+    modality: string;
+    streamUrl?: string | null;
     startsAt: string;
     endsAt: string;
     capacity?: number | null;
@@ -120,6 +124,8 @@ export async function createEventRequest(input: {
   description?: string | null;
   type: string;
   status: string;
+  modality?: string;
+  streamUrl?: string | null;
   startsAt: string;
   endsAt: string;
   venueId?: string | null;
@@ -128,6 +134,7 @@ export async function createEventRequest(input: {
   const response = await client.post<ApiResponse<EventItem>>(endpoints.events.create(), {
     ...input,
     venueId: input.venueId || null,
+    streamUrl: input.streamUrl || null,
     capacity: input.capacity || null,
   });
 
@@ -141,6 +148,8 @@ export async function updateEventRequest(
     description?: string | null;
     type?: string;
     status?: string;
+    modality?: string;
+    streamUrl?: string | null;
     startsAt?: string;
     endsAt?: string;
     venueId?: string | null;
@@ -150,6 +159,7 @@ export async function updateEventRequest(
   const response = await client.patch<ApiResponse<EventItem>>(endpoints.events.detail(id), {
     ...input,
     venueId: input.venueId === '' ? null : input.venueId,
+    streamUrl: input.streamUrl === '' ? null : input.streamUrl,
   });
 
   return response.data.data;

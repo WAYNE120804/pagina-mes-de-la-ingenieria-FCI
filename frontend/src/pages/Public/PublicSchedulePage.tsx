@@ -5,7 +5,7 @@ import {
   listPublicEventsRequest,
   type PublicEventItem,
 } from '../../api/events.api';
-import { eventTypeLabels, labelFor } from '../../utils/labels';
+import { eventModalityLabels, eventTypeLabels, labelFor } from '../../utils/labels';
 import PublicLayout from './PublicLayout';
 import { campusImage } from './publicContent';
 
@@ -299,6 +299,22 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                                   </span>
                                 </span>
                               </span>
+                              <span className="inline-flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm text-[#5adf82]">connected_tv</span>
+                                {labelFor(eventModalityLabels, event.modality)}
+                              </span>
+                              {event.streamUrl ? (
+                                <a
+                                  className="inline-flex items-center gap-2 font-semibold text-[#5adf82] hover:underline"
+                                  href={event.streamUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={(clickEvent) => clickEvent.stopPropagation()}
+                                >
+                                  <span className="material-symbols-outlined text-sm">open_in_new</span>
+                                  Ver transmisión
+                                </a>
+                              ) : null}
                             </div>
                           </div>
                           {event.type === 'TALK' ? (
@@ -414,6 +430,25 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                       {profileEvent.venue?.location ? (
                         <dd className="mt-1 text-xs leading-5 text-[#b9cbb8]">
                           {profileEvent.venue.location}
+                        </dd>
+                      ) : null}
+                    </div>
+                    <div>
+                      <dt className="text-[#849584]">Modalidad</dt>
+                      <dd className="mt-1 font-semibold text-[#f0ffed]">
+                        {labelFor(eventModalityLabels, profileEvent.modality)}
+                      </dd>
+                      {profileEvent.streamUrl ? (
+                        <dd className="mt-2">
+                          <a
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#5adf82] px-4 py-2 text-sm font-bold text-[#003917]"
+                            href={profileEvent.streamUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Ver transmisión
+                            <span className="material-symbols-outlined text-sm">open_in_new</span>
+                          </a>
                         </dd>
                       ) : null}
                     </div>
