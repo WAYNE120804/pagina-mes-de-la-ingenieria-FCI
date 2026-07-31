@@ -64,6 +64,46 @@ function memberName(member: TournamentTeam['members'][number]) {
   return member.fullName || member.user?.name || 'Integrante';
 }
 
+function tournamentDateTimeRange(tournament?: Pick<PublicTournamentOverview, 'startsAt' | 'endsAt'> | null) {
+  if (!tournament?.startsAt && !tournament?.endsAt) {
+    return '';
+  }
+
+  const dateFormatter = new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+  const timeFormatter = new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  if (tournament.startsAt && tournament.endsAt) {
+    const start = new Date(tournament.startsAt);
+    const end = new Date(tournament.endsAt);
+    const startDate = dateFormatter.format(start);
+    const endDate = dateFormatter.format(end);
+    const startTime = timeFormatter.format(start);
+    const endTime = timeFormatter.format(end);
+
+    return startDate === endDate
+      ? `${startDate}, ${startTime} - ${endTime}`
+      : `${startDate}, ${startTime} - ${endDate}, ${endTime}`;
+  }
+
+  if (tournament.startsAt) {
+    const start = new Date(tournament.startsAt);
+    return `Desde ${dateFormatter.format(start)}, ${timeFormatter.format(start)}`;
+  }
+
+  const end = new Date(tournament.endsAt as string);
+  return `Hasta ${dateFormatter.format(end)}, ${timeFormatter.format(end)}`;
+}
+
 const PublicTournamentsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [tournaments, setTournaments] = useState<PublicTournamentOverview[]>([]);
@@ -125,6 +165,7 @@ const PublicTournamentsPage = () => {
     : 0;
   const activeVenue = activeTournament?.venue || activeTournament?.matches?.find((match) => match.venue)?.venue || null;
   const activeVenueImage = activeVenue?.photoUrl || campusImage;
+  const activeDateRange = tournamentDateTimeRange(activeTournament);
   const isJudgedTournament = Boolean(activeTournament && judgedSports.includes(activeTournament.sport));
   const rankedStandings = [...(activeTournament?.standings || [])].sort((first, second) => {
     const firstRank = first.rank || 999;
@@ -192,6 +233,12 @@ const PublicTournamentsPage = () => {
                           )} - ${registrationCount} inscritos`
                         : ''}
                     </p>
+                    {activeDateRange ? (
+                      <p className="mt-2 inline-flex items-center gap-2 text-sm text-[#b9cbb8]">
+                        <span className="material-symbols-outlined text-sm text-[#5adf82]">calendar_month</span>
+                        {activeDateRange}
+                      </p>
+                    ) : null}
                     <p className="mt-2 inline-flex items-center gap-2 text-sm text-[#b9cbb8]">
                       <span className="material-symbols-outlined text-sm text-[#5adf82]">location_on</span>
                       {activeVenue?.name || 'Sitio por confirmar'}
@@ -435,6 +482,12 @@ const PublicTournamentsPage = () => {
                     <span className="rounded-full bg-[#323537] px-3 py-1">{labelFor(tournamentSportLabels, item.sport)}</span>
                     <span className="rounded-full bg-[#323537] px-3 py-1">{item.venue?.name || 'Sin sitio'}</span>
                   </div>
+                  {tournamentDateTimeRange(item) ? (
+                    <p className="mt-4 inline-flex items-start gap-2 text-xs leading-5 text-[#b9cbb8]">
+                      <span className="material-symbols-outlined text-sm text-[#5adf82]">calendar_month</span>
+                      {tournamentDateTimeRange(item)}
+                    </p>
+                  ) : null}
                 </article>
               ))}
               <article className="relative overflow-hidden rounded-2xl border border-[#3b4b3c] md:col-span-2">
