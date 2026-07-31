@@ -346,7 +346,7 @@ model Event {
   slug        String      @unique
   description String?
   type        EventType
-  status      EventStatus @default(DRAFT)
+  status      EventStatus @default(PUBLISHED)
   modality    EventModality @default(PRESENTIAL)
   streamUrl   String?     @map("stream_url")
   startsAt    DateTime    @map("starts_at")
@@ -429,6 +429,7 @@ model Attendance {
   scannerId   String?          @map("scanner_id") @db.Uuid
   fullName    String?          @map("full_name")
   email       String?
+  phone       String?
   identifier  String?
   category    AttendeeCategory?
   semester    String?
@@ -465,7 +466,7 @@ model Tournament {
   videoGameTitle    VideoGameTitle?      @map("video_game_title")
   rulePreset        TournamentRulePreset @default(CUSTOM) @map("rule_preset")
   format            TournamentFormat
-  status            TournamentStatus     @default(DRAFT)
+  status            TournamentStatus     @default(REGISTRATION_OPEN)
   description       String?
   rules             String?
   maxTeams          Int?                 @map("max_teams")
@@ -522,6 +523,7 @@ model TournamentParticipant {
   groupId      String?   @map("group_id") @db.Uuid
   displayName  String    @map("display_name")
   email        String?
+  phone        String?
   identifier   String?
   semester     String?
   career       String?
@@ -582,6 +584,7 @@ model TeamMember {
   fullName   String?  @map("full_name")
   identifier String?
   email      String?
+  phone      String?
   semester   String?
   career     String?
   whatsappConsent Boolean @default(false) @map("whatsapp_consent")
@@ -675,7 +678,7 @@ model HackathonEvent {
   id          String          @id @default(uuid()) @db.Uuid
   eventId     String?         @unique @map("event_id") @db.Uuid
   name        String
-  status      HackathonStatus @default(DRAFT)
+  status      HackathonStatus @default(REGISTRATION_OPEN)
   description String?
   startsAt    DateTime?       @map("starts_at")
   endsAt      DateTime?       @map("ends_at")

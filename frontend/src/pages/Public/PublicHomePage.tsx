@@ -168,7 +168,7 @@ const PublicHomePage = () => {
                       <span className="font-mono text-xs uppercase text-[#849584]">{formatEventDate(event.startsAt)}</span>
                     </div>
                     <h3 className="font-display text-xl font-bold text-[#f0ffed]">{event.title}</h3>
-                    <p className="mt-4 flex-1 text-sm leading-6 text-[#b9cbb8]">
+                    <p className="mt-4 flex-1 whitespace-pre-line text-sm leading-6 text-[#b9cbb8]">
                       {event.description || 'Sin descripcion registrada.'}
                     </p>
                     {event.talk?.speaker?.fullName ? (
@@ -223,13 +223,13 @@ const PublicHomePage = () => {
                         >
                           Ver competencia
                         </Link>
-                      ) : event.registrationUrl || event.attendanceUrl ? (
+                      ) : event.registrationUrl ? (
                         <Link
                           className="mt-4 inline-flex rounded-lg bg-[#5adf82] px-4 py-2 text-sm font-bold text-[#003917]"
-                          to={event.registrationUrl || event.attendanceUrl || '#'}
+                          to={event.registrationUrl}
                           onClick={(clickEvent) => clickEvent.stopPropagation()}
                         >
-                          {event.registrationUrl ? 'Inscribirse' : 'Confirmar asistencia'}
+                          Inscribirse
                         </Link>
                       ) : null}
                     </div>
@@ -249,7 +249,7 @@ const PublicHomePage = () => {
                 <h3 className="font-display text-3xl font-bold text-[#5adf82]">
                   {featuredTournament?.name || 'Torneos publicados'}
                 </h3>
-                <p className="mt-3 max-w-md text-[#b9cbb8]">
+                <p className="mt-3 max-w-md whitespace-pre-line text-[#b9cbb8]">
                   {featuredTournament?.description ||
                     'Los torneos creados y publicados desde el panel aparecerán aquí.'}
                 </p>
@@ -274,7 +274,7 @@ const PublicHomePage = () => {
                 <p className="mt-3 text-sm leading-6 text-[#b9cbb8]">
                   {labelFor(tournamentSportLabels, item.sport)} - {item._count?.teams || item._count?.participants || 0} inscritos
                 </p>
-                {item.status === 'REGISTRATION_OPEN' ? (
+                {item.status !== 'FINISHED' && item.status !== 'CANCELLED' ? (
                   <Link
                     className="mt-5 inline-flex rounded-lg bg-[#5adf82] px-4 py-2 text-sm font-bold text-[#003917]"
                     to={`/public/torneos/${tournamentSlug(item)}/inscripcion`}

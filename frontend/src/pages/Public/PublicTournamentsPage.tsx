@@ -197,7 +197,7 @@ const PublicTournamentsPage = () => {
                       {activeVenue?.name || 'Sitio por confirmar'}
                     </p>
                   </div>
-                  {activeTournament?.status === 'REGISTRATION_OPEN' ? (
+                  {activeTournament && activeTournament.status !== 'FINISHED' && activeTournament.status !== 'CANCELLED' ? (
                     <Link
                       className="rounded-xl bg-[#5adf82] px-5 py-3 font-bold text-[#003917]"
                       to={`/public/torneos/${tournamentSlug(activeTournament)}/inscripcion`}
@@ -400,10 +400,10 @@ const PublicTournamentsPage = () => {
                 </section>
                 <section className="rounded-3xl bg-[#5adf82] p-6 text-[#003917]">
                   <h2 className="font-display text-2xl font-bold">{activeTournament?.name}</h2>
-                  <p className="mt-3 text-sm leading-6 text-[#003917]/80">
+                  <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#003917]/80">
                     {activeTournament?.description || 'Información publicada desde el panel administrativo.'}
                   </p>
-                  {activeTournament?.status === 'REGISTRATION_OPEN' ? (
+                  {activeTournament && activeTournament.status !== 'FINISHED' && activeTournament.status !== 'CANCELLED' ? (
                     <Link
                       className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#003917] px-5 py-3 font-bold text-[#5adf82]"
                       to={`/public/torneos/${tournamentSlug(activeTournament)}/inscripcion`}
@@ -423,7 +423,7 @@ const PublicTournamentsPage = () => {
                     {labelFor(tournamentStatusLabels, item.status)}
                   </span>
                   <h3 className="mt-4 font-display text-xl font-bold text-[#f0ffed]">{item.name}</h3>
-                  <p className="mt-3 text-sm leading-6 text-[#b9cbb8]">
+                  <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#b9cbb8]">
                     {item.description || labelFor(tournamentSportLabels, item.sport)}
                   </p>
                   <div className="mt-5 flex flex-wrap gap-3 text-xs text-[#b9cbb8]">

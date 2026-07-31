@@ -153,7 +153,7 @@ export async function listPublicEvents(origin: string) {
   const events = await prisma.event.findMany({
     where: {
       ...onlyActive,
-      status: { in: [EventStatus.PUBLISHED, EventStatus.FINISHED] },
+      status: { not: EventStatus.CANCELLED },
     },
     include: publicEventInclude,
     orderBy: { startsAt: 'asc' },
@@ -162,7 +162,7 @@ export async function listPublicEvents(origin: string) {
   return events.map((event) => ({
     ...event,
     registrationUrl: buildPublicFormUrl(origin, event.title, event.slug || event.id, 'registration'),
-    attendanceUrl: buildPublicFormUrl(origin, event.title, event.slug || event.id, 'attendance'),
+    attendanceUrl: null,
     attendanceOpensAt: new Date(event.startsAt.getTime() - 30 * 60 * 1000),
     attendanceClosesAt: new Date(event.endsAt.getTime() + 30 * 60 * 1000),
   }));

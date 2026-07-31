@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import EventsPage from './pages/Events/EventsPage';
 import LoginPage from './pages/Auth/LoginPage';
 import NotificationsPage from './pages/Notifications/NotificationsPage';
+import RegistrationsPage from './pages/Registrations/RegistrationsPage';
 import PublicEventFormPage from './pages/Public/PublicEventFormPage';
 import PublicHomePage from './pages/Public/PublicHomePage';
 import PublicSchedulePage from './pages/Public/PublicSchedulePage';
@@ -70,6 +71,14 @@ const App = () => {
               </AppLayout>
             }
           />
+          <Route
+            path="/competencias"
+            element={
+              <AppLayout>
+                <EventsPage scope="competitions" />
+              </AppLayout>
+            }
+          />
           <Route path="/charlas" element={<Navigate to="/eventos" replace />} />
           <Route
             path="/ponentes"
@@ -86,6 +95,14 @@ const App = () => {
             element={
               <AppLayout>
                 <AttendancePage />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/inscritos"
+            element={
+              <AppLayout>
+                <RegistrationsPage />
               </AppLayout>
             }
           />

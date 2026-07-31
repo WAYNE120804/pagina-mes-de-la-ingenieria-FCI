@@ -47,6 +47,7 @@ export type AttendanceItem = {
   id: string;
   fullName?: string | null;
   email?: string | null;
+  phone?: string | null;
   identifier?: string | null;
   category?: string | null;
   semester?: string | null;
@@ -195,6 +196,7 @@ export async function createAttendanceRequest(
   input: {
     fullName: string;
     email?: string;
+    phone?: string;
     identifier?: string;
     category?: string;
     semester?: string;
@@ -206,6 +208,7 @@ export async function createAttendanceRequest(
     {
       fullName: input.fullName,
       email: input.email || null,
+      phone: input.phone || null,
       identifier: input.identifier || null,
       category: input.category || null,
       semester: input.semester || null,
@@ -220,13 +223,14 @@ export async function createAttendanceRequest(
 
 export async function preregisterAttendanceRequest(
   eventId: string,
-  input: { fullName: string; email?: string; identifier?: string; category?: string }
+  input: { fullName: string; email?: string; phone?: string; identifier?: string; category?: string }
 ) {
   const response = await client.post<ApiResponse<AttendanceItem>>(
     endpoints.events.preregisterAttendance(eventId),
     {
       fullName: input.fullName,
       email: input.email || null,
+      phone: input.phone || null,
       identifier: input.identifier || null,
       category: input.category || null,
       method: 'QR',
@@ -335,6 +339,7 @@ export async function publicRegisterEventRequest(
     semester: string;
     career: string;
     email?: string | null;
+    phone: string;
     whatsappConsent: boolean;
   }
 ) {
@@ -355,6 +360,7 @@ export async function publicCheckInEventRequest(
     semester?: string;
     career?: string;
     email?: string | null;
+    phone?: string | null;
     whatsappConsent?: boolean;
   }
 ) {

@@ -18,6 +18,7 @@ type MemberForm = {
   fullName: string;
   identifier: string;
   email: string;
+  phone: string;
   semester: string;
   career: string;
 };
@@ -26,6 +27,7 @@ const emptyMember: MemberForm = {
   fullName: '',
   identifier: '',
   email: '',
+  phone: '',
   semester: '',
   career: '',
 };
@@ -291,6 +293,14 @@ const PublicTournamentFormPage = () => {
                       type="email"
                       value={member.email}
                       onChange={(event) => updateMember(index, 'email', event.target.value)}
+                      required
+                    />
+                    <input
+                      className="rounded-xl border border-[#3b4b3c] bg-[#101415] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors placeholder:text-[#849584] focus:border-[#5adf82]"
+                      placeholder="Teléfono"
+                      type="tel"
+                      value={member.phone}
+                      onChange={(event) => updateMember(index, 'phone', event.target.value)}
                       required
                     />
                     <select

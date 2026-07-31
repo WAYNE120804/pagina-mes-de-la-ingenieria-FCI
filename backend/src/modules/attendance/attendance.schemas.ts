@@ -45,6 +45,7 @@ export const createAttendanceSchema = z
     userId: z.string().uuid().optional().nullable(),
     fullName: z.string().trim().optional().nullable(),
     email: z.string().email().trim().toLowerCase().optional().nullable(),
+    phone: z.string().trim().min(7).max(30).optional().nullable(),
     identifier: z.string().trim().min(3).optional().nullable(),
     category: z.nativeEnum(AttendeeCategory).optional().nullable(),
     semester: semesterSchema.optional().nullable(),
@@ -75,6 +76,7 @@ export const publicAttendanceSchema = z.object({
   semester: semesterSchema,
   career: careerSchema,
   email: z.string().email().trim().toLowerCase().optional().nullable(),
+  phone: z.string().trim().min(7).max(30),
   whatsappConsent: z.boolean().default(false),
 });
 
@@ -84,6 +86,7 @@ export const publicCheckInSchema = publicAttendanceSchema.partial({
   semester: true,
   career: true,
   email: true,
+  phone: true,
 }).extend({
   identifier: z.string().trim().min(3),
 });

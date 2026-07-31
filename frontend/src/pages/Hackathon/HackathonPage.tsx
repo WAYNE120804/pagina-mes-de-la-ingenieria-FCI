@@ -81,7 +81,7 @@ type DeliverableForm = {
 
 const emptyHackathonForm: HackathonForm = {
   name: '',
-  status: 'DRAFT',
+  status: 'REGISTRATION_OPEN',
   description: '',
   startsAt: '',
   endsAt: '',

@@ -85,6 +85,10 @@ function attendeeEmail(item: AttendanceItem) {
   return item.user?.email || item.email || '';
 }
 
+function attendeePhone(item: AttendanceItem) {
+  return item.phone || '';
+}
+
 function attendeeIdentifier(item: AttendanceItem) {
   return item.user?.universityCode || item.identifier || '';
 }
@@ -212,6 +216,7 @@ function exportAttendanceExcel(
       const cells = [
         attendeeName(item),
         attendeeEmail(item),
+        attendeePhone(item),
         attendeeIdentifier(item),
         labelFor(labels.categories, item.category),
         labelFor(semesterLabels, item.semester),
@@ -230,10 +235,11 @@ function exportAttendanceExcel(
       <head><meta charset="UTF-8" /></head>
       <body>
         <table>
-          <tr><th colspan="9">${escapeHtml(eventTitle)}</th></tr>
+          <tr><th colspan="10">${escapeHtml(eventTitle)}</th></tr>
           <tr>
             <th>Nombre</th>
             <th>Correo</th>
+            <th>Telefono</th>
             <th>Código/Cédula</th>
             <th>Cargo</th>
             <th>Semestre</th>
@@ -264,6 +270,7 @@ const AttendancePage = () => {
   const [eventId, setEventId] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [identifier, setIdentifier] = useState('');
   const [category, setCategory] = useState('ESTUDIANTE');
   const [semester, setSemester] = useState('');
@@ -337,9 +344,10 @@ const AttendancePage = () => {
     setNotice('');
 
     try {
-      await createAttendanceRequest(eventId, { fullName, email, identifier, category, semester, career });
+      await createAttendanceRequest(eventId, { fullName, email, phone, identifier, category, semester, career });
       setFullName('');
       setEmail('');
+      setPhone('');
       setIdentifier('');
       setSemester('');
       setCareer('');
@@ -504,6 +512,7 @@ const AttendancePage = () => {
                   {Object.entries(careerLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
                 <input className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Correo" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+                <input className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Telefono" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} required />
                 {error ? <p className="text-sm text-red-600">{error}</p> : null}
                 <div className="flex flex-wrap gap-2">
                   <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white" type="submit">Registrar ingreso</button>
@@ -561,8 +570,9 @@ const AttendancePage = () => {
               <table className="w-full min-w-[1100px] table-fixed divide-y divide-slate-200 text-sm">
                 <thead className="theme-table-head">
                   <tr>
-                    <th className="w-[16%] px-4 py-3 text-left">Nombre</th>
-                    <th className="w-[18%] px-4 py-3 text-left">Correo</th>
+                    <th className="w-[15%] px-4 py-3 text-left">Nombre</th>
+                    <th className="w-[16%] px-4 py-3 text-left">Correo</th>
+                    <th className="w-[10%] px-4 py-3 text-left">Telefono</th>
                     <th className="w-[12%] px-4 py-3 text-left">Código/Cédula</th>
                     <th className="w-[9%] px-4 py-3 text-left">Cargo</th>
                     <th className="w-[8%] px-4 py-3 text-left">Semestre</th>
@@ -575,7 +585,7 @@ const AttendancePage = () => {
                 <tbody className="divide-y divide-slate-100">
                   {attendance.length === 0 ? (
                     <tr>
-                      <td className="px-5 py-6 text-center text-slate-500" colSpan={9}>
+                      <td className="px-5 py-6 text-center text-slate-500" colSpan={10}>
                         No hay asistentes registrados para este evento.
                       </td>
                     </tr>
@@ -588,6 +598,7 @@ const AttendancePage = () => {
                       <td className="px-4 py-4 align-top text-slate-600">
                         <span className="block break-all leading-5">{attendeeEmail(item) || 'N/A'}</span>
                       </td>
+                      <td className="px-4 py-4 align-top text-slate-600">{attendeePhone(item) || 'N/A'}</td>
                       <td className="px-4 py-4 align-top text-slate-600">{attendeeIdentifier(item) || 'N/A'}</td>
                       <td className="px-4 py-4 align-top text-slate-600">{labelFor(attendeeCategoryLabels, item.category)}</td>
                       <td className="px-4 py-4 align-top text-slate-600">{labelFor(semesterLabels, item.semester)}</td>

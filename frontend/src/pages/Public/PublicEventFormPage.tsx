@@ -59,6 +59,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
   const [semester, setSemester] = useState('');
   const [career, setCareer] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [whatsappConsent, setWhatsappConsent] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -87,6 +88,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
           semester,
           career,
           email: email || null,
+          phone,
           whatsappConsent,
         });
         setMessage('Inscripción registrada. Guarda tu código o cédula para confirmar asistencia.');
@@ -98,6 +100,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
           semester: fullName ? semester : undefined,
           career: fullName ? career : undefined,
           email: email || null,
+          phone: phone || null,
         });
         setMessage('Asistencia confirmada correctamente.');
       }
@@ -105,6 +108,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
       setFullName('');
       setIdentifier('');
       setEmail('');
+      setPhone('');
       setWhatsappConsent(false);
       setCategory('ESTUDIANTE');
       setSemester('');
@@ -255,6 +259,16 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
+                />
+              </label>
+              <label className="block text-sm font-semibold text-[#e0e3e5]">
+                Teléfono
+                <input
+                  className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                  type="tel"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  required={mode === 'registration' || Boolean(fullName)}
                 />
               </label>
               {mode === 'registration' ? (

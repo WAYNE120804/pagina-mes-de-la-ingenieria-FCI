@@ -228,22 +228,32 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
               </div>
             </section>
             {!eventType && publicTournaments.length ? (
-              <section className="rounded-xl border border-[#3b4b3c] bg-[#1d2022]/80 p-6 backdrop-blur">
-                <h2 className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#5adf82]">
-                  Torneos
-                </h2>
-                <div className="mt-5 space-y-3">
+              <section className="overflow-hidden rounded-xl border border-[#5adf82]/35 bg-[#101415] backdrop-blur">
+                <div className="border-b border-[#3b4b3c] bg-[#5adf82]/10 px-6 py-5">
+                  <h2 className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#8af59e]">
+                    Torneos
+                  </h2>
+                </div>
+                <div className="divide-y divide-[#3b4b3c]">
                   {publicTournaments.map((tournament) => (
                     <Link
                       key={tournament.id}
-                      className="block rounded-xl border border-[#3b4b3c] bg-[#101415] p-4 text-sm transition-colors hover:border-[#5adf82]"
+                      className="group flex items-start gap-3 px-5 py-4 text-sm transition-colors hover:bg-[#5adf82]/10"
                       to={`/public/torneos?torneo=${tournamentSlug(tournament)}`}
                     >
-                      <span className="block font-display text-base font-bold text-[#f0ffed]">
-                        {tournament.name}
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#5adf82]/30 bg-[#1d2022] text-[#5adf82] transition-colors group-hover:border-[#5adf82]">
+                        <span className="material-symbols-outlined text-lg">trophy</span>
                       </span>
-                      <span className="mt-1 block text-xs text-[#b9cbb8]">
-                        {labelFor(tournamentSportLabels, tournament.sport)}
+                      <span className="min-w-0 flex-1">
+                        <span className="block break-words font-display text-base font-bold leading-snug text-[#f0ffed]">
+                          {tournament.name}
+                        </span>
+                        <span className="mt-1 block text-xs text-[#b9cbb8]">
+                          {labelFor(tournamentSportLabels, tournament.sport)}
+                        </span>
+                      </span>
+                      <span className="material-symbols-outlined mt-1 text-base text-[#5adf82] opacity-0 transition-opacity group-hover:opacity-100">
+                        arrow_forward
                       </span>
                     </Link>
                   ))}
@@ -304,7 +314,7 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                                 {labelFor(eventTypeLabels, event.type)}
                               </span>
                             </div>
-                            <p className="mt-4 text-sm leading-6 text-[#b9cbb8]">
+                            <p className="mt-4 whitespace-pre-line text-sm leading-6 text-[#b9cbb8]">
                               {event.description || 'Sin descripcion registrada.'}
                             </p>
                             <div className="mt-5 flex flex-wrap gap-4 text-sm text-[#b9cbb8]">
@@ -392,14 +402,14 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                                 </div>
                               </div>
                             </div>
-                          ) : event.registrationUrl || event.attendanceUrl ? (
+                          ) : event.registrationUrl ? (
                             <div className="flex items-center md:w-44">
                               <Link
                                 className="w-full rounded-xl bg-[#5adf82] px-4 py-3 text-center font-bold text-[#003917] transition-transform active:scale-95"
-                                to={event.registrationUrl || event.attendanceUrl || '#'}
+                                to={event.registrationUrl}
                                 onClick={(clickEvent) => clickEvent.stopPropagation()}
                               >
-                                {event.registrationUrl ? 'Inscribirse' : 'Asistencia'}
+                                Inscribirse
                               </Link>
                             </div>
                           ) : null}
@@ -430,14 +440,25 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                     {profileEvent.talk?.topic || profileEvent.title}
                   </h2>
                 </div>
-                <button
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#3b4b3c] text-[#b9cbb8] transition-colors hover:border-[#5adf82] hover:text-[#5adf82]"
-                  type="button"
-                  aria-label="Cerrar"
-                  onClick={closeEventProfile}
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
+                <div className="flex shrink-0 items-center gap-3">
+                  {profileEvent.registrationUrl ? (
+                    <Link
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#5adf82] px-5 py-3 font-bold text-[#003917] transition-transform active:scale-95"
+                      to={profileEvent.registrationUrl}
+                    >
+                      Inscribirse
+                      <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    </Link>
+                  ) : null}
+                  <button
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#3b4b3c] text-[#b9cbb8] transition-colors hover:border-[#5adf82] hover:text-[#5adf82]"
+                    type="button"
+                    aria-label="Cerrar"
+                    onClick={closeEventProfile}
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
               </div>
 
               <div className="mt-7 grid gap-5 md:grid-cols-2">
@@ -533,7 +554,7 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                     <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#5adf82]">
                       ¿Quien es?
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-[#dbe8d8]">
+                    <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[#dbe8d8]">
                       {profileEvent.talk?.speaker?.bio || 'Sin descripcion del ponente registrada.'}
                     </p>
                   </div>
@@ -544,21 +565,10 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                 <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#5adf82]">
                   Descripcion
                 </p>
-                <p className="mt-3 text-sm leading-7 text-[#dbe8d8]">
+                <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#dbe8d8]">
                   {profileEvent.description || 'Sin descripcion registrada.'}
                 </p>
               </div>
-              {profileEvent.registrationUrl ? (
-                <div className="mt-6 flex justify-end">
-                  <Link
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#5adf82] px-5 py-3 font-bold text-[#003917] transition-transform active:scale-95"
-                    to={profileEvent.registrationUrl}
-                  >
-                    Inscribirse
-                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                  </Link>
-                </div>
-              ) : null}
             </section>
           </div>
         ) : null}

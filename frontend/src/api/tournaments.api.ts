@@ -51,6 +51,7 @@ export type TournamentTeam = {
     fullName?: string | null;
     identifier?: string | null;
     email?: string | null;
+    phone?: string | null;
     whatsappConsent?: boolean;
     isCaptain: boolean;
     user?: {
@@ -76,6 +77,7 @@ export type TournamentParticipant = {
   userId?: string | null;
   displayName: string;
   email?: string | null;
+  phone?: string | null;
   identifier?: string | null;
   whatsappConsent?: boolean;
   status: string;
@@ -232,6 +234,7 @@ export type TeamRegistrationInput = {
     fullName: string;
     identifier: string;
     email: string;
+    phone?: string | null;
     isCaptain?: boolean;
   }>;
   status?: string;
@@ -241,6 +244,7 @@ export type IndividualRegistrationInput = {
   userId?: string | null;
   displayName?: string;
   email?: string | null;
+  phone?: string | null;
   identifier?: string | null;
   status?: string;
   seed?: number | null;
@@ -546,6 +550,7 @@ export async function publicRegisterTournamentRequest(
       fullName: string;
       identifier: string;
       email: string;
+      phone: string;
       semester: string;
       career: string;
     }>;

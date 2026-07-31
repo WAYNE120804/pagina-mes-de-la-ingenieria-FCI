@@ -85,12 +85,6 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
             ))}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <NavLink
-              to="/public/cronograma"
-              className="hidden rounded-full bg-[#63ff93] px-5 py-2 text-sm font-bold text-[#00210b] shadow-[0_0_22px_rgba(0,228,113,0.22)] transition-transform active:scale-95 sm:inline-flex"
-            >
-              Registro
-            </NavLink>
             <button
               type="button"
               className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#3b4b3c] bg-[#151b1c] text-[#e0e3e5] transition-colors hover:border-[#5adf82] hover:text-[#5adf82] md:hidden"
@@ -118,12 +112,6 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
                 {item.label}
               </NavLink>
             ))}
-            <NavLink
-              to="/public/cronograma"
-              className="mt-2 inline-flex items-center justify-center rounded-full bg-[#63ff93] px-5 py-3 text-sm font-bold text-[#00210b] shadow-[0_0_22px_rgba(0,228,113,0.22)] transition-transform active:scale-95 sm:hidden"
-            >
-              Registro
-            </NavLink>
           </div>
         </div>
       </header>

@@ -306,13 +306,7 @@ export async function listPublicTournaments() {
   return prisma.tournament.findMany({
     where: {
       ...onlyActive,
-      status: {
-        in: [
-          TournamentStatus.REGISTRATION_OPEN,
-          TournamentStatus.IN_PROGRESS,
-          TournamentStatus.FINISHED,
-        ],
-      },
+      status: { not: TournamentStatus.CANCELLED },
     },
     include: {
       ...tournamentInclude,
@@ -657,6 +651,7 @@ type NormalizedTeamMember = {
   fullName: string;
   identifier: string;
   email: string;
+  phone?: string | null;
   semester?: string | null;
   career?: string | null;
   isCaptain: boolean;
@@ -672,6 +667,7 @@ async function normalizeTeamMembers(
       fullName?: string | null;
       identifier?: string | null;
       email?: string | null;
+      phone?: string | null;
       semester?: string | null;
       career?: string | null;
       isCaptain: boolean;
@@ -696,6 +692,7 @@ async function normalizeTeamMembers(
       fullName: member.fullName,
       identifier: member.identifier,
       email: member.email,
+      phone: member.phone || null,
       semester: member.semester || null,
       career: member.career || null,
       isCaptain: Boolean(member.isCaptain),
@@ -707,6 +704,7 @@ async function normalizeTeamMembers(
       fullName: user.name,
       identifier: user.universityCode || user.id,
       email: user.email,
+      phone: null,
       semester: null,
       career: null,
       isCaptain: index === 0,
@@ -717,6 +715,7 @@ async function normalizeTeamMembers(
       fullName: member.fullName || member.user?.name || '',
       identifier: member.identifier || member.user?.universityCode || member.userId || '',
       email: member.email || member.user?.email || '',
+      phone: member.phone || null,
       semester: member.semester || null,
       career: member.career || null,
       isCaptain: member.isCaptain,
@@ -748,6 +747,7 @@ async function normalizeTeamMembers(
     fullName: member.fullName.trim(),
     identifier: member.identifier.trim(),
     email: member.email.trim().toLowerCase(),
+    phone: member.phone?.trim() || null,
   }));
 }
 
@@ -967,6 +967,7 @@ export async function registerTeam(
           fullName: member.fullName,
           identifier: member.identifier,
           email: member.email,
+          phone: member.phone || null,
           isCaptain: member.isCaptain,
         })),
       },
@@ -1038,6 +1039,7 @@ export async function updateTeamRegistration(
             fullName: member.fullName,
             identifier: member.identifier,
             email: member.email,
+            phone: member.phone || null,
             isCaptain: member.isCaptain,
           })),
         },
@@ -1103,6 +1105,7 @@ export async function registerIndividualParticipant(
     : null;
   const displayName = user?.name || input.displayName || '';
   const email = user?.email || input.email || null;
+  const phone = input.phone || null;
   const identifier = user?.universityCode || input.identifier || null;
 
   await ensureNoDuplicateIndividual(prisma, tournamentId, { userId: input.userId, email, identifier });
@@ -1114,6 +1117,7 @@ export async function registerIndividualParticipant(
       userId: input.userId || null,
       displayName,
       email,
+      phone,
       identifier,
       semester: input.semester || null,
       career: input.career || null,
@@ -1234,6 +1238,7 @@ export async function publicRegisterTournament(
             fullName: member.fullName,
             identifier: member.identifier,
             email: member.email,
+            phone: member.phone || null,
             semester: member.semester || null,
             career: member.career || null,
             whatsappConsent: input.whatsappConsent,
@@ -1280,6 +1285,7 @@ export async function publicRegisterTournament(
       tournamentId: resolvedTournamentId,
       displayName: member.fullName,
       email: member.email,
+      phone: member.phone,
       identifier: member.identifier,
       semester: member.semester,
       career: member.career,
@@ -1328,6 +1334,7 @@ export async function updateIndividualParticipant(
 
   const displayName = user?.name || input.displayName || existingParticipant.displayName;
   const email = user?.email || input.email || existingParticipant.email;
+  const phone = input.phone === undefined ? existingParticipant.phone : input.phone;
   const identifier = user?.universityCode || input.identifier || existingParticipant.identifier;
 
   await ensureNoDuplicateIndividual(prisma, tournamentId, { userId: nextUserId, email, identifier }, participantId);
@@ -1339,6 +1346,7 @@ export async function updateIndividualParticipant(
       userId: nextUserId || null,
       displayName,
       email,
+      phone,
       identifier,
       status: input.status,
       seed: input.seed === undefined ? undefined : input.seed,

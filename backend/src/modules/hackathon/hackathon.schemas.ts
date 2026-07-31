@@ -46,7 +46,7 @@ export const listCompaniesQuerySchema = z.object({
 const hackathonEventBodySchema = z.object({
   eventId: z.string().uuid().optional().nullable(),
   name: z.string().trim().min(3),
-  status: z.nativeEnum(HackathonStatus).default(HackathonStatus.DRAFT),
+  status: z.nativeEnum(HackathonStatus).default(HackathonStatus.REGISTRATION_OPEN),
   description: z.string().trim().optional().nullable(),
   startsAt: bogotaDateTimeSchema.optional().nullable(),
   endsAt: bogotaDateTimeSchema.optional().nullable(),

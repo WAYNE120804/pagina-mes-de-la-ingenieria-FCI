@@ -32,6 +32,7 @@ import {
 import { getApiErrorMessage } from '../../api/client';
 import Topbar from '../../components/Layout/Topbar';
 import FormModal from '../../components/common/FormModal';
+import RegistrationsModal, { type RegistrationModalRow } from '../../components/common/RegistrationsModal';
 import { listVenuesRequest, type Venue } from '../../api/venues.api';
 import { fromDateTimeLocalValue, toDateTimeLocalValue } from '../../utils/dates';
 import {
@@ -96,6 +97,7 @@ type TeamMemberEditForm = {
   fullName: string;
   identifier: string;
   email: string;
+  phone: string;
   isCaptain: boolean;
 };
 
@@ -109,6 +111,7 @@ type ParticipantEditForm = {
   displayName: string;
   identifier: string;
   email: string;
+  phone: string;
   seed: string;
 };
 
@@ -116,7 +119,7 @@ const emptyForm: TournamentForm = {
   name: '',
   sport: 'FUTBOL',
   format: 'MIXED',
-  status: 'DRAFT',
+  status: 'REGISTRATION_OPEN',
   videoGameTitle: '',
   venueId: '',
   description: '',
@@ -143,6 +146,7 @@ const emptyMemberForm: TeamMemberEditForm = {
   fullName: '',
   identifier: '',
   email: '',
+  phone: '',
   isCaptain: false,
 };
 
@@ -424,6 +428,12 @@ const TournamentsPage = () => {
   const [publicRegistrationLink, setPublicRegistrationLink] = useState('');
   const [publicRegistrationQrSvg, setPublicRegistrationQrSvg] = useState('');
   const [publicFormTournament, setPublicFormTournament] = useState<Tournament | null>(null);
+  const [registrationsModalTournament, setRegistrationsModalTournament] = useState<Tournament | null>(null);
+  const [registrationsModalData, setRegistrationsModalData] = useState<TournamentRegistrations>({
+    teams: [],
+    participants: [],
+  });
+  const [showRegistrationsModal, setShowRegistrationsModal] = useState(false);
   const [showTournamentModal, setShowTournamentModal] = useState(false);
   const [showListModal, setShowListModal] = useState(false);
   const [listRecipients, setListRecipients] = useState('');
@@ -436,11 +446,39 @@ const TournamentsPage = () => {
     displayName: '',
     identifier: '',
     email: '',
+    phone: '',
     seed: '',
   });
 
   const mode = useMemo(() => modeForSport(form.sport), [form.sport]);
   const isJudgedTournament = Boolean(selectedTournament && judgedSports.includes(selectedTournament.sport));
+  const tournamentRegistrationRows = useMemo<RegistrationModalRow[]>(() => {
+    if (registrationsModalTournament?.mode === 'TEAM') {
+      return registrationsModalData.teams.flatMap((team) =>
+        team.members.map((member) => ({
+          id: member.id,
+          group: team.name,
+          name: member.fullName || member.user?.name || '',
+          email: member.email || member.user?.email || '',
+          phone: member.phone || '',
+          identifier: member.identifier || member.user?.universityCode || '',
+          status: team.status,
+          detail: member.isCaptain ? 'Capitan' : 'Integrante',
+        }))
+      );
+    }
+
+    return registrationsModalData.participants.map((participant) => ({
+      id: participant.id,
+      group: registrationsModalTournament?.name || '',
+      name: participant.displayName || participant.user?.name || '',
+      email: participant.email || participant.user?.email || '',
+      phone: participant.phone || '',
+      identifier: participant.identifier || participant.user?.universityCode || '',
+      status: participant.status,
+      detail: participant.seed ? `Semilla ${participant.seed}` : 'Participante',
+    }));
+  }, [registrationsModalData, registrationsModalTournament]);
 
   async function loadTournaments() {
     const [data, venueData] = await Promise.all([
@@ -626,6 +664,21 @@ const TournamentsPage = () => {
     }
   }
 
+  async function openTournamentRegistrationsModal(tournament = publicFormTournament) {
+    if (!tournament) {
+      return;
+    }
+
+    try {
+      setRegistrationError('');
+      setRegistrationsModalTournament(tournament);
+      setRegistrationsModalData(await getTournamentRegistrationsRequest(tournament.id));
+      setShowRegistrationsModal(true);
+    } catch {
+      setRegistrationError('No fue posible cargar los inscritos del torneo.');
+    }
+  }
+
   async function removeTeamRegistration(teamId: string) {
     if (!selectedTournament || !confirm('Retirar este equipo del torneo?')) {
       return;
@@ -656,6 +709,7 @@ const TournamentsPage = () => {
         fullName: member.fullName || member.user?.name || '',
         identifier: member.identifier || member.user?.universityCode || '',
         email: member.email || member.user?.email || '',
+        phone: member.phone || '',
         isCaptain: member.isCaptain,
       })),
     });
@@ -749,6 +803,7 @@ const TournamentsPage = () => {
       displayName: participant.user?.name || participant.displayName,
       identifier: participant.user?.universityCode || participant.identifier || '',
       email: participant.user?.email || participant.email || '',
+      phone: participant.phone || '',
       seed: participant.seed ? String(participant.seed) : '',
     });
   }
@@ -765,6 +820,7 @@ const TournamentsPage = () => {
       await updateIndividualParticipantRequest(selectedTournament.id, selectedParticipant.id, {
         displayName: participantEditForm.displayName,
         email: participantEditForm.email,
+        phone: participantEditForm.phone || null,
         identifier: participantEditForm.identifier || null,
         seed: participantEditForm.seed ? Number(participantEditForm.seed) : null,
         status: selectedParticipant.status,
@@ -1241,6 +1297,7 @@ const TournamentsPage = () => {
                     <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Nombre" value={member.fullName} onChange={(event) => updateTeamMember(index, 'fullName', event.target.value)} required />
                     <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Código o cédula" value={member.identifier} onChange={(event) => updateTeamMember(index, 'identifier', event.target.value)} required />
                     <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Correo" type="email" value={member.email} onChange={(event) => updateTeamMember(index, 'email', event.target.value)} required />
+                    <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Telefono" type="tel" value={member.phone} onChange={(event) => updateTeamMember(index, 'phone', event.target.value)} required />
                   </div>
                   {teamEditForm.members.length > 1 ? (
                     <button className="mt-3 rounded-md border border-red-200 px-3 py-2 text-xs font-semibold text-red-700" type="button" onClick={() => removeTeamMember(index)}>
@@ -1276,6 +1333,10 @@ const TournamentsPage = () => {
             <label className="block text-sm font-medium text-slate-700">
               Correo
               <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="email" value={participantEditForm.email} onChange={(event) => setParticipantEditForm({ ...participantEditForm, email: event.target.value })} required />
+            </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Telefono
+              <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="tel" value={participantEditForm.phone} onChange={(event) => setParticipantEditForm({ ...participantEditForm, phone: event.target.value })} required />
             </label>
             <label className="block text-sm font-medium text-slate-700">
               Semilla
@@ -1323,6 +1384,15 @@ const TournamentsPage = () => {
                   ) : null}
                 </div>
                 <div className="flex flex-wrap justify-center gap-2">
+                  {publicFormTournament ? (
+                    <button
+                      className="rounded-md border border-[#5adf82]/35 px-4 py-2 text-sm font-semibold text-[#f4fff0]"
+                      type="button"
+                      onClick={() => void openTournamentRegistrationsModal(publicFormTournament)}
+                    >
+                      Ver inscritos
+                    </button>
+                  ) : null}
                   <button className="rounded-md border border-[#5adf82]/35 px-4 py-2 text-sm font-semibold text-[#f4fff0]" type="button" onClick={() => void navigator.clipboard.writeText(publicRegistrationLink)}>
                     Copiar link
                   </button>
@@ -1348,6 +1418,16 @@ const TournamentsPage = () => {
             )}
           </div>
         </FormModal>
+
+        <RegistrationsModal
+          open={showRegistrationsModal}
+          title={`Inscritos - ${registrationsModalTournament?.name || 'Torneo'}`}
+          description="Lista de equipos, participantes e integrantes inscritos."
+          rows={tournamentRegistrationRows}
+          emptyMessage="Este torneo no tiene inscritos registrados."
+          onClose={() => setShowRegistrationsModal(false)}
+          onNotice={setRegistrationError}
+        />
 
         <div className="space-y-6">
           <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">

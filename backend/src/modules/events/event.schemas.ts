@@ -21,7 +21,7 @@ const eventBodySchema = z.object({
   slug: z.string().trim().min(3).optional(),
   description: z.string().trim().optional().nullable(),
   type: z.nativeEnum(EventType),
-  status: z.nativeEnum(EventStatus).default(EventStatus.DRAFT),
+  status: z.nativeEnum(EventStatus).default(EventStatus.PUBLISHED),
   modality: z.nativeEnum(EventModality).default(EventModality.PRESENTIAL),
   streamUrl: z.string().trim().url('El link de transmisión debe ser una URL válida').optional().nullable(),
   startsAt: bogotaDateTimeSchema,

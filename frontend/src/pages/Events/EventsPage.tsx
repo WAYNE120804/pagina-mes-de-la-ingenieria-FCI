@@ -9,6 +9,7 @@ import {
   getPublicEventQrSvgRequest,
   listAttendanceRequest,
   listEventsRequest,
+  updateAttendanceStatusRequest,
   updateEventRequest,
   type AttendanceItem,
   type EventItem,
@@ -24,6 +25,7 @@ import { listUsersRequest, type UserRow } from '../../api/users.api';
 import { listVenuesRequest, type Venue } from '../../api/venues.api';
 import Topbar from '../../components/Layout/Topbar';
 import FormModal from '../../components/common/FormModal';
+import RegistrationsModal, { type RegistrationModalRow } from '../../components/common/RegistrationsModal';
 import {
   formatDateTime as formatColombiaDateTime,
   fromDateTimeLocalValue,
@@ -39,7 +41,9 @@ import {
   roleLabels,
 } from '../../utils/labels';
 
-const eventTypes = Object.keys(eventTypeLabels);
+const generalEventTypes = Object.keys(eventTypeLabels).filter(
+  (type) => !['COMPETITION', 'HACKATHON'].includes(type)
+);
 const eventStatuses = Object.keys(eventStatusLabels);
 const eventModalities = Object.keys(eventModalityLabels);
 
@@ -303,12 +307,27 @@ function readImageAsDataUrl(file: File) {
   });
 }
 
-const EventsPage = () => {
+type EventsPageProps = {
+  scope?: 'events' | 'competitions';
+};
+
+const EventsPage = ({ scope = 'events' }: EventsPageProps) => {
+  const isCompetitionScope = scope === 'competitions';
+  const pageTitle = isCompetitionScope ? 'Competencias' : 'Eventos';
+  const entityLabel = isCompetitionScope ? 'competencia' : 'evento';
+  const availableEventTypes = isCompetitionScope ? ['COMPETITION'] : generalEventTypes;
+  const initialForm = useMemo(
+    () => ({
+      ...emptyForm,
+      type: isCompetitionScope ? 'COMPETITION' : 'TALK',
+    }),
+    [isCompetitionScope]
+  );
   const [events, setEvents] = useState<EventItem[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
-  const [form, setForm] = useState<EventForm>(emptyForm);
+  const [form, setForm] = useState<EventForm>(initialForm);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -321,7 +340,10 @@ const EventsPage = () => {
   const [publicLinkTitle, setPublicLinkTitle] = useState('');
   const [publicLinkEvent, setPublicLinkEvent] = useState<EventItem | null>(null);
   const [publicLinkMode, setPublicLinkMode] = useState<'registration' | 'attendance'>('attendance');
+  const [registrationListEvent, setRegistrationListEvent] = useState<EventItem | null>(null);
+  const [registrationListAttendance, setRegistrationListAttendance] = useState<AttendanceItem[]>([]);
   const [showEventModal, setShowEventModal] = useState(false);
+  const [showRegistrationsModal, setShowRegistrationsModal] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
@@ -336,23 +358,55 @@ const EventsPage = () => {
   const selectedActiveAttendance = selectedAttendance.filter((item) => item.status !== 'CANCELLED').length;
   const selectedAvailable = selectedEvent?.capacity ? Math.max(selectedEvent.capacity - selectedActiveAttendance, 0) : null;
   const selectedDuration = selectedEvent ? getDurationMinutes(selectedEvent.startsAt, selectedEvent.endsAt) : null;
+  const registrationListRows = useMemo<RegistrationModalRow[]>(
+    () =>
+      registrationListAttendance.map((item) => ({
+        id: item.id,
+        name: item.user?.name || item.fullName || '',
+        email: item.user?.email || item.email || '',
+        phone: item.phone || '',
+        identifier: item.user?.universityCode || item.identifier || '',
+        status: labelFor(attendanceStatusLabels, item.status),
+        detail: labelFor(attendanceMethodLabels, item.method),
+        actionLabel: item.status === 'CHECKED_IN' ? 'Desconfirmar ingreso' : 'Confirmar ingreso',
+      })),
+    [registrationListAttendance]
+  );
 
   async function loadData() {
+    const eventFilters = {
+      search: search || undefined,
+      type: isCompetitionScope ? 'COMPETITION' : filterType || undefined,
+      status: filterStatus || undefined,
+    };
     const [eventsData, venuesData, usersData, speakerData] = await Promise.all([
-      listEventsRequest({ search: search || undefined, type: filterType || undefined, status: filterStatus || undefined }),
+      listEventsRequest(eventFilters),
       listVenuesRequest(),
       listUsersRequest(),
       listSpeakersRequest(),
     ]);
-    setEvents(eventsData);
+    setEvents(
+      isCompetitionScope
+        ? eventsData
+        : eventsData.filter((event) => !['COMPETITION', 'HACKATHON'].includes(event.type))
+    );
     setVenues(venuesData);
     setUsers(usersData.users);
     setSpeakers(speakerData);
   }
 
   useEffect(() => {
+    setForm(initialForm);
+    setFilterType('');
+    setSelectedEvent(null);
+    setSelectedAttendance([]);
+    setPublicQrSvg('');
+    setPublicLink('');
+  }, [initialForm]);
+
+  useEffect(() => {
     loadData().catch(() => setError('No fue posible cargar la agenda.'));
-  }, []);
+  }, [scope]);
 
   async function applyFilters() {
     setError('');
@@ -392,19 +446,19 @@ const EventsPage = () => {
   }
 
   function resetForm() {
-    setForm(emptyForm);
+    setForm(initialForm);
   }
 
   function openCreateModal() {
     setError('');
     setMessage('');
-    setForm(emptyForm);
+    setForm(initialForm);
     setShowEventModal(true);
   }
 
   function closeEventModal() {
     setShowEventModal(false);
-    setForm(emptyForm);
+    setForm(initialForm);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -516,6 +570,38 @@ const EventsPage = () => {
     }
   }
 
+  async function openRegistrationsModal(event = publicLinkEvent) {
+    if (!event) {
+      return;
+    }
+
+    try {
+      setError('');
+      setRegistrationListEvent(event);
+      setRegistrationListAttendance(await listAttendanceRequest(event.id));
+      setShowRegistrationsModal(true);
+    } catch {
+      setError('No fue posible cargar los inscritos.');
+    }
+  }
+
+  async function toggleRegistrationStatus(row: RegistrationModalRow) {
+    const current = registrationListAttendance.find((item) => item.id === row.id);
+
+    if (!current) {
+      return;
+    }
+
+    const nextStatus = current.status === 'CHECKED_IN' ? 'REGISTERED' : 'CHECKED_IN';
+    const updated = await updateAttendanceStatusRequest(current.id, nextStatus);
+    setRegistrationListAttendance((items) =>
+      items.map((item) => (item.id === updated.id ? updated : item))
+    );
+    setSelectedAttendance((items) =>
+      items.map((item) => (item.id === updated.id ? updated : item))
+    );
+  }
+
   async function assignResponsible(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedEvent || !responsibleUserId) {
@@ -551,12 +637,16 @@ const EventsPage = () => {
 
   return (
     <div>
-      <Topbar title="Eventos" />
+      <Topbar title={pageTitle} />
       <div className="px-6 py-6">
         <FormModal
           open={showEventModal}
-          title={form.id ? 'Editar evento' : 'Nuevo evento'}
-          description="Configura los datos principales del evento. Si es charla o taller, agrega el tema y el ponente."
+          title={form.id ? `Editar ${entityLabel}` : `Nueva ${entityLabel}`}
+          description={
+            isCompetitionScope
+              ? 'Configura los datos principales de la competencia.'
+              : 'Configura los datos principales del evento. Si es charla o taller, agrega el tema y el ponente.'
+          }
           onClose={closeEventModal}
           size="xl"
         >
@@ -575,16 +665,23 @@ const EventsPage = () => {
               />
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <label className="block text-sm font-medium text-slate-700">
-                Tipo
-                <select
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-                  value={form.type}
-                  onChange={(event) => setForm({ ...form, type: event.target.value })}
-                >
-                  {eventTypes.map((item) => <option key={item} value={item}>{eventTypeLabels[item]}</option>)}
-                </select>
-              </label>
+              {isCompetitionScope ? (
+                <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                  <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Tipo</span>
+                  <span className="mt-1 block font-semibold text-slate-950">Competencia</span>
+                </div>
+              ) : (
+                <label className="block text-sm font-medium text-slate-700">
+                  Tipo
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    value={form.type}
+                    onChange={(event) => setForm({ ...form, type: event.target.value })}
+                  >
+                    {availableEventTypes.map((item) => <option key={item} value={item}>{eventTypeLabels[item]}</option>)}
+                  </select>
+                </label>
+              )}
               <label className="block text-sm font-medium text-slate-700">
                 Estado
                 <select className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
@@ -704,14 +801,31 @@ const EventsPage = () => {
           </form>
         </FormModal>
 
+        <RegistrationsModal
+          open={showRegistrationsModal}
+          title={`Inscritos - ${registrationListEvent?.title || 'Actividad'}`}
+          description="Lista de personas inscritas o con asistencia confirmada."
+          rows={registrationListRows}
+          emptyMessage="Esta actividad no tiene inscritos registrados."
+          onClose={() => setShowRegistrationsModal(false)}
+          onRowAction={(row) => void toggleRegistrationStatus(row)}
+          onNotice={setMessage}
+        />
+
         <div className="space-y-6">
           <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <div className="grid gap-3 md:grid-cols-[1fr_180px_180px_auto]">
-              <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Buscar evento" value={search} onChange={(event) => setSearch(event.target.value)} />
-              <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filterType} onChange={(event) => setFilterType(event.target.value)}>
-                <option value="">Todos los tipos</option>
-                {eventTypes.map((item) => <option key={item} value={item}>{eventTypeLabels[item]}</option>)}
-              </select>
+              <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder={`Buscar ${entityLabel}`} value={search} onChange={(event) => setSearch(event.target.value)} />
+              {isCompetitionScope ? (
+                <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                  Competencias
+                </div>
+              ) : (
+                <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filterType} onChange={(event) => setFilterType(event.target.value)}>
+                  <option value="">Todos los tipos</option>
+                  {availableEventTypes.map((item) => <option key={item} value={item}>{eventTypeLabels[item]}</option>)}
+                </select>
+              )}
               <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filterStatus} onChange={(event) => setFilterStatus(event.target.value)}>
                 <option value="">Todos los estados</option>
                 {eventStatuses.map((item) => <option key={item} value={item}>{eventStatusLabels[item]}</option>)}
@@ -732,9 +846,9 @@ const EventsPage = () => {
 
           <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
-              <h3 className="text-base font-semibold text-slate-950">Agenda</h3>
+              <h3 className="text-base font-semibold text-slate-950">{isCompetitionScope ? 'Competencias' : 'Agenda'}</h3>
               <button className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={openCreateModal}>
-                Nuevo evento
+                {isCompetitionScope ? 'Nueva competencia' : 'Nuevo evento'}
               </button>
             </div>
             <div className="overflow-x-auto">
@@ -770,9 +884,7 @@ const EventsPage = () => {
                         <div className="flex flex-wrap gap-2">
                           <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => void openDetail(event.id)}>Detalle</button>
                           <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => void showPublicLink(event, 'attendance')}>Asistencia</button>
-                          {event.type === 'WORKSHOP' ? (
-                            <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => void showPublicLink(event, 'registration')}>Inscripción</button>
-                          ) : null}
+                          <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => void showPublicLink(event, 'registration')}>Inscripción</button>
                           <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" onClick={() => editEvent(event)}>Editar</button>
                           <button className="rounded-md border border-red-200 px-2 py-1 text-xs font-semibold text-red-700" onClick={() => void removeEvent(event.id)}>Eliminar</button>
                         </div>
@@ -794,6 +906,15 @@ const EventsPage = () => {
                   <h3 className="mt-1 text-lg font-semibold text-[#f4fff0]">{publicLinkTitle}</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  {publicLinkEvent ? (
+                    <button
+                      className="rounded-md border border-[#5adf82]/35 px-3 py-2 text-sm font-semibold text-[#f4fff0]"
+                      type="button"
+                      onClick={() => void openRegistrationsModal(publicLinkEvent)}
+                    >
+                      Ver asistencia
+                    </button>
+                  ) : null}
                   <button className="rounded-md border border-[#5adf82]/35 px-3 py-2 text-sm font-semibold text-[#f4fff0]" type="button" onClick={() => void navigator.clipboard.writeText(publicLink)}>Copiar link</button>
                   {publicLinkEvent ? (
                     <button
@@ -863,9 +984,7 @@ const EventsPage = () => {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => void showPublicLink(selectedEvent, 'attendance')}>Asistencia</button>
-                  {selectedEvent.type === 'WORKSHOP' ? (
-                    <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => void showPublicLink(selectedEvent, 'registration')}>Inscripción</button>
-                  ) : null}
+                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => void showPublicLink(selectedEvent, 'registration')}>Inscripción</button>
                   <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => setSelectedEvent(null)}>Cerrar detalle</button>
                 </div>
               </div>
@@ -991,7 +1110,7 @@ const EventsPage = () => {
                     </div>
                     <div>
                       <dt className="text-slate-500">Formulario</dt>
-                      <dd className="mt-1 font-semibold text-slate-950">{selectedEvent.type === 'WORKSHOP' ? 'Inscripción y asistencia' : 'Asistencia'}</dd>
+                      <dd className="mt-1 font-semibold text-slate-950">Inscripción y asistencia</dd>
                     </div>
                   </dl>
                 </div>
