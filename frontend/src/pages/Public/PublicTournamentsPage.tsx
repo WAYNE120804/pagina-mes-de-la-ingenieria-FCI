@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import {
   listPublicTournamentsRequest,
@@ -28,30 +28,6 @@ function competitorName(match: TournamentMatch, side: 'home' | 'away') {
 
 const phaseOrder = ['FASE_GRUPOS', 'OCTAVOS', 'CUARTOS', 'SEMIFINAL', 'FINAL'];
 const judgedSports = ['MARATON_PROGRAMACION', 'CAPTURA_BANDERA'];
-
-function formatMatchDate(startsAt?: string | null, endsAt?: string | null) {
-  if (!startsAt) {
-    return 'Fecha y hora por definir';
-  }
-
-  const startText = new Intl.DateTimeFormat('es-CO', {
-    timeZone: 'America/Bogota',
-    weekday: 'short',
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(startsAt));
-  const endText = endsAt
-    ? new Intl.DateTimeFormat('es-CO', {
-        timeZone: 'America/Bogota',
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(new Date(endsAt))
-    : 'fin por definir';
-
-  return `${startText} - ${endText}`;
-}
 
 function groupMatchesByGroup(matches: TournamentMatch[]) {
   return Object.entries(
@@ -89,6 +65,7 @@ function memberName(member: TournamentTeam['members'][number]) {
 }
 
 const PublicTournamentsPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tournaments, setTournaments] = useState<PublicTournamentOverview[]>([]);
   const [activeId, setActiveId] = useState('');
   const [loading, setLoading] = useState(true);
@@ -98,11 +75,20 @@ const PublicTournamentsPage = () => {
     listPublicTournamentsRequest()
       .then((data) => {
         setTournaments(data);
-        setActiveId(data[0]?.id || '');
+        const requestedTournament = searchParams.get('torneo') || '';
+        const requestedMatch = data.find(
+          (tournament) => tournament.id === requestedTournament || tournamentSlug(tournament) === requestedTournament
+        );
+        setActiveId(requestedMatch?.id || data[0]?.id || '');
       })
       .catch(() => setError('No fue posible cargar los torneos publicados.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [searchParams]);
+
+  function selectTournament(tournament: PublicTournamentOverview) {
+    setActiveId(tournament.id);
+    setSearchParams({ torneo: tournamentSlug(tournament) });
+  }
 
   const activeTournament = tournaments.find((item) => item.id === activeId) || tournaments[0];
   const matchesByPhase = useMemo(() => {
@@ -179,7 +165,7 @@ const PublicTournamentsPage = () => {
                       : 'text-[#b9cbb8] hover:bg-[#272a2c] hover:text-[#5adf82]',
                   ].join(' ')}
                   type="button"
-                  onClick={() => setActiveId(tournament.id)}
+                  onClick={() => selectTournament(tournament)}
                 >
                   <span className="material-symbols-outlined">
                     {sportIcon(tournament.sport)}
@@ -343,7 +329,7 @@ const PublicTournamentsPage = () => {
                                         </span>
                                         <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-[#1d2022] px-3 py-1">
                                           <span className="material-symbols-outlined text-sm text-[#5adf82]">schedule</span>
-                                          {formatMatchDate(match.scheduledAt, match.scheduledEndsAt)}
+                                          Programacion por definir
                                         </span>
                                         <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-[#1d2022] px-3 py-1">
                                           <span className="material-symbols-outlined text-sm text-[#5adf82]">location_on</span>

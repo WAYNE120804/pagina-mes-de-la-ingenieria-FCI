@@ -5,7 +5,11 @@ import {
   listPublicEventsRequest,
   type PublicEventItem,
 } from '../../api/events.api';
-import { eventModalityLabels, eventTypeLabels, labelFor } from '../../utils/labels';
+import {
+  listPublicTournamentsRequest,
+  type PublicTournamentOverview,
+} from '../../api/tournaments.api';
+import { eventModalityLabels, eventTypeLabels, labelFor, tournamentSportLabels } from '../../utils/labels';
 import PublicLayout from './PublicLayout';
 import { campusImage } from './publicContent';
 
@@ -64,6 +68,17 @@ function durationLabel(start: string, end: string) {
   return remainingMinutes ? `${hours} h ${remainingMinutes} min` : `${hours} horas`;
 }
 
+function tournamentSlug(tournament: { id: string; name: string }) {
+  const slug = tournament.name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+  return slug || tournament.id;
+}
+
 const copyByType = {
   TALK: {
     title: 'Charlas',
@@ -95,6 +110,7 @@ const defaultCopy = {
 const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [allEvents, setAllEvents] = useState<PublicEventItem[]>([]);
+  const [publicTournaments, setPublicTournaments] = useState<PublicTournamentOverview[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [profileEvent, setProfileEvent] = useState<PublicEventItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -103,8 +119,11 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
   const requestedEventId = searchParams.get('evento') || '';
 
   useEffect(() => {
-    listPublicEventsRequest()
-      .then(setAllEvents)
+    Promise.all([listPublicEventsRequest(), listPublicTournamentsRequest()])
+      .then(([eventData, tournamentData]) => {
+        setAllEvents(eventData);
+        setPublicTournaments(tournamentData);
+      })
       .catch(() => setError('No fue posible cargar el cronograma publicado.'))
       .finally(() => setLoading(false));
   }, []);
@@ -208,6 +227,29 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                 </div>
               </div>
             </section>
+            {!eventType && publicTournaments.length ? (
+              <section className="rounded-xl border border-[#3b4b3c] bg-[#1d2022]/80 p-6 backdrop-blur">
+                <h2 className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#5adf82]">
+                  Torneos
+                </h2>
+                <div className="mt-5 space-y-3">
+                  {publicTournaments.map((tournament) => (
+                    <Link
+                      key={tournament.id}
+                      className="block rounded-xl border border-[#3b4b3c] bg-[#101415] p-4 text-sm transition-colors hover:border-[#5adf82]"
+                      to={`/public/torneos?torneo=${tournamentSlug(tournament)}`}
+                    >
+                      <span className="block font-display text-base font-bold text-[#f0ffed]">
+                        {tournament.name}
+                      </span>
+                      <span className="mt-1 block text-xs text-[#b9cbb8]">
+                        {labelFor(tournamentSportLabels, tournament.sport)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </aside>
 
           <section className="space-y-12 lg:col-span-9">
@@ -432,6 +474,13 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                           {profileEvent.venue.location}
                         </dd>
                       ) : null}
+                      <dd className="mt-3 overflow-hidden rounded-xl border border-[#3b4b3c]">
+                        <img
+                          className="h-40 w-full object-cover"
+                          src={profileEvent.venue?.photoUrl || campusImage}
+                          alt={profileEvent.venue?.name || 'Ubicacion de la actividad'}
+                        />
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-[#849584]">Modalidad</dt>
@@ -499,6 +548,17 @@ const PublicSchedulePage = ({ eventType }: PublicSchedulePageProps) => {
                   {profileEvent.description || 'Sin descripcion registrada.'}
                 </p>
               </div>
+              {profileEvent.registrationUrl ? (
+                <div className="mt-6 flex justify-end">
+                  <Link
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#5adf82] px-5 py-3 font-bold text-[#003917] transition-transform active:scale-95"
+                    to={profileEvent.registrationUrl}
+                  >
+                    Inscribirse
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  </Link>
+                </div>
+              ) : null}
             </section>
           </div>
         ) : null}

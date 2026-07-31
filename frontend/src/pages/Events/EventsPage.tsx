@@ -13,7 +13,6 @@ import {
   type AttendanceItem,
   type EventItem,
 } from '../../api/events.api';
-import { getApiErrorMessage } from '../../api/client';
 import {
   createSpeakerRequest,
   createTalkRequest,
@@ -21,7 +20,6 @@ import {
   updateTalkRequest,
   type Speaker,
 } from '../../api/talks.api';
-import { createTournamentRequest } from '../../api/tournaments.api';
 import { listUsersRequest, type UserRow } from '../../api/users.api';
 import { listVenuesRequest, type Venue } from '../../api/venues.api';
 import Topbar from '../../components/Layout/Topbar';
@@ -39,16 +37,11 @@ import {
   eventTypeLabels,
   labelFor,
   roleLabels,
-  tournamentFormatLabels,
-  tournamentSportLabels,
-  tournamentStatusLabels,
 } from '../../utils/labels';
 
 const eventTypes = Object.keys(eventTypeLabels);
 const eventStatuses = Object.keys(eventStatusLabels);
 const eventModalities = Object.keys(eventModalityLabels);
-const competitionSports = ['MARATON_PROGRAMACION', 'CAPTURA_BANDERA'];
-const competitionFormats = Object.keys(tournamentFormatLabels);
 
 type EventForm = {
   id?: string;
@@ -69,10 +62,6 @@ type EventForm = {
   speakerCompany: string;
   speakerBio: string;
   speakerPhotoUrl: string;
-  competitionSport: string;
-  competitionFormat: string;
-  competitionMaxTeams: string;
-  competitionMaxMembersPerTeam: string;
 };
 
 const emptyForm: EventForm = {
@@ -93,22 +82,7 @@ const emptyForm: EventForm = {
   speakerCompany: '',
   speakerBio: '',
   speakerPhotoUrl: '',
-  competitionSport: 'MARATON_PROGRAMACION',
-  competitionFormat: 'ROUND_ROBIN',
-  competitionMaxTeams: '',
-  competitionMaxMembersPerTeam: '',
 };
-
-function defaultCompetitionFormat(sport: string) {
-  return sport === 'MARATON_PROGRAMACION' || sport === 'CAPTURA_BANDERA' ? 'ROUND_ROBIN' : 'KNOCKOUT';
-}
-
-function tournamentStatusFromEventStatus(status: string) {
-  if (status === 'PUBLISHED') return 'REGISTRATION_OPEN';
-  if (status === 'FINISHED') return 'FINISHED';
-  if (status === 'CANCELLED') return 'CANCELLED';
-  return 'DRAFT';
-}
 
 function oneHourAfterLocalInput(value: string) {
   if (!value) {
@@ -405,10 +379,6 @@ const EventsPage = () => {
       speakerCompany: event.talk?.speaker?.company || '',
       speakerBio: event.talk?.speaker?.bio || '',
       speakerPhotoUrl: event.talk?.speaker?.photoUrl || '',
-      competitionSport: 'MARATON_PROGRAMACION',
-      competitionFormat: 'ROUND_ROBIN',
-      competitionMaxTeams: '',
-      competitionMaxMembersPerTeam: '',
     });
     setShowEventModal(true);
   }
@@ -441,42 +411,6 @@ const EventsPage = () => {
     event.preventDefault();
     setError('');
     setMessage('');
-
-    // "Competencia" es una puerta de entrada desde agenda, no un Event real.
-    // Al guardar se crea un Tournament para reutilizar inscripciones, equipos,
-    // fixture, rankings y publicacion del modulo Torneos.
-    if (form.type === 'COMPETITION') {
-      if (form.id) {
-        setError('Un evento existente no se puede convertir en competencia. Crea una competencia nueva para que se registre como torneo.');
-        return;
-      }
-
-      try {
-        await createTournamentRequest({
-          name: form.title,
-          sport: form.competitionSport,
-          mode: 'TEAM',
-          format: form.competitionFormat,
-          status: tournamentStatusFromEventStatus(form.status),
-          videoGameTitle: null,
-          venueId: form.venueId || null,
-          description: form.description || null,
-          rules: null,
-          maxTeams: form.competitionMaxTeams ? Number(form.competitionMaxTeams) : null,
-          maxMembersPerTeam: form.competitionMaxMembersPerTeam ? Number(form.competitionMaxMembersPerTeam) : null,
-          maxParticipants: null,
-          startsAt: form.startsAt ? fromDateTimeLocalValue(form.startsAt) : null,
-          endsAt: form.endsAt ? fromDateTimeLocalValue(form.endsAt) : null,
-        });
-
-        resetForm();
-        setShowEventModal(false);
-        setMessage('La competencia no se guardó como evento: se creó como torneo y se gestiona desde el módulo Torneos.');
-      } catch (requestError) {
-        setError(getApiErrorMessage(requestError, 'No fue posible crear el torneo de competencia.'));
-      }
-      return;
-    }
 
     const payload = {
       title: form.title,
@@ -646,17 +580,7 @@ const EventsPage = () => {
                 <select
                   className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                   value={form.type}
-                  onChange={(event) => {
-                    const type = event.target.value;
-                    setForm({
-                      ...form,
-                      type,
-                      competitionFormat:
-                        type === 'COMPETITION'
-                          ? defaultCompetitionFormat(form.competitionSport)
-                          : form.competitionFormat,
-                    });
-                  }}
+                  onChange={(event) => setForm({ ...form, type: event.target.value })}
                 >
                   {eventTypes.map((item) => <option key={item} value={item}>{eventTypeLabels[item]}</option>)}
                 </select>
@@ -702,71 +626,6 @@ const EventsPage = () => {
                 </div>
               )}
             </div>
-            {form.type === 'COMPETITION' ? (
-              <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                <p className="font-semibold">
-                  Esta categoría no se guarda como evento. Al guardar se creará un torneo y se administrará desde el módulo Torneos.
-                </p>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <label className="block font-medium">
-                    Disciplina
-                    <select
-                      className="mt-1 w-full rounded-md border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900"
-                      value={form.competitionSport}
-                      onChange={(event) => {
-                        const sport = event.target.value;
-                        setForm({
-                          ...form,
-                          competitionSport: sport,
-                          competitionFormat: defaultCompetitionFormat(sport),
-                        });
-                      }}
-                    >
-                      {competitionSports.map((sport) => (
-                        <option key={sport} value={sport}>{tournamentSportLabels[sport]}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block font-medium">
-                    Formato del torneo
-                    <select
-                      className="mt-1 w-full rounded-md border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900"
-                      value={form.competitionFormat}
-                      onChange={(event) => setForm({ ...form, competitionFormat: event.target.value })}
-                    >
-                      {competitionFormats.map((format) => (
-                        <option key={format} value={format}>{tournamentFormatLabels[format]}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block font-medium">
-                    Máximo de equipos
-                    <input
-                      className="mt-1 w-full rounded-md border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900"
-                      type="number"
-                      min="1"
-                      value={form.competitionMaxTeams}
-                      onChange={(event) => setForm({ ...form, competitionMaxTeams: event.target.value })}
-                      placeholder="Sin límite"
-                    />
-                  </label>
-                  <label className="block font-medium">
-                    Máximo integrantes por equipo
-                    <input
-                      className="mt-1 w-full rounded-md border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900"
-                      type="number"
-                      min="1"
-                      value={form.competitionMaxMembersPerTeam}
-                      onChange={(event) => setForm({ ...form, competitionMaxMembersPerTeam: event.target.value })}
-                      placeholder="Sin límite"
-                    />
-                  </label>
-                </div>
-                <p className="text-xs">
-                  Estado resultante del torneo: {tournamentStatusLabels[tournamentStatusFromEventStatus(form.status)]}.
-                </p>
-              </div>
-            ) : null}
             <label className="block text-sm font-medium text-slate-700">
               {form.modality === 'VIRTUAL' ? 'Espacio de referencia' : 'Espacio'}
               <select className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.venueId} onChange={(event) => setForm({ ...form, venueId: event.target.value })}>
@@ -784,12 +643,10 @@ const EventsPage = () => {
                 <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="datetime-local" value={form.endsAt} onChange={(event) => setForm({ ...form, endsAt: event.target.value })} required />
               </label>
             </div>
-            {form.type !== 'COMPETITION' ? (
-              <label className="block text-sm font-medium text-slate-700">
-                Capacidad
-                <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" value={form.capacity} onChange={(event) => setForm({ ...form, capacity: event.target.value })} />
-              </label>
-            ) : null}
+            <label className="block text-sm font-medium text-slate-700">
+              Capacidad
+              <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" min="1" value={form.capacity} onChange={(event) => setForm({ ...form, capacity: event.target.value })} />
+            </label>
             {requiresTalkData ? (
               <div className="space-y-4 rounded-md border border-slate-200 bg-slate-50 p-3">
                 <p className="text-sm font-semibold text-slate-950">

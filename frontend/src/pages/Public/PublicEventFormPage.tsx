@@ -59,6 +59,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
   const [semester, setSemester] = useState('');
   const [career, setCareer] = useState('');
   const [email, setEmail] = useState('');
+  const [whatsappConsent, setWhatsappConsent] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -86,6 +87,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
           semester,
           career,
           email: email || null,
+          whatsappConsent,
         });
         setMessage('Inscripción registrada. Guarda tu código o cédula para confirmar asistencia.');
       } else {
@@ -103,6 +105,7 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
       setFullName('');
       setIdentifier('');
       setEmail('');
+      setWhatsappConsent(false);
       setCategory('ESTUDIANTE');
       setSemester('');
       setCareer('');
@@ -254,6 +257,19 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
                   onChange={(event) => setEmail(event.target.value)}
                 />
               </label>
+              {mode === 'registration' ? (
+                <label className="flex items-start gap-3 rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-4 text-sm leading-6 text-[#b9cbb8]">
+                  <input
+                    className="mt-1 text-[#5adf82] focus:ring-[#5adf82]"
+                    type="checkbox"
+                    checked={whatsappConsent}
+                    onChange={(event) => setWhatsappConsent(event.target.checked)}
+                  />
+                  <span>
+                    Autorizo ser ingresado/a a un grupo de WhatsApp para el envio de informacion de la actividad.
+                  </span>
+                </label>
+              ) : null}
               {message ? (
                 <p className="rounded-xl border border-[#5adf82]/30 bg-[#5adf82]/10 px-4 py-3 text-sm text-[#5adf82]">
                   {message}

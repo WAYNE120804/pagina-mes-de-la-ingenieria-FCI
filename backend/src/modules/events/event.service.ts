@@ -1,4 +1,4 @@
-import { AuditAction, EventModality, EventStatus, EventType, Prisma } from '../../lib/prisma-client';
+import { AuditAction, EventModality, EventStatus, Prisma } from '../../lib/prisma-client';
 import { AppError } from '../../lib/app-error';
 import { getPrisma } from '../../lib/prisma';
 import { createAuditLog } from '../../utils/audit';
@@ -73,19 +73,6 @@ function buildPublicFormUrl(origin: string, eventTitle: string, fallbackSlug: st
   const eventSlug = slugify(eventTitle) || fallbackSlug;
 
   return `${origin.replace(/\/$/, '')}/public/eventos/${eventSlug}/${pathMode}`;
-}
-
-function assertEventTypeCanBeSaved(type?: EventType) {
-  // COMPETITION aparece en el formulario de Eventos como ayuda de UX, pero no
-  // debe persistirse en Event: las competencias necesitan inscripciones, equipos,
-  // partidos y rankings, por eso se crean como Tournament desde el frontend.
-  if (type === EventType.COMPETITION) {
-    throw new AppError(
-      'Las competencias no se guardan como eventos. Crea un torneo para gestionar inscripciones, equipos y resultados.',
-      400,
-      'COMPETITION_IS_TOURNAMENT'
-    );
-  }
 }
 
 function assertTransmissionLink(input: { modality?: EventModality | null; streamUrl?: string | null }) {
@@ -174,19 +161,8 @@ export async function listPublicEvents(origin: string) {
 
   return events.map((event) => ({
     ...event,
-    // Solo WORKSHOP tiene preinscripcion publica. La asistencia QR se maneja
-    // aparte para los tipos permitidos por attendance.service.ts.
-    registrationUrl:
-      event.type === EventType.WORKSHOP
-        ? buildPublicFormUrl(origin, event.title, event.slug || event.id, 'registration')
-        : null,
-    attendanceUrl:
-      event.type === EventType.TALK ||
-      event.type === EventType.ACADEMIC ||
-      event.type === EventType.WORKSHOP ||
-      event.type === EventType.COMPETITION
-        ? buildPublicFormUrl(origin, event.title, event.slug || event.id, 'attendance')
-        : null,
+    registrationUrl: buildPublicFormUrl(origin, event.title, event.slug || event.id, 'registration'),
+    attendanceUrl: buildPublicFormUrl(origin, event.title, event.slug || event.id, 'attendance'),
     attendanceOpensAt: new Date(event.startsAt.getTime() - 30 * 60 * 1000),
     attendanceClosesAt: new Date(event.endsAt.getTime() + 30 * 60 * 1000),
   }));
@@ -208,7 +184,6 @@ export async function getEventById(id: string) {
 
 export async function createEvent(input: CreateEventInput, actorId?: string) {
   const prisma = requirePrisma();
-  assertEventTypeCanBeSaved(input.type);
   assertTransmissionLink(input);
 
   await assertVenueAvailability({
@@ -250,7 +225,6 @@ export async function createEvent(input: CreateEventInput, actorId?: string) {
 export async function updateEvent(id: string, input: UpdateEventInput, actorId?: string) {
   const prisma = requirePrisma();
   const existingEvent = await getEventById(id);
-  assertEventTypeCanBeSaved(input.type);
   assertTransmissionLink({
     modality: input.modality === undefined ? existingEvent.modality : input.modality,
     streamUrl: input.streamUrl === undefined ? existingEvent.streamUrl : input.streamUrl,

@@ -433,6 +433,7 @@ model Attendance {
   category    AttendeeCategory?
   semester    String?
   career      String?
+  whatsappConsent Boolean @default(false) @map("whatsapp_consent")
   method      AttendanceMethod
   status      AttendanceStatus @default(REGISTERED)
   qrCode      String?          @unique @map("qr_code")
@@ -524,6 +525,7 @@ model TournamentParticipant {
   identifier   String?
   semester     String?
   career       String?
+  whatsappConsent Boolean @default(false) @map("whatsapp_consent")
   status       String    @default("PENDING")
   seed         Int?
   createdAt    DateTime  @default(now()) @map("created_at")
@@ -582,6 +584,7 @@ model TeamMember {
   email      String?
   semester   String?
   career     String?
+  whatsappConsent Boolean @default(false) @map("whatsapp_consent")
   isCaptain  Boolean  @default(false) @map("is_captain")
   createdAt  DateTime @default(now()) @map("created_at")
 

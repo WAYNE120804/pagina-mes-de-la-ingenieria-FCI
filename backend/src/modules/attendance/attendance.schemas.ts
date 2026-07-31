@@ -49,6 +49,7 @@ export const createAttendanceSchema = z
     category: z.nativeEnum(AttendeeCategory).optional().nullable(),
     semester: semesterSchema.optional().nullable(),
     career: careerSchema.optional().nullable(),
+    whatsappConsent: z.boolean().default(false),
     method: z.nativeEnum(AttendanceMethod).default(AttendanceMethod.MANUAL),
     status: z.nativeEnum(AttendanceStatus).default(AttendanceStatus.CHECKED_IN),
     tempCode: z.string().trim().optional().nullable(),
@@ -74,6 +75,7 @@ export const publicAttendanceSchema = z.object({
   semester: semesterSchema,
   career: careerSchema,
   email: z.string().email().trim().toLowerCase().optional().nullable(),
+  whatsappConsent: z.boolean().default(false),
 });
 
 export const publicCheckInSchema = publicAttendanceSchema.partial({

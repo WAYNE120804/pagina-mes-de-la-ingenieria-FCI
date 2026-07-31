@@ -51,6 +51,7 @@ export type AttendanceItem = {
   category?: string | null;
   semester?: string | null;
   career?: string | null;
+  whatsappConsent: boolean;
   status: string;
   method: string;
   qrCode?: string | null;
@@ -334,6 +335,7 @@ export async function publicRegisterEventRequest(
     semester: string;
     career: string;
     email?: string | null;
+    whatsappConsent: boolean;
   }
 ) {
   const response = await client.post<ApiResponse<AttendanceItem>>(
@@ -353,6 +355,7 @@ export async function publicCheckInEventRequest(
     semester?: string;
     career?: string;
     email?: string | null;
+    whatsappConsent?: boolean;
   }
 ) {
   const response = await client.post<ApiResponse<AttendanceItem>>(

@@ -166,6 +166,7 @@ export const publicTournamentMemberSchema = z.object({
 export const publicTournamentRegistrationSchema = z.object({
   teamName: z.string().trim().min(2).optional(),
   captainIndex: z.number().int().min(0).optional(),
+  whatsappConsent: z.boolean().default(false),
   members: z.array(publicTournamentMemberSchema).min(1).max(20),
 });
 

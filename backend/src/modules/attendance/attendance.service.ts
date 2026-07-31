@@ -287,6 +287,7 @@ export async function createAttendance(
       category: input.category || null,
       semester: input.semester || null,
       career: input.career || null,
+      whatsappConsent: input.whatsappConsent || false,
       method: input.method,
       status: input.status,
       tempCode: input.tempCode || null,
@@ -335,6 +336,7 @@ export async function preregisterAttendance(
       category: input.category || null,
       semester: input.semester || null,
       career: input.career || null,
+      whatsappConsent: input.whatsappConsent || false,
       method: AttendanceMethod.QR,
       status: AttendanceStatus.REGISTERED,
       qrCode: createQrToken(eventId),
@@ -473,10 +475,15 @@ function assertPublicEventType(event: Awaited<ReturnType<typeof getActiveEvent>>
   // Esta lista controla que tipos pueden usar QR/link publico de asistencia.
   // No agregar tipos aqui sin revisar capacidad, certificados y textos publicos.
   const publicTypes: EventType[] = [
-    EventType.TALK,
+    EventType.GENERAL,
     EventType.ACADEMIC,
+    EventType.TALK,
     EventType.WORKSHOP,
     EventType.COMPETITION,
+    EventType.TOURNAMENT,
+    EventType.HACKATHON,
+    EventType.CEREMONY,
+    EventType.OTHER,
   ];
 
   if (!publicTypes.includes(event.type)) {
@@ -520,10 +527,6 @@ export async function getPublicEventForm(
   const event = await getActiveEvent(eventId);
   assertPublicEventType(event);
 
-  if (mode === 'registration') {
-    assertWorkshopEvent(event);
-  }
-
   return {
     event: {
       id: event.id,
@@ -563,7 +566,7 @@ export async function publicRegisterAttendance(eventId: string, input: PublicAtt
   const event = await getActiveEvent(eventId);
   const resolvedEventId = event.id;
 
-  assertWorkshopEvent(event);
+  assertPublicEventType(event);
   await assertCapacity(resolvedEventId, event.capacity);
   await assertNoDuplicate(resolvedEventId, {
     ...input,
@@ -580,6 +583,7 @@ export async function publicRegisterAttendance(eventId: string, input: PublicAtt
       category: input.category,
       semester: input.semester,
       career: input.career,
+      whatsappConsent: input.whatsappConsent,
       method: AttendanceMethod.QR,
       status: AttendanceStatus.REGISTERED,
       qrCode: createQrToken(resolvedEventId),
@@ -629,6 +633,10 @@ export async function publicCheckInAttendance(eventId: string, input: PublicChec
         category: input.category || existingAttendance.category,
         semester: input.semester || existingAttendance.semester,
         career: input.career || existingAttendance.career,
+        whatsappConsent:
+          input.whatsappConsent === undefined
+            ? existingAttendance.whatsappConsent
+            : input.whatsappConsent,
         status: AttendanceStatus.CHECKED_IN,
         checkedInAt: existingAttendance.checkedInAt || new Date(),
       },
@@ -668,6 +676,7 @@ export async function publicCheckInAttendance(eventId: string, input: PublicChec
       category: input.category,
       semester: input.semester || null,
       career: input.career || null,
+      whatsappConsent: input.whatsappConsent || false,
       method: AttendanceMethod.QR,
       status: AttendanceStatus.CHECKED_IN,
       checkedInAt: new Date(),

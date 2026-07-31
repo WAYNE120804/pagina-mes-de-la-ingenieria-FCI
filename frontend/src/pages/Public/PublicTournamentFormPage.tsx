@@ -62,6 +62,7 @@ const PublicTournamentFormPage = () => {
   const [captainIndex, setCaptainIndex] = useState<number | null>(null);
   const [memberCount, setMemberCount] = useState(2);
   const [members, setMembers] = useState<MemberForm[]>([{ ...emptyMember }, { ...emptyMember }]);
+  const [whatsappConsent, setWhatsappConsent] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -160,11 +161,13 @@ const PublicTournamentFormPage = () => {
       await publicRegisterTournamentRequest(form.tournament.id, {
         teamName: isTeam ? teamName : undefined,
         captainIndex: isTeam ? captainIndex ?? undefined : undefined,
+        whatsappConsent,
         members,
       });
       setMessage(isTeam ? 'Equipo inscrito correctamente.' : 'Participante inscrito correctamente.');
       setTeamName('');
       setCaptainIndex(null);
+      setWhatsappConsent(false);
       const resetCount = isTeam ? minTeamMembers : 1;
       setMemberCount(resetCount);
       setMembers(Array.from({ length: resetCount }, () => ({ ...emptyMember })));
@@ -329,6 +332,18 @@ const PublicTournamentFormPage = () => {
                 </div>
               ))}
             </div>
+
+            <label className="flex items-start gap-3 rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-4 text-sm leading-6 text-[#b9cbb8]">
+              <input
+                className="mt-1 text-[#5adf82] focus:ring-[#5adf82]"
+                type="checkbox"
+                checked={whatsappConsent}
+                onChange={(event) => setWhatsappConsent(event.target.checked)}
+              />
+              <span>
+                Autorizo ser ingresado/a a un grupo de WhatsApp para el envio de informacion del torneo.
+              </span>
+            </label>
 
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               {isTeam ? (
