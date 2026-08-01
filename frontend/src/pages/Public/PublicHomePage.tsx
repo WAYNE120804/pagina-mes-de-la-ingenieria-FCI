@@ -286,6 +286,81 @@ const PublicHomePage = () => {
             ))}
           </div>
         </section>
+
+        {!loading && !error && events.length ? (
+          <section className="bg-[#0b0f10] py-20">
+            <div className="mx-auto max-w-7xl px-4 md:px-12">
+              <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2 className="font-display text-3xl font-bold text-[#5adf82]">Todos los eventos</h2>
+                  <div className="mt-3 h-1 w-24 rounded-full bg-[#00ff7f]" />
+                </div>
+                <Link className="font-mono text-xs font-bold uppercase tracking-wider text-[#5adf82]" to="/public/cronograma">
+                  Ver cronograma
+                </Link>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {events.map((event) => (
+                  <article
+                    key={event.id}
+                    className="flex min-h-64 cursor-pointer flex-col rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-6 transition-colors hover:border-[#5adf82]"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => navigate(eventDetailPath(event))}
+                    onKeyDown={(keyboardEvent) => {
+                      if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+                        keyboardEvent.preventDefault();
+                        navigate(eventDetailPath(event));
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="rounded bg-[#323537] px-3 py-1 font-mono text-xs uppercase text-[#e0e3e5]">
+                        {labelFor(eventTypeLabels, event.type)}
+                      </span>
+                      <span className="text-right font-mono text-xs uppercase leading-5 text-[#849584]">
+                        {formatEventDate(event.startsAt)}
+                      </span>
+                    </div>
+                    <h3 className="mt-5 font-display text-2xl font-bold text-[#f0ffed]">{event.title}</h3>
+                    <p className="mt-3 line-clamp-4 whitespace-pre-line text-sm leading-6 text-[#b9cbb8]">
+                      {event.description || 'Sin descripcion registrada.'}
+                    </p>
+                    <div className="mt-auto space-y-3 pt-6 text-sm text-[#b9cbb8]">
+                      <p className="inline-flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base text-[#5adf82]">schedule</span>
+                        {formatEventTime(event.startsAt)}
+                      </p>
+                      <p className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-base text-[#5adf82]">location_on</span>
+                        <span>{event.venue?.name || 'Espacio por confirmar'}</span>
+                      </p>
+                    </div>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <Link
+                        className="inline-flex rounded-lg border border-[#5adf82]/40 px-4 py-2 text-sm font-bold text-[#5adf82]"
+                        to={eventDetailPath(event)}
+                        onClick={(clickEvent) => clickEvent.stopPropagation()}
+                      >
+                        Ver detalle
+                      </Link>
+                      {event.registrationUrl ? (
+                        <Link
+                          className="inline-flex rounded-lg bg-[#5adf82] px-4 py-2 text-sm font-bold text-[#003917]"
+                          to={event.registrationUrl}
+                          onClick={(clickEvent) => clickEvent.stopPropagation()}
+                        >
+                          Inscribirse
+                        </Link>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
       </main>
     </PublicLayout>
   );
