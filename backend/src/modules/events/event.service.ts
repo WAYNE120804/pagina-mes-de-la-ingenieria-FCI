@@ -96,6 +96,17 @@ async function assertVenueAvailability(input: {
   }
 
   const prisma = requirePrisma();
+  const venue = await prisma.venue.findFirst({
+    where: { id: input.venueId, ...onlyActive },
+    select: {
+      allowsConcurrentEvents: true,
+    },
+  });
+
+  if (venue?.allowsConcurrentEvents) {
+    return;
+  }
+
   const conflict = await prisma.event.findFirst({
     where: {
       id: input.eventId ? { not: input.eventId } : undefined,
@@ -109,7 +120,7 @@ async function assertVenueAvailability(input: {
 
   if (conflict) {
     throw new AppError(
-      'El espacio ya tiene un evento programado en ese horario',
+      `El espacio ya tiene el evento "${conflict.title}" programado en ese horario`,
       409,
       'VENUE_SCHEDULE_CONFLICT'
     );

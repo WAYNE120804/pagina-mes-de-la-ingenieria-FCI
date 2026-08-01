@@ -14,6 +14,7 @@ import {
   type AttendanceItem,
   type EventItem,
 } from '../../api/events.api';
+import { getApiErrorMessage } from '../../api/client';
 import {
   createSpeakerRequest,
   createTalkRequest,
@@ -520,8 +521,13 @@ const EventsPage = ({ scope = 'events' }: EventsPageProps) => {
       resetForm();
       setShowEventModal(false);
       await loadData();
-    } catch {
-      setError('No fue posible guardar el evento. Revisa horario, espacio y datos.');
+    } catch (requestError) {
+      setError(
+        getApiErrorMessage(
+          requestError,
+          `No fue posible guardar ${isCompetitionScope ? 'la competencia' : 'el evento'}. Revisa horario, espacio y datos.`
+        )
+      );
     }
   }
 

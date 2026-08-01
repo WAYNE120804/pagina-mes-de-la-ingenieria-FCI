@@ -66,6 +66,7 @@ export async function createVenue(input: CreateVenueInput, actorId?: string) {
       location: input.location || null,
       photoUrl: input.photoUrl || null,
       capacity: input.capacity || null,
+      allowsConcurrentEvents: input.allowsConcurrentEvents,
       isActive: input.isActive,
     },
   });
@@ -92,6 +93,7 @@ export async function updateVenue(id: string, input: UpdateVenueInput, actorId?:
       location: input.location === undefined ? undefined : input.location,
       photoUrl: input.photoUrl === undefined ? undefined : input.photoUrl,
       capacity: input.capacity === undefined ? undefined : input.capacity,
+      allowsConcurrentEvents: input.allowsConcurrentEvents,
       isActive: input.isActive,
     },
   });

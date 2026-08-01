@@ -8,6 +8,7 @@ export type Venue = {
   photoUrl?: string | null;
   capacity?: number | null;
   isActive: boolean;
+  allowsConcurrentEvents: boolean;
 };
 
 type ApiResponse<T> = {
@@ -27,6 +28,7 @@ export async function createVenueRequest(input: {
   location?: string | null;
   photoUrl?: string | null;
   capacity?: number | null;
+  allowsConcurrentEvents?: boolean;
 }) {
   const response = await client.post<ApiResponse<Venue>>(endpoints.venues.create(), {
     ...input,
@@ -38,7 +40,14 @@ export async function createVenueRequest(input: {
 
 export async function updateVenueRequest(
   id: string,
-  input: { name?: string; location?: string | null; photoUrl?: string | null; capacity?: number | null; isActive?: boolean }
+  input: {
+    name?: string;
+    location?: string | null;
+    photoUrl?: string | null;
+    capacity?: number | null;
+    allowsConcurrentEvents?: boolean;
+    isActive?: boolean;
+  }
 ) {
   const response = await client.patch<ApiResponse<Venue>>(endpoints.venues.detail(id), input);
 

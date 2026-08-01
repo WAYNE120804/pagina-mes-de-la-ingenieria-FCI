@@ -21,6 +21,7 @@ export const createVenueSchema = z.object({
   location: z.string().trim().optional().nullable(),
   photoUrl: imageUrlSchema.optional().nullable(),
   capacity: z.number().int().positive().optional().nullable(),
+  allowsConcurrentEvents: z.boolean().default(false),
   isActive: z.boolean().default(true),
 });
 

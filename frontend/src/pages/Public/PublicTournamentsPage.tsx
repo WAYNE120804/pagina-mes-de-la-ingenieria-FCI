@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import {
@@ -130,6 +130,7 @@ const PublicTournamentsPage = () => {
     setSearchParams({ torneo: tournamentSlug(tournament) });
   }
 
+
   const activeTournament = tournaments.find((item) => item.id === activeId) || tournaments[0];
   const matchesByPhase = useMemo(() => {
     const grouped = (activeTournament?.matches || []).reduce<Record<string, TournamentMatch[]>>((groups, match) => {
@@ -191,7 +192,7 @@ const PublicTournamentsPage = () => {
           <p className="rounded-xl border border-[#ffb4ab]/30 bg-[#93000a]/20 p-6 text-[#ffb4ab]">{error}</p>
         ) : tournaments.length === 0 ? (
           <p className="rounded-xl border border-[#3b4b3c] bg-[#1d2022] p-6 text-[#b9cbb8]">
-            Aún no hay torneos publicados desde el panel administrativo.
+            AÃºn no hay torneos publicados desde el panel administrativo.
           </p>
         ) : (
           <>
@@ -259,7 +260,7 @@ const PublicTournamentsPage = () => {
                     <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[#3b4b3c] pb-4">
                       <div>
                         <p className="font-mono text-xs font-bold uppercase tracking-[0.35em] text-[#5adf82]">
-                          Ranking público
+                          Ranking pÃºblico
                         </p>
                         <h3 className="mt-1 font-display text-2xl font-bold text-[#f0ffed]">
                           Resultados por jurados
@@ -309,7 +310,7 @@ const PublicTournamentsPage = () => {
                       </div>
                     ) : (
                       <div className="rounded-2xl border border-dashed border-[#3b4b3c] bg-[#101415] p-8 text-center text-[#b9cbb8]">
-                        Aún no hay resultados publicados por jurados.
+                        AÃºn no hay resultados publicados por jurados.
                       </div>
                     )}
                   </section>
@@ -441,21 +442,21 @@ const PublicTournamentsPage = () => {
                     </div>
                   ) : (
                     <p className="text-sm leading-6 text-[#b9cbb8]">
-                      Aún no hay tabla de posiciones para este torneo.
+                      AÃºn no hay tabla de posiciones para este torneo.
                     </p>
                   )}
                 </section>
                 <section className="rounded-3xl bg-[#5adf82] p-6 text-[#003917]">
                   <h2 className="font-display text-2xl font-bold">{activeTournament?.name}</h2>
                   <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#003917]/80">
-                    {activeTournament?.description || 'Información publicada desde el panel administrativo.'}
+                    {activeTournament?.description || 'InformaciÃ³n publicada desde el panel administrativo.'}
                   </p>
                   {activeTournament && activeTournament.status !== 'FINISHED' && activeTournament.status !== 'CANCELLED' ? (
                     <Link
                       className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#003917] px-5 py-3 font-bold text-[#5adf82]"
                       to={`/public/torneos/${tournamentSlug(activeTournament)}/inscripcion`}
                     >
-                      Inscribete aquí
+                      Inscribete aquÃ­
                       <span className="material-symbols-outlined">arrow_forward</span>
                     </Link>
                   ) : null}
@@ -491,7 +492,7 @@ const PublicTournamentsPage = () => {
                 </article>
               ))}
               <article className="relative overflow-hidden rounded-2xl border border-[#3b4b3c] md:col-span-2">
-                <img className="h-64 w-full object-cover" src={activeVenueImage} alt={activeVenue?.name || 'Ubicación de encuentros'} />
+                <img className="h-64 w-full object-cover" src={activeVenueImage} alt={activeVenue?.name || 'UbicaciÃ³n de encuentros'} />
                 <div className="absolute inset-0 flex items-end bg-gradient-to-t from-[#0b0f10] to-transparent p-6">
                   <div>
                     <h3 className="font-display text-2xl font-extrabold text-[#f0ffed]">
@@ -499,7 +500,7 @@ const PublicTournamentsPage = () => {
                     </h3>
                     <p className="mt-1 text-sm text-[#b9cbb8]">
                       {activeVenue
-                        ? activeVenue.location || 'Ubicación pendiente desde administracion.'
+                        ? activeVenue.location || 'UbicaciÃ³n pendiente desde administracion.'
                         : 'Consulta el espacio asignado en cada partido publicado por administracion.'}
                     </p>
                   </div>
@@ -514,3 +515,5 @@ const PublicTournamentsPage = () => {
 };
 
 export default PublicTournamentsPage;
+
+
