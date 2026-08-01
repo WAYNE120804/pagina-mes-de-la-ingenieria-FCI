@@ -69,7 +69,7 @@ export const publicFormQuerySchema = z.object({
   origin: z.string().url().optional(),
 });
 
-export const publicAttendanceSchema = z.object({
+const publicRegistrationMemberSchema = z.object({
   fullName: z.string().trim().min(2),
   identifier: z.string().trim().min(3),
   category: z.nativeEnum(AttendeeCategory),
@@ -77,10 +77,43 @@ export const publicAttendanceSchema = z.object({
   career: careerSchema,
   email: z.string().email().trim().toLowerCase().optional().nullable(),
   phone: z.string().trim().min(7).max(30),
-  whatsappConsent: z.boolean().default(false),
 });
 
-export const publicCheckInSchema = publicAttendanceSchema.partial({
+export const publicAttendanceSchema = z.object({
+  fullName: z.string().trim().min(2).optional(),
+  identifier: z.string().trim().min(3).optional(),
+  category: z.nativeEnum(AttendeeCategory).optional(),
+  semester: semesterSchema.optional(),
+  career: careerSchema.optional(),
+  email: z.string().email().trim().toLowerCase().optional().nullable(),
+  phone: z.string().trim().min(7).max(30).optional(),
+  teamName: z.string().trim().min(2).max(120).optional().nullable(),
+  members: z.array(publicRegistrationMemberSchema).min(2).max(50).optional(),
+  whatsappConsent: z.boolean().default(false),
+}).superRefine((data, ctx) => {
+  if (data.members?.length) {
+    if (!data.teamName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Debes indicar el nombre del equipo',
+        path: ['teamName'],
+      });
+    }
+    return;
+  }
+
+  (['fullName', 'identifier', 'category', 'semester', 'career', 'phone'] as const).forEach((field) => {
+    if (!data[field]) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Campo requerido',
+        path: [field],
+      });
+    }
+  });
+});
+
+export const publicCheckInSchema = publicRegistrationMemberSchema.partial({
   fullName: true,
   category: true,
   semester: true,
@@ -89,6 +122,7 @@ export const publicCheckInSchema = publicAttendanceSchema.partial({
   phone: true,
 }).extend({
   identifier: z.string().trim().min(3),
+  whatsappConsent: z.boolean().optional(),
 });
 
 export const updateAttendanceSchema = z.object({

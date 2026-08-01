@@ -9,6 +9,8 @@ export type EventItem = {
   description?: string | null;
   type: string;
   status: string;
+  competitionMode: string;
+  maxMembersPerTeam?: number | null;
   modality: string;
   streamUrl?: string | null;
   startsAt: string;
@@ -48,6 +50,7 @@ export type AttendanceItem = {
   fullName?: string | null;
   email?: string | null;
   phone?: string | null;
+  teamName?: string | null;
   identifier?: string | null;
   category?: string | null;
   semester?: string | null;
@@ -72,6 +75,8 @@ export type PublicEventForm = {
     type: string;
     status: string;
     modality: string;
+    competitionMode: string;
+    maxMembersPerTeam?: number | null;
     streamUrl?: string | null;
     startsAt: string;
     endsAt: string;
@@ -132,6 +137,8 @@ export async function createEventRequest(input: {
   endsAt: string;
   venueId?: string | null;
   capacity?: number | null;
+  competitionMode?: string;
+  maxMembersPerTeam?: number | null;
 }) {
   const response = await client.post<ApiResponse<EventItem>>(endpoints.events.create(), {
     ...input,
@@ -151,6 +158,8 @@ export async function updateEventRequest(
     type?: string;
     status?: string;
     modality?: string;
+    competitionMode?: string;
+    maxMembersPerTeam?: number | null;
     streamUrl?: string | null;
     startsAt?: string;
     endsAt?: string;
@@ -340,10 +349,20 @@ export async function publicRegisterEventRequest(
     career: string;
     email?: string | null;
     phone: string;
+    teamName?: string | null;
+    members?: Array<{
+      fullName: string;
+      identifier: string;
+      category: string;
+      semester: string;
+      career: string;
+      email?: string | null;
+      phone: string;
+    }>;
     whatsappConsent: boolean;
   }
 ) {
-  const response = await client.post<ApiResponse<AttendanceItem>>(
+  const response = await client.post<ApiResponse<AttendanceItem | AttendanceItem[]>>(
     endpoints.public.eventRegister(eventId),
     input
   );

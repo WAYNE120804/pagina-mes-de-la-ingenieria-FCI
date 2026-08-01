@@ -215,6 +215,7 @@ async function buildEventAttendanceWorkbook(prisma: ReturnType<typeof requirePri
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet('Asistencia');
   sheet.columns = [
+    { header: 'Equipo', key: 'teamName', width: 28 },
     { header: 'Nombre', key: 'name', width: 34 },
     { header: 'Correo', key: 'email', width: 34 },
     { header: 'Telefono', key: 'phone', width: 18 },
@@ -228,6 +229,7 @@ async function buildEventAttendanceWorkbook(prisma: ReturnType<typeof requirePri
 
   attendance.forEach((item) => {
     sheet.addRow({
+      teamName: item.teamName || '',
       name: item.user?.name || item.fullName || '',
       email: item.user?.email || item.email || '',
       phone: item.phone || '',

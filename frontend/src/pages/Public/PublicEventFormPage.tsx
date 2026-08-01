@@ -36,6 +36,26 @@ const careerOptions = [
   { value: 'NO_APLICA', label: 'No aplica' },
 ];
 
+type MemberForm = {
+  fullName: string;
+  identifier: string;
+  category: string;
+  semester: string;
+  career: string;
+  email: string;
+  phone: string;
+};
+
+const emptyMember: MemberForm = {
+  fullName: '',
+  identifier: '',
+  category: 'ESTUDIANTE',
+  semester: '',
+  career: '',
+  email: '',
+  phone: '',
+};
+
 function formatDateTime(value: string) {
   return new Date(value)
     .toLocaleString('es-CO', {
@@ -60,9 +80,36 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
   const [career, setCareer] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [teamName, setTeamName] = useState('');
+  const [members, setMembers] = useState<MemberForm[]>([{ ...emptyMember }, { ...emptyMember }]);
   const [whatsappConsent, setWhatsappConsent] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const isTeamRegistration =
+    mode === 'registration' &&
+    form?.event.type === 'COMPETITION' &&
+    form.event.competitionMode === 'TEAM';
+  const maxTeamMembers = Math.max(form?.event.maxMembersPerTeam || 20, 2);
+
+  function updateMember(index: number, field: keyof MemberForm, value: string) {
+    setMembers((current) =>
+      current.map((member, memberIndex) =>
+        memberIndex === index ? { ...member, [field]: value } : member
+      )
+    );
+  }
+
+  function addMember() {
+    setMembers((current) =>
+      current.length >= maxTeamMembers ? current : [...current, { ...emptyMember }]
+    );
+  }
+
+  function removeMember(index: number) {
+    setMembers((current) =>
+      current.length <= 2 ? current : current.filter((_, memberIndex) => memberIndex !== index)
+    );
+  }
 
   useEffect(() => {
     if (!eventId) {
@@ -81,16 +128,34 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
 
     try {
       if (mode === 'registration') {
-        await publicRegisterEventRequest(eventId, {
-          fullName,
-          identifier,
-          category,
-          semester,
-          career,
-          email: email || null,
-          phone,
-          whatsappConsent,
-        });
+        if (isTeamRegistration) {
+          await publicRegisterEventRequest(eventId, {
+            fullName: members[0]?.fullName || '',
+            identifier: members[0]?.identifier || '',
+            category: members[0]?.category || 'ESTUDIANTE',
+            semester: members[0]?.semester || '',
+            career: members[0]?.career || '',
+            email: members[0]?.email || null,
+            phone: members[0]?.phone || '',
+            teamName,
+            members: members.map((member) => ({
+              ...member,
+              email: member.email || null,
+            })),
+            whatsappConsent,
+          });
+        } else {
+          await publicRegisterEventRequest(eventId, {
+            fullName,
+            identifier,
+            category,
+            semester,
+            career,
+            email: email || null,
+            phone,
+            whatsappConsent,
+          });
+        }
         setMessage('Inscripción registrada. Guarda tu código o cédula para confirmar asistencia.');
       } else {
         await publicCheckInEventRequest(eventId, {
@@ -109,6 +174,8 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
       setIdentifier('');
       setEmail('');
       setPhone('');
+      setTeamName('');
+      setMembers([{ ...emptyMember }, { ...emptyMember }]);
       setWhatsappConsent(false);
       setCategory('ESTUDIANTE');
       setSemester('');
@@ -185,6 +252,137 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
                   completa todos los datos y quedaras confirmado.
                 </p>
               ) : null}
+              {isTeamRegistration ? (
+                <div className="space-y-5">
+                  <label className="block text-sm font-semibold text-[#e0e3e5]">
+                    Nombre del equipo
+                    <input
+                      className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                      value={teamName}
+                      onChange={(event) => setTeamName(event.target.value)}
+                      required
+                    />
+                  </label>
+                  {members.map((member, index) => (
+                    <div key={index} className="rounded-2xl border border-[#3b4b3c] bg-[#101415] p-4">
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <p className="font-display text-lg font-bold text-[#f0ffed]">Integrante {index + 1}</p>
+                        {members.length > 2 ? (
+                          <button
+                            className="rounded-lg border border-[#ffb4ab]/40 px-3 py-2 text-xs font-bold text-[#ffb4ab]"
+                            type="button"
+                            onClick={() => removeMember(index)}
+                          >
+                            Quitar
+                          </button>
+                        ) : null}
+                      </div>
+                      <div className="space-y-4">
+                        <label className="block text-sm font-semibold text-[#e0e3e5]">
+                          Nombre completo
+                          <input
+                            className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                            value={member.fullName}
+                            onChange={(event) => updateMember(index, 'fullName', event.target.value)}
+                            required
+                          />
+                        </label>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <label className="block text-sm font-semibold text-[#e0e3e5]">
+                            Codigo o cedula
+                            <input
+                              className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                              value={member.identifier}
+                              onChange={(event) => updateMember(index, 'identifier', event.target.value)}
+                              required
+                            />
+                          </label>
+                          <label className="block text-sm font-semibold text-[#e0e3e5]">
+                            Cargo
+                            <select
+                              className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                              value={member.category}
+                              onChange={(event) => updateMember(index, 'category', event.target.value)}
+                              required
+                            >
+                              {categories.map((item) => (
+                                <option key={item} value={item}>
+                                  {attendeeCategoryLabels[item]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <label className="block text-sm font-semibold text-[#e0e3e5]">
+                            Semestre
+                            <select
+                              className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                              value={member.semester}
+                              onChange={(event) => updateMember(index, 'semester', event.target.value)}
+                              required
+                            >
+                              <option value="">Selecciona semestre</option>
+                              {semesterOptions.map((item) => (
+                                <option key={item.value} value={item.value}>
+                                  {item.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="block text-sm font-semibold text-[#e0e3e5]">
+                            Carrera
+                            <select
+                              className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                              value={member.career}
+                              onChange={(event) => updateMember(index, 'career', event.target.value)}
+                              required
+                            >
+                              <option value="">Selecciona carrera</option>
+                              {careerOptions.map((item) => (
+                                <option key={item.value} value={item.value}>
+                                  {item.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <label className="block text-sm font-semibold text-[#e0e3e5]">
+                            Correo
+                            <input
+                              className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                              type="email"
+                              value={member.email}
+                              onChange={(event) => updateMember(index, 'email', event.target.value)}
+                            />
+                          </label>
+                          <label className="block text-sm font-semibold text-[#e0e3e5]">
+                            Telefono
+                            <input
+                              className="mt-2 w-full rounded-xl border border-[#3b4b3c] bg-[#1d2022] px-4 py-3 text-sm text-[#f0ffed] outline-none transition-colors focus:border-[#5adf82]"
+                              type="tel"
+                              value={member.phone}
+                              onChange={(event) => updateMember(index, 'phone', event.target.value)}
+                              required
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    className="w-full rounded-xl border border-[#5adf82]/40 px-4 py-3 text-sm font-bold text-[#5adf82] disabled:cursor-not-allowed disabled:opacity-50"
+                    type="button"
+                    disabled={members.length >= maxTeamMembers}
+                    onClick={addMember}
+                  >
+                    Agregar integrante
+                  </button>
+                </div>
+              ) : null}
+              {!isTeamRegistration ? (
+                <>
               <label className="block text-sm font-semibold text-[#e0e3e5]">
                 Nombre completo
                 <input
@@ -271,6 +469,8 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
                   required={mode === 'registration' || Boolean(fullName)}
                 />
               </label>
+                </>
+              ) : null}
               {mode === 'registration' ? (
                 <label className="flex items-start gap-3 rounded-2xl border border-[#3b4b3c] bg-[#1d2022] p-4 text-sm leading-6 text-[#b9cbb8]">
                   <input
@@ -295,7 +495,11 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
                 </p>
               ) : null}
               <button className="w-full rounded-xl bg-[#5adf82] px-5 py-4 text-sm font-bold text-[#003917] transition-transform active:scale-95">
-                {mode === 'registration' ? 'Inscribirme' : 'Confirmar asistencia'}
+                {mode === 'registration'
+                  ? isTeamRegistration
+                    ? 'Inscribir equipo'
+                    : 'Inscribirme'
+                  : 'Confirmar asistencia'}
               </button>
             </form>
           </section>

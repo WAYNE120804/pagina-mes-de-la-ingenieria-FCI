@@ -34,6 +34,7 @@ import {
 } from '../../utils/dates';
 import {
   attendanceMethodLabels,
+  competitionModeLabels,
   eventModalityLabels,
   attendanceStatusLabels,
   eventStatusLabels,
@@ -53,6 +54,8 @@ type EventForm = {
   title: string;
   type: string;
   status: string;
+  competitionMode: string;
+  maxMembersPerTeam: string;
   modality: string;
   streamUrl: string;
   description: string;
@@ -73,6 +76,8 @@ const emptyForm: EventForm = {
   title: '',
   type: 'TALK',
   status: 'PUBLISHED',
+  competitionMode: 'INDIVIDUAL',
+  maxMembersPerTeam: '',
   modality: 'PRESENTIAL',
   streamUrl: '',
   description: '',
@@ -321,6 +326,7 @@ const EventsPage = ({ scope = 'events' }: EventsPageProps) => {
     () => ({
       ...emptyForm,
       type: isCompetitionScope ? 'COMPETITION' : 'TALK',
+      competitionMode: 'INDIVIDUAL',
     }),
     [isCompetitionScope]
   );
@@ -366,6 +372,7 @@ const EventsPage = ({ scope = 'events' }: EventsPageProps) => {
         name: item.user?.name || item.fullName || '',
         email: item.user?.email || item.email || '',
         phone: item.phone || '',
+        group: item.teamName || '',
         identifier: item.user?.universityCode || item.identifier || '',
         status: labelFor(attendanceStatusLabels, item.status),
         detail: labelFor(attendanceMethodLabels, item.method),
@@ -420,6 +427,8 @@ const EventsPage = ({ scope = 'events' }: EventsPageProps) => {
       title: event.title,
       type: event.type,
       status: event.status,
+      competitionMode: event.competitionMode || 'INDIVIDUAL',
+      maxMembersPerTeam: event.maxMembersPerTeam ? String(event.maxMembersPerTeam) : '',
       modality: event.modality || 'PRESENTIAL',
       streamUrl: event.streamUrl || '',
       description: event.description || '',
@@ -472,6 +481,11 @@ const EventsPage = ({ scope = 'events' }: EventsPageProps) => {
       description: form.description || null,
       type: form.type,
       status: form.status,
+      competitionMode: form.type === 'COMPETITION' ? form.competitionMode : 'INDIVIDUAL',
+      maxMembersPerTeam:
+        form.type === 'COMPETITION' && form.competitionMode === 'TEAM' && form.maxMembersPerTeam
+          ? Number(form.maxMembersPerTeam)
+          : null,
       modality: form.modality,
       streamUrl: form.modality === 'PRESENTIAL' ? null : form.streamUrl || null,
       venueId: form.venueId || null,
@@ -695,6 +709,39 @@ const EventsPage = ({ scope = 'events' }: EventsPageProps) => {
                 </select>
               </label>
             </div>
+            {form.type === 'COMPETITION' ? (
+              <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 md:grid-cols-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Participación
+                  <select
+                    className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    value={form.competitionMode}
+                    onChange={(event) => setForm({ ...form, competitionMode: event.target.value })}
+                  >
+                    {Object.entries(competitionModeLabels).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </label>
+                {form.competitionMode === 'TEAM' ? (
+                  <label className="block text-sm font-medium text-slate-700">
+                    Máx. integrantes por equipo
+                    <input
+                      className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                      type="number"
+                      min="2"
+                      value={form.maxMembersPerTeam}
+                      onChange={(event) => setForm({ ...form, maxMembersPerTeam: event.target.value })}
+                      placeholder="Sin límite"
+                    />
+                  </label>
+                ) : (
+                  <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+                    Cada persona se inscribe de forma individual.
+                  </div>
+                )}
+              </div>
+            ) : null}
             <div className="grid gap-3 md:grid-cols-2">
               <label className="block text-sm font-medium text-slate-700">
                 Modalidad

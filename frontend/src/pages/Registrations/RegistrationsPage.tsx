@@ -121,7 +121,7 @@ const RegistrationsPage = () => {
     if (selectedActivity?.kind === 'event') {
       return selectedAttendance.map((item) => ({
         id: item.id,
-        group: selectedActivity.category,
+        group: item.teamName || selectedActivity.category,
         name: item.user?.name || item.fullName || '',
         email: item.user?.email || item.email || '',
         phone: item.phone || '',

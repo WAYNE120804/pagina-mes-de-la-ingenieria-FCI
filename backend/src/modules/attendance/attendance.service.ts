@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 
 import QRCode from 'qrcode';
 
-import { AttendanceMethod, AttendanceStatus, AuditAction, EventType, Prisma } from '../../lib/prisma-client';
+import { AttendanceMethod, AttendanceStatus, AuditAction, CompetitionMode, EventType, Prisma } from '../../lib/prisma-client';
 import { AppError } from '../../lib/app-error';
 import { getPrisma } from '../../lib/prisma';
 import { createAuditLog } from '../../utils/audit';
@@ -160,7 +160,7 @@ async function getActiveEvent(eventId: string) {
   return event;
 }
 
-async function assertCapacity(eventId: string, capacity?: number | null) {
+async function assertCapacity(eventId: string, capacity?: number | null, increment = 1) {
   if (!capacity) {
     return;
   }
@@ -174,12 +174,15 @@ async function assertCapacity(eventId: string, capacity?: number | null) {
     },
   });
 
-  if (currentCount >= capacity) {
+  if (currentCount + increment > capacity) {
     throw new AppError('El evento ya alcanzo su capacidad maxima', 409, 'EVENT_CAPACITY_FULL');
   }
 }
 
-async function assertNoDuplicate(eventId: string, input: CreateAttendanceInput) {
+async function assertNoDuplicate(
+  eventId: string,
+  input: { userId?: string | null; email?: string | null; identifier?: string | null }
+) {
   const prisma = requirePrisma();
 
   if (input.userId) {
@@ -284,6 +287,7 @@ export async function createAttendance(
       fullName: input.fullName || null,
       email: input.email || null,
       phone: input.phone || null,
+      teamName: null,
       identifier: input.identifier || null,
       category: input.category || null,
       semester: input.semester || null,
@@ -334,6 +338,7 @@ export async function preregisterAttendance(
       fullName: input.fullName || null,
       email: input.email || null,
       phone: input.phone || null,
+      teamName: null,
       identifier: input.identifier || null,
       category: input.category || null,
       semester: input.semester || null,
@@ -535,6 +540,8 @@ export async function getPublicEventForm(
       title: event.title,
       type: event.type,
       status: event.status,
+      competitionMode: event.competitionMode,
+      maxMembersPerTeam: event.maxMembersPerTeam,
       modality: event.modality,
       streamUrl: event.streamUrl,
       startsAt: event.startsAt,
@@ -567,25 +574,132 @@ export async function publicRegisterAttendance(eventId: string, input: PublicAtt
   const prisma = requirePrisma();
   const event = await getActiveEvent(eventId);
   const resolvedEventId = event.id;
+  const members = input.members || [];
 
   assertPublicEventType(event);
+  if (members.length) {
+    if (event.type !== EventType.COMPETITION || event.competitionMode !== CompetitionMode.TEAM) {
+      throw new AppError(
+        'Esta actividad no recibe inscripciones por equipos',
+        400,
+        'TEAM_REGISTRATION_NOT_ALLOWED'
+      );
+    }
+
+    const maxMembers = event.maxMembersPerTeam || 20;
+
+    if (members.length > maxMembers) {
+      throw new AppError(
+        `El equipo no puede superar ${maxMembers} integrantes`,
+        400,
+        'TEAM_MEMBERS_LIMIT_EXCEEDED'
+      );
+    }
+
+    const existingTeam = await prisma.attendance.findFirst({
+      where: {
+        eventId: resolvedEventId,
+        deletedAt: null,
+        teamName: input.teamName,
+      },
+    });
+
+    if (existingTeam) {
+      throw new AppError('Ya existe un equipo inscrito con ese nombre', 409, 'TEAM_DUPLICATED');
+    }
+
+    await assertCapacity(resolvedEventId, event.capacity, members.length);
+
+    const memberIdentifiers = new Set<string>();
+    const memberEmails = new Set<string>();
+
+    for (const member of members) {
+      const normalizedIdentifier = member.identifier.trim().toLowerCase();
+      const normalizedEmail = member.email?.trim().toLowerCase();
+
+      if (memberIdentifiers.has(normalizedIdentifier)) {
+        throw new AppError('Hay integrantes con el mismo codigo o cedula', 409, 'TEAM_MEMBER_DUPLICATED');
+      }
+
+      if (normalizedEmail && memberEmails.has(normalizedEmail)) {
+        throw new AppError('Hay integrantes con el mismo correo', 409, 'TEAM_MEMBER_DUPLICATED');
+      }
+
+      memberIdentifiers.add(normalizedIdentifier);
+      if (normalizedEmail) {
+        memberEmails.add(normalizedEmail);
+      }
+
+      await assertNoDuplicate(resolvedEventId, member);
+    }
+
+    const createdAttendances = await prisma.$transaction(
+      members.map((member) =>
+        prisma.attendance.create({
+          data: {
+            eventId: resolvedEventId,
+            fullName: member.fullName,
+            email: member.email || null,
+            phone: member.phone,
+            teamName: input.teamName || null,
+            identifier: member.identifier,
+            category: member.category,
+            semester: member.semester,
+            career: member.career,
+            whatsappConsent: input.whatsappConsent,
+            method: AttendanceMethod.QR,
+            status: AttendanceStatus.REGISTERED,
+            qrCode: createQrToken(resolvedEventId),
+            tempCode: createTempCode(),
+          },
+          include: attendanceInclude,
+        })
+      )
+    );
+
+    await createAuditLog({
+      prisma,
+      action: AuditAction.CREATE,
+      entity: 'Attendance',
+      entityId: createdAttendances[0].id,
+      newValues: {
+        eventId: resolvedEventId,
+        teamName: input.teamName,
+        members: createdAttendances.length,
+        publicRegistration: true,
+      },
+    });
+
+    createdAttendances.forEach((attendance) => sendEventRegistrationEmail(event, attendance));
+
+    return createdAttendances;
+  }
+
+  if (event.type === EventType.COMPETITION && event.competitionMode === CompetitionMode.TEAM) {
+    throw new AppError(
+      'Esta competencia requiere inscripción por equipos',
+      400,
+      'TEAM_REGISTRATION_REQUIRED'
+    );
+  }
+
   await assertCapacity(resolvedEventId, event.capacity);
   await assertNoDuplicate(resolvedEventId, {
-    ...input,
-    method: AttendanceMethod.QR,
-    status: AttendanceStatus.REGISTERED,
+    email: input.email,
+    identifier: input.identifier,
   });
 
   const attendance = await prisma.attendance.create({
     data: {
       eventId: resolvedEventId,
-      fullName: input.fullName,
+      fullName: input.fullName!,
       email: input.email || null,
-      phone: input.phone,
-      identifier: input.identifier,
-      category: input.category,
-      semester: input.semester,
-      career: input.career,
+      phone: input.phone!,
+      teamName: null,
+      identifier: input.identifier!,
+      category: input.category!,
+      semester: input.semester!,
+      career: input.career!,
       whatsappConsent: input.whatsappConsent,
       method: AttendanceMethod.QR,
       status: AttendanceStatus.REGISTERED,
@@ -634,6 +748,7 @@ export async function publicCheckInAttendance(eventId: string, input: PublicChec
         fullName: input.fullName || existingAttendance.fullName,
         email: input.email === undefined ? existingAttendance.email : input.email,
         phone: input.phone === undefined ? existingAttendance.phone : input.phone,
+        teamName: existingAttendance.teamName,
         category: input.category || existingAttendance.category,
         semester: input.semester || existingAttendance.semester,
         career: input.career || existingAttendance.career,
@@ -677,6 +792,7 @@ export async function publicCheckInAttendance(eventId: string, input: PublicChec
       fullName: input.fullName,
       email: input.email || null,
       phone: input.phone || null,
+      teamName: null,
       identifier: input.identifier,
       category: input.category,
       semester: input.semester || null,

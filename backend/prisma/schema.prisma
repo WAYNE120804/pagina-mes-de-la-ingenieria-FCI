@@ -348,6 +348,8 @@ model Event {
   description String?
   type        EventType
   status      EventStatus @default(PUBLISHED)
+  competitionMode CompetitionMode @default(INDIVIDUAL) @map("competition_mode")
+  maxMembersPerTeam Int? @map("max_members_per_team")
   modality    EventModality @default(PRESENTIAL)
   streamUrl   String?     @map("stream_url")
   startsAt    DateTime    @map("starts_at")
@@ -431,6 +433,7 @@ model Attendance {
   fullName    String?          @map("full_name")
   email       String?
   phone       String?
+  teamName    String?          @map("team_name")
   identifier  String?
   category    AttendeeCategory?
   semester    String?

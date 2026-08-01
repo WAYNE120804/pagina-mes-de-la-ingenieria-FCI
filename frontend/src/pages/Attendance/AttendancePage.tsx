@@ -93,6 +93,10 @@ function attendeeIdentifier(item: AttendanceItem) {
   return item.user?.universityCode || item.identifier || '';
 }
 
+function attendeeTeam(item: AttendanceItem) {
+  return item.teamName || '';
+}
+
 function wrapCanvasText(
   context: CanvasRenderingContext2D,
   text: string,
@@ -214,6 +218,7 @@ function exportAttendanceExcel(
   const tableRows = rows
     .map((item) => {
       const cells = [
+        attendeeTeam(item),
         attendeeName(item),
         attendeeEmail(item),
         attendeePhone(item),
@@ -235,8 +240,9 @@ function exportAttendanceExcel(
       <head><meta charset="UTF-8" /></head>
       <body>
         <table>
-          <tr><th colspan="10">${escapeHtml(eventTitle)}</th></tr>
+          <tr><th colspan="11">${escapeHtml(eventTitle)}</th></tr>
           <tr>
+            <th>Equipo</th>
             <th>Nombre</th>
             <th>Correo</th>
             <th>Telefono</th>
@@ -567,10 +573,11 @@ const AttendancePage = () => {
             </div>
             {notice ? <p className="border-b border-slate-100 px-5 py-3 text-sm text-emerald-700">{notice}</p> : null}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1100px] table-fixed divide-y divide-slate-200 text-sm">
+              <table className="w-full min-w-[1200px] table-fixed divide-y divide-slate-200 text-sm">
                 <thead className="theme-table-head">
                   <tr>
-                    <th className="w-[15%] px-4 py-3 text-left">Nombre</th>
+                    <th className="w-[12%] px-4 py-3 text-left">Equipo</th>
+                    <th className="w-[13%] px-4 py-3 text-left">Nombre</th>
                     <th className="w-[16%] px-4 py-3 text-left">Correo</th>
                     <th className="w-[10%] px-4 py-3 text-left">Telefono</th>
                     <th className="w-[12%] px-4 py-3 text-left">Código/Cédula</th>
@@ -585,13 +592,16 @@ const AttendancePage = () => {
                 <tbody className="divide-y divide-slate-100">
                   {attendance.length === 0 ? (
                     <tr>
-                      <td className="px-5 py-6 text-center text-slate-500" colSpan={10}>
+                      <td className="px-5 py-6 text-center text-slate-500" colSpan={11}>
                         No hay asistentes registrados para este evento.
                       </td>
                     </tr>
                   ) : null}
                   {attendance.map((item) => (
                     <tr key={item.id} className="transition hover:bg-slate-50">
+                      <td className="px-4 py-4 align-top text-slate-600">
+                        <span className="block break-words leading-5">{attendeeTeam(item) || 'N/A'}</span>
+                      </td>
                       <td className="px-5 py-4 align-top font-medium text-slate-950">
                         <span className="block break-words leading-5">{attendeeName(item) || 'N/A'}</span>
                       </td>
