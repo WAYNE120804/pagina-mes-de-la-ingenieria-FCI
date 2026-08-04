@@ -7,6 +7,7 @@ import {
   type AttendanceItem,
   type EventItem,
 } from '../../api/events.api';
+import { getApiErrorMessage } from '../../api/client';
 import {
   getTournamentRegistrationsRequest,
   listTournamentsRequest,
@@ -180,8 +181,8 @@ const RegistrationsPage = () => {
       }
 
       setShowModal(true);
-    } catch {
-      setError('No fue posible cargar los inscritos de la actividad.');
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, 'No fue posible cargar los inscritos de la actividad.'));
     }
   }
 

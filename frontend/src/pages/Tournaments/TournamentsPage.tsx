@@ -674,8 +674,8 @@ const TournamentsPage = () => {
       setRegistrationsModalTournament(tournament);
       setRegistrationsModalData(await getTournamentRegistrationsRequest(tournament.id));
       setShowRegistrationsModal(true);
-    } catch {
-      setRegistrationError('No fue posible cargar los inscritos del torneo.');
+    } catch (requestError) {
+      setRegistrationError(getApiErrorMessage(requestError, 'No fue posible cargar los inscritos del torneo.'));
     }
   }
 
