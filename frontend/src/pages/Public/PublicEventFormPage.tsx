@@ -7,6 +7,7 @@ import {
   publicRegisterEventRequest,
   type PublicEventForm,
 } from '../../api/events.api';
+import { getApiErrorMessage } from '../../api/client';
 import { attendeeCategoryLabels, eventModalityLabels, eventTypeLabels, labelFor } from '../../utils/labels';
 import PublicLayout from './PublicLayout';
 
@@ -180,11 +181,14 @@ const PublicEventFormPage = ({ mode }: { mode: 'registration' | 'attendance' }) 
       setCategory('ESTUDIANTE');
       setSemester('');
       setCareer('');
-    } catch {
+    } catch (requestError) {
       setError(
-        mode === 'registration'
-          ? 'No fue posible registrar la inscripción. Revisa cupos o si ya estás inscrito.'
-          : 'No fue posible confirmar la asistencia. Revisa el horario disponible o tus datos.'
+        getApiErrorMessage(
+          requestError,
+          mode === 'registration'
+            ? 'No fue posible registrar la inscripción. Revisa cupos o si ya estás inscrito.'
+            : 'No fue posible confirmar la asistencia. Revisa el horario disponible o tus datos.'
+        )
       );
     }
   }

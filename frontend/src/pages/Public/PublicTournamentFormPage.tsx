@@ -6,6 +6,7 @@ import {
   publicRegisterTournamentRequest,
   type PublicTournamentForm,
 } from '../../api/tournaments.api';
+import { getApiErrorMessage } from '../../api/client';
 import {
   competitionModeLabels,
   labelFor,
@@ -173,8 +174,13 @@ const PublicTournamentFormPage = () => {
       const resetCount = isTeam ? minTeamMembers : 1;
       setMemberCount(resetCount);
       setMembers(Array.from({ length: resetCount }, () => ({ ...emptyMember })));
-    } catch {
-      setError('No fue posible completar la inscripción. Revisa cupos, datos repetidos o inscripciones previas.');
+    } catch (requestError) {
+      setError(
+        getApiErrorMessage(
+          requestError,
+          'No fue posible completar la inscripción. Revisa cupos, datos repetidos o inscripciones previas.'
+        )
+      );
     }
   }
 
