@@ -44,6 +44,8 @@ const semesterOptions = [
   { value: '8', label: '8' },
   { value: '9', label: '9' },
   { value: '10', label: '10' },
+  { value: 'TECNICO', label: 'Técnico' },
+  { value: 'TECNOLOGO', label: 'Tecnólogo' },
   { value: 'POSGRADO', label: 'Posgrado' },
   { value: 'NO_APLICA', label: 'No aplica' },
 ];

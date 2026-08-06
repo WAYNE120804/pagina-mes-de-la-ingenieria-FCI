@@ -22,6 +22,8 @@ const semesterSchema = z.enum([
   '8',
   '9',
   '10',
+  'TECNICO',
+  'TECNOLOGO',
   'POSGRADO',
   'NO_APLICA',
 ]);

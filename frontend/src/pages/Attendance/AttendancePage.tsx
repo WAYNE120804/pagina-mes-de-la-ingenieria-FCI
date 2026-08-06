@@ -35,6 +35,8 @@ const semesterLabels: Record<string, string> = {
   '8': '8',
   '9': '9',
   '10': '10',
+  TECNICO: 'Técnico',
+  TECNOLOGO: 'Tecnólogo',
   POSGRADO: 'Posgrado',
   NO_APLICA: 'No aplica',
 };
